@@ -6,7 +6,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
 import click
 import typer
@@ -233,6 +233,56 @@ def _format_rate_pct(value: str | float | int | None) -> str:
         digits = digits.rstrip("0").rstrip(".")
         s = f"{sign}{digits}"
     return f"{s}%"
+
+
+MARKET_SORT_FIELDS = {"volume", "oi", "price", "change", "funding", "coin"}
+
+
+def _normalize_market_sort(sort_by: str) -> str:
+    value = sort_by.strip().lower()
+    if value not in MARKET_SORT_FIELDS:
+        allowed = ", ".join(sorted(MARKET_SORT_FIELDS))
+        raise RuntimeError(f"invalid sort field: {sort_by} (expected one of: {allowed})")
+    return value
+
+
+def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> dict[str, list[dict[str, Any]]]:
+    sort_by = _normalize_market_sort(sort_by)
+
+    def numeric_value(row: dict[str, Any], key: str) -> float | None:
+        value = row.get(key)
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except Exception:
+            return None
+
+    def sort_rows(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        if sort_by == "coin":
+            return sorted(items, key=lambda row: str(row.get("coin", "")).lower())
+
+        field_map = {
+            "volume": "volumeUsd",
+            "oi": "openInterest",
+            "price": "price",
+            "change": "priceChange",
+            "funding": "funding",
+        }
+        field = field_map[sort_by]
+
+        def key(row: dict[str, Any]) -> tuple[int, float]:
+            value = numeric_value(row, field)
+            if value is None:
+                return (1, 0.0)
+            return (0, -value)
+
+        return sorted(items, key=key)
+
+    return {
+        "perpMarkets": sort_rows(rows["perpMarkets"]),
+        "spotMarkets": sort_rows(rows["spotMarkets"]),
+    }
 
 
 def _extract_statuses(result: dict[str, Any]) -> list[dict[str, Any] | str]:
@@ -936,15 +986,19 @@ def _fetch_builder_market_data(info: Any, dex: str) -> tuple[dict[str, Any], lis
 @cli_command
 def markets_ls(
     ctx: typer.Context,
-    spot_only: bool = typer.Option(False, "--spot-only"),
-    perp_only: bool = typer.Option(False, "--perp-only"),
-    watch: bool = typer.Option(False, "-w", "--watch"),
+    spot_only: Annotated[bool, typer.Option("--spot-only")] = False,
+    perp_only: Annotated[bool, typer.Option("--perp-only")] = False,
+    sort_by: Annotated[
+        str,
+        typer.Option("--sort-by", help="Sort markets by volume, oi, price, change, funding, or coin"),
+    ] = "volume",
+    watch: Annotated[bool, typer.Option("-w", "--watch")] = False,
 ) -> None:
     context = _ctx(ctx)
 
     if watch:
         watch_loop(
-            lambda: _build_market_rows(context, spot_only, perp_only),
+            lambda: _sort_market_rows(_build_market_rows(context, spot_only, perp_only), sort_by),
             lambda d: _render_table(
                 f"Markets ({len(d['perpMarkets'])} perps, {len(d['spotMarkets'])} spot)",
                 ["Coin", "Pair", "Price", "24h%", "Vol", "Funding", "OI"],
@@ -965,7 +1019,7 @@ def markets_ls(
         )
         return
 
-    out(_build_market_rows(context, spot_only, perp_only), _json(ctx))
+    out(_sort_market_rows(_build_market_rows(context, spot_only, perp_only), sort_by), _json(ctx))
     _done(ctx)
 
 
@@ -974,14 +1028,18 @@ def markets_ls(
 def markets_search(
     ctx: typer.Context,
     query: str,
-    spot_only: bool = typer.Option(False, "--spot-only"),
-    perp_only: bool = typer.Option(False, "--perp-only"),
+    spot_only: Annotated[bool, typer.Option("--spot-only")] = False,
+    perp_only: Annotated[bool, typer.Option("--perp-only")] = False,
+    sort_by: Annotated[
+        str,
+        typer.Option("--sort-by", help="Sort matches by volume, oi, price, change, funding, or coin"),
+    ] = "volume",
 ) -> None:
     context = _ctx(ctx)
     q = query.strip().lower()
     if not q:
         raise RuntimeError("query must not be empty")
-    rows = _build_market_rows(context, spot_only, perp_only)
+    rows = _sort_market_rows(_build_market_rows(context, spot_only, perp_only), sort_by)
     perps = [
         x for x in rows["perpMarkets"] if q in str(x.get("coin", "")).lower() or q in str(x.get("pairName", "")).lower()
     ]

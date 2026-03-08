@@ -341,6 +341,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     mk_ls.add_argument("--spot-only", action="store_true")
     mk_ls.add_argument("--perp-only", action="store_true")
+    mk_ls.add_argument(
+        "--sort-by",
+        default="volume",
+        help="Sort markets by volume, oi, price, change, funding, or coin",
+    )
     mk_ls.add_argument("-w", "--watch", action="store_true")
     mk_search = add_cmd_parser(
         mk_sub,
@@ -351,6 +356,11 @@ def _build_parser() -> argparse.ArgumentParser:
     mk_search.add_argument("query")
     mk_search.add_argument("--spot-only", action="store_true")
     mk_search.add_argument("--perp-only", action="store_true")
+    mk_search.add_argument(
+        "--sort-by",
+        default="volume",
+        help="Sort matches by volume, oi, price, change, funding, or coin",
+    )
 
     # referral
     referral = add_cmd_parser(
@@ -676,6 +686,7 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
                 ctx,
                 spot_only=args.spot_only,
                 perp_only=args.perp_only,
+                sort_by=args.sort_by,
                 watch=args.watch,
             )
         elif sc == "search":
@@ -685,6 +696,7 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
                 args.query,
                 spot_only=args.spot_only,
                 perp_only=args.perp_only,
+                sort_by=args.sort_by,
             )
         else:
             _exit_with_error(f"Unknown markets subcommand: {sc}")
