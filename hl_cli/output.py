@@ -280,7 +280,7 @@ def _print_markets_payload(data: dict[str, Any]) -> None:
                 _fmt_pct(r.get("priceChange")),
                 _fmt_usd(r.get("volumeUsd")),
                 _fmt_rate_pct(r.get("funding")),
-                str(r.get("openInterest", "-")),
+                _fmt_usd(r.get("openInterestUsd")),
             )
         console.print(tbl)
     if spot:

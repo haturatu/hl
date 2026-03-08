@@ -246,17 +246,20 @@ def _normalize_market_sort(sort_by: str) -> str:
     return value
 
 
+def _to_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
 def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> dict[str, list[dict[str, Any]]]:
     sort_by = _normalize_market_sort(sort_by)
 
     def numeric_value(row: dict[str, Any], key: str) -> float | None:
-        value = row.get(key)
-        if value is None:
-            return None
-        try:
-            return float(value)
-        except Exception:
-            return None
+        return _to_float(row.get(key))
 
     def sort_rows(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if sort_by == "coin":
@@ -264,7 +267,7 @@ def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> di
 
         field_map = {
             "volume": "volumeUsd",
-            "oi": "openInterest",
+            "oi": "openInterestUsd",
             "price": "price",
             "change": "priceChange",
             "funding": "funding",
@@ -915,6 +918,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
                     "volumeUsd": c.get("dayNtlVlm", "?"),
                     "funding": None,
                     "openInterest": None,
+                    "openInterestUsd": None,
                 }
             )
 
@@ -926,6 +930,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
             c = perp_ctxs[i] if i < len(perp_ctxs) else {}
             prev = float(c.get("prevDayPx", 0) or 0)
             mark = float(c.get("markPx", 0) or 0)
+            oi_raw = _to_float(c.get("openInterest"))
             chg = ((mark - prev) / prev * 100) if prev else None
             perp_rows.append(
                 {
@@ -936,6 +941,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
                     "volumeUsd": c.get("dayNtlVlm", "?"),
                     "funding": c.get("funding"),
                     "openInterest": c.get("openInterest"),
+                    "openInterestUsd": (oi_raw * mark) if oi_raw is not None and mark > 0 else None,
                 }
             )
 
@@ -960,6 +966,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
                 c = ctxs[i] if i < len(ctxs) else {}
                 prev = float(c.get("prevDayPx", 0) or 0)
                 mark = float(c.get("markPx", 0) or 0)
+                oi_raw = _to_float(c.get("openInterest"))
                 chg = ((mark - prev) / prev * 100) if prev else None
                 perp_rows.append(
                     {
@@ -970,6 +977,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
                         "volumeUsd": c.get("dayNtlVlm", "?"),
                         "funding": c.get("funding"),
                         "openInterest": c.get("openInterest"),
+                        "openInterestUsd": (oi_raw * mark) if oi_raw is not None and mark > 0 else None,
                     }
                 )
 
@@ -1010,7 +1018,7 @@ def markets_ls(
                         "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
                         _format_usd(x["volumeUsd"]),
                         _format_rate_pct(x["funding"]),
-                        x["openInterest"] if x["openInterest"] is not None else "-",
+                        _format_usd(x["openInterestUsd"]),
                     ]
                     for x in [*d["perpMarkets"], *d["spotMarkets"]]
                 ],
