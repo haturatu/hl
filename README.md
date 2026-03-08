@@ -113,3 +113,15 @@ hl order tpsl ETH --sl 1800 --ratio 0.5
 - https://app.hyperliquid.xyz/
 - https://github.com/chrisling-dev/hyperliquid-cli
 - https://github.com/ehfuzzz/hyperliquid-CLI
+
+This project is primarily a Python implementation of
+https://github.com/chrisling-dev/hyperliquid-cli.
+Some features, including the TWAP order implementation, are also based on ideas from
+https://github.com/ehfuzzz/hyperliquid-CLI.
+
+In addition to that foundation, this project extends the CLI with expanded `order`
+subcommands, the `--stake` option, and additional `market` subcommand functionality.
+
+Because the appropriate source-level license attribution was unclear, this project is
+currently published under my BSD 3-Clause License. If you have better ideas for proper
+license attribution or display, please open an issue.
