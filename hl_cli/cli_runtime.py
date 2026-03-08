@@ -1,13 +1,17 @@
+from functools import wraps
 import time
-from typing import Any
+from typing import Any, Callable, ParamSpec, TypeVar
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from .context import CLIContext
+from .output import out_error
 
 console = Console()
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def cli_context(ctx: typer.Context) -> CLIContext:
@@ -39,3 +43,17 @@ def render_table(title: str, columns: list[str], rows: list[list[Any]]) -> None:
     for row in rows:
         table.add_row(*[str(v) for v in row])
     console.print(table)
+
+
+def cli_command(fn: Callable[P, R]) -> Callable[P, R]:
+    @wraps(fn)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        try:
+            return fn(*args, **kwargs)
+        except typer.Exit:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            out_error(str(exc))
+            raise typer.Exit(1) from exc
+
+    return wrapper

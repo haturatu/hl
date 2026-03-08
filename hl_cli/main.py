@@ -13,6 +13,7 @@ from eth_account import Account as EthAccount
 from typer.core import TyperGroup
 
 from .cli_runtime import (
+    cli_command,
     cli_context,
     console,
     confirm,
@@ -46,7 +47,7 @@ from .order_commands import (
     order_twap,
     order_twap_cancel,
 )
-from .output import out, out_error, out_success
+from .output import out, out_success
 from .paths import (
     SERVER_CACHE_PATH,
     SERVER_LOG_PATH,
@@ -302,79 +303,77 @@ def account_callback(ctx: typer.Context) -> None:
 
 
 @account_app.command("add")
+@cli_command
 def account_add(ctx: typer.Context) -> None:
-    try:
-        context = _ctx(ctx)
-        is_testnet = context.config.testnet
+    context = _ctx(ctx)
+    is_testnet = context.config.testnet
 
-        print("\n=== Add New Account ===\n")
-        _print_account_add_guide()
-        print("1) Use existing API wallet")
-        print("2) Add read-only account")
-        choice = input("Select setup method [1/2]: ").strip()
+    print("\n=== Add New Account ===\n")
+    _print_account_add_guide()
+    print("1) Use existing API wallet")
+    print("2) Add read-only account")
+    choice = input("Select setup method [1/2]: ").strip()
 
-        if choice == "1":
-            api_url = "https://app.hyperliquid-testnet.xyz/API" if is_testnet else "https://app.hyperliquid.xyz/API"
-            print(f"\nVisit {api_url} and generate an API wallet key.\n")
-            api_key = normalize_private_key(input("Enter API wallet private key: ").strip())
+    if choice == "1":
+        api_url = "https://app.hyperliquid-testnet.xyz/API" if is_testnet else "https://app.hyperliquid.xyz/API"
+        print(f"\nVisit {api_url} and generate an API wallet key.\n")
+        api_key = normalize_private_key(input("Enter API wallet private key: ").strip())
 
-            info = context.get_public_client()
-            api_wallet_addr = EthAccount.from_key(api_key).address
-            role = info.user_role(api_wallet_addr)
-            if role.get("role") != "agent":
-                raise RuntimeError("This key is not registered as an API wallet (agent) on Hyperliquid")
-            user_address = role["data"]["user"]
+        info = context.get_public_client()
+        api_wallet_addr = EthAccount.from_key(api_key).address
+        role = info.user_role(api_wallet_addr)
+        if role.get("role") != "agent":
+            raise RuntimeError("This key is not registered as an API wallet (agent) on Hyperliquid")
+        user_address = role["data"]["user"]
 
-            while True:
-                alias = input("Alias: ").strip()
-                if not alias:
-                    print("Alias cannot be empty.")
-                    continue
-                if is_alias_taken(alias):
-                    print(f'Alias "{alias}" is already taken.')
-                    continue
-                break
+        while True:
+            alias = input("Alias: ").strip()
+            if not alias:
+                print("Alias cannot be empty.")
+                continue
+            if is_alias_taken(alias):
+                print(f'Alias "{alias}" is already taken.')
+                continue
+            break
 
-            set_as_default = get_account_count() == 0 or _confirm("Set as default account?", True)
-            created = create_account(
-                alias=alias,
-                user_address=user_address,
-                account_type="api_wallet",
-                api_wallet_private_key=api_key,
-                api_wallet_public_key=api_wallet_addr,
-                set_as_default=set_as_default,
-            )
-            data = created.__dict__.copy()
-            data["api_wallet_private_key"] = "[REDACTED]"
-            out(data, _json(ctx))
-        elif choice == "2":
-            user_address = validate_address(input("Wallet address to watch: ").strip())
-            while True:
-                alias = input("Alias: ").strip()
-                if not alias:
-                    print("Alias cannot be empty.")
-                    continue
-                if is_alias_taken(alias):
-                    print(f'Alias "{alias}" is already taken.')
-                    continue
-                break
-            set_as_default = get_account_count() == 0 or _confirm("Set as default account?", True)
-            created = create_account(
-                alias=alias,
-                user_address=user_address,
-                account_type="readonly",
-                set_as_default=set_as_default,
-            )
-            out(created.__dict__, _json(ctx))
-        else:
-            raise RuntimeError("Invalid selection")
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+        set_as_default = get_account_count() == 0 or _confirm("Set as default account?", True)
+        created = create_account(
+            alias=alias,
+            user_address=user_address,
+            account_type="api_wallet",
+            api_wallet_private_key=api_key,
+            api_wallet_public_key=api_wallet_addr,
+            set_as_default=set_as_default,
+        )
+        data = created.__dict__.copy()
+        data["api_wallet_private_key"] = "[REDACTED]"
+        out(data, _json(ctx))
+    elif choice == "2":
+        user_address = validate_address(input("Wallet address to watch: ").strip())
+        while True:
+            alias = input("Alias: ").strip()
+            if not alias:
+                print("Alias cannot be empty.")
+                continue
+            if is_alias_taken(alias):
+                print(f'Alias "{alias}" is already taken.')
+                continue
+            break
+        set_as_default = get_account_count() == 0 or _confirm("Set as default account?", True)
+        created = create_account(
+            alias=alias,
+            user_address=user_address,
+            account_type="readonly",
+            set_as_default=set_as_default,
+        )
+        out(created.__dict__, _json(ctx))
+    else:
+        raise RuntimeError("Invalid selection")
+    _done(ctx)
 
 
 @account_app.command("ls")
+@cli_command
 def account_ls(ctx: typer.Context) -> None:
     accounts = get_all_accounts()
     if _json(ctx):
@@ -401,41 +400,33 @@ def account_ls(ctx: typer.Context) -> None:
 
 
 @account_app.command("set-default")
+@cli_command
 def account_set_default(ctx: typer.Context, alias: str) -> None:
-    try:
-        if not get_account_by_alias(alias):
-            raise RuntimeError(f'Account with alias "{alias}" not found')
-        updated = set_default_account(alias)
-        out(updated.__dict__, _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    if not get_account_by_alias(alias):
+        raise RuntimeError(f'Account with alias "{alias}" not found')
+    updated = set_default_account(alias)
+    out(updated.__dict__, _json(ctx))
+    _done(ctx)
 
 
 @account_app.command("remove")
+@cli_command
 def account_remove(
     ctx: typer.Context,
     alias: str,
     force: bool = typer.Option(False, "-f", "--force"),
 ) -> None:
-    try:
-        existing = get_account_by_alias(alias)
-        if not existing:
-            raise RuntimeError(f'Account with alias "{alias}" not found')
-        if not force and not _confirm(f'Remove account "{alias}" ({existing.user_address})?', False):
-            print("Cancelled.")
-            raise typer.Exit(0)
-        ok = delete_account(alias)
-        if not ok:
-            raise RuntimeError("Failed to remove account")
-        out({"deleted": True, "alias": alias}, _json(ctx))
-        _done(ctx)
-    except typer.Exit:
-        raise
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    existing = get_account_by_alias(alias)
+    if not existing:
+        raise RuntimeError(f'Account with alias "{alias}" not found')
+    if not force and not _confirm(f'Remove account "{alias}" ({existing.user_address})?', False):
+        print("Cancelled.")
+        raise typer.Exit(0)
+    ok = delete_account(alias)
+    if not ok:
+        raise RuntimeError("Failed to remove account")
+    out({"deleted": True, "alias": alias}, _json(ctx))
+    _done(ctx)
 
 
 def _fetch_positions(context: CLIContext, user: str) -> dict[str, Any]:
@@ -474,41 +465,38 @@ def _fetch_positions(context: CLIContext, user: str) -> dict[str, Any]:
 
 
 @account_app.command("positions")
+@cli_command
 def account_positions(
     ctx: typer.Context,
     user: Optional[str] = typer.Option(None, "--user"),
     watch: bool = typer.Option(False, "-w", "--watch"),
 ) -> None:
-    try:
-        context = _ctx(ctx)
-        address = validate_address(user) if user else context.get_wallet_address()
-        if watch:
-            watch_loop(
-                lambda: _fetch_positions(context, address),
-                lambda data: _render_table(
-                    "Positions",
-                    ["Coin", "Size", "Entry", "Value", "PnL", "Leverage", "Liq"],
+    context = _ctx(ctx)
+    address = validate_address(user) if user else context.get_wallet_address()
+    if watch:
+        watch_loop(
+            lambda: _fetch_positions(context, address),
+            lambda data: _render_table(
+                "Positions",
+                ["Coin", "Size", "Entry", "Value", "PnL", "Leverage", "Liq"],
+                [
                     [
-                        [
-                            p["coin"],
-                            p["size"],
-                            p["entryPx"],
-                            p["positionValue"],
-                            p["unrealizedPnl"],
-                            p["leverage"],
-                            p["liquidationPx"],
-                        ]
-                        for p in data["positions"]
-                    ],
-                ),
-                as_json=_json(ctx),
-            )
-            return
-        out(_fetch_positions(context, address), _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+                        p["coin"],
+                        p["size"],
+                        p["entryPx"],
+                        p["positionValue"],
+                        p["unrealizedPnl"],
+                        p["leverage"],
+                        p["liquidationPx"],
+                    ]
+                    for p in data["positions"]
+                ],
+            ),
+            as_json=_json(ctx),
+        )
+        return
+    out(_fetch_positions(context, address), _json(ctx))
+    _done(ctx)
 
 
 def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
@@ -527,30 +515,27 @@ def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
 
 
 @account_app.command("orders")
+@cli_command
 def account_orders(
     ctx: typer.Context,
     user: Optional[str] = typer.Option(None, "--user"),
     watch: bool = typer.Option(False, "-w", "--watch"),
 ) -> None:
-    try:
-        context = _ctx(ctx)
-        address = validate_address(user) if user else context.get_wallet_address()
-        if watch:
-            watch_loop(
-                lambda: _fetch_orders(context, address),
-                lambda rows: _render_table(
-                    "Open Orders",
-                    ["OID", "Coin", "Side", "Size", "Price", "Time"],
-                    [[r["oid"], r["coin"], r["side"], r["sz"], r["limitPx"], r["timestamp"]] for r in rows],
-                ),
-                as_json=_json(ctx),
-            )
-            return
-        out(_fetch_orders(context, address), _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    context = _ctx(ctx)
+    address = validate_address(user) if user else context.get_wallet_address()
+    if watch:
+        watch_loop(
+            lambda: _fetch_orders(context, address),
+            lambda rows: _render_table(
+                "Open Orders",
+                ["OID", "Coin", "Side", "Size", "Price", "Time"],
+                [[r["oid"], r["coin"], r["side"], r["sz"], r["limitPx"], r["timestamp"]] for r in rows],
+            ),
+            as_json=_json(ctx),
+        )
+        return
+    out(_fetch_orders(context, address), _json(ctx))
+    _done(ctx)
 
 
 def _fetch_balances(context: CLIContext, user: str) -> dict[str, Any]:
@@ -574,183 +559,168 @@ def _fetch_balances(context: CLIContext, user: str) -> dict[str, Any]:
 
 
 @account_app.command("balances")
+@cli_command
 def account_balances(
     ctx: typer.Context,
     user: Optional[str] = typer.Option(None, "--user"),
     watch: bool = typer.Option(False, "-w", "--watch"),
 ) -> None:
-    try:
-        context = _ctx(ctx)
-        address = validate_address(user) if user else context.get_wallet_address()
-        if watch:
-            watch_loop(
-                lambda: _fetch_balances(context, address),
-                lambda data: _render_table(
-                    f"Balances (Perp USD: {data['perpBalance']})",
-                    ["Token", "Total", "Hold", "Available"],
-                    [[b["token"], b["total"], b["hold"], b["available"]] for b in data["spotBalances"]],
-                ),
-                as_json=_json(ctx),
-            )
-            return
-        out(_fetch_balances(context, address), _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    context = _ctx(ctx)
+    address = validate_address(user) if user else context.get_wallet_address()
+    if watch:
+        watch_loop(
+            lambda: _fetch_balances(context, address),
+            lambda data: _render_table(
+                f"Balances (Perp USD: {data['perpBalance']})",
+                ["Token", "Total", "Hold", "Available"],
+                [[b["token"], b["total"], b["hold"], b["available"]] for b in data["spotBalances"]],
+            ),
+            as_json=_json(ctx),
+        )
+        return
+    out(_fetch_balances(context, address), _json(ctx))
+    _done(ctx)
 
 
 @account_app.command("portfolio")
+@cli_command
 def account_portfolio(
     ctx: typer.Context,
     user: Optional[str] = typer.Option(None, "--user"),
     watch: bool = typer.Option(False, "-w", "--watch"),
 ) -> None:
-    try:
-        context = _ctx(ctx)
-        address = validate_address(user) if user else context.get_wallet_address()
+    context = _ctx(ctx)
+    address = validate_address(user) if user else context.get_wallet_address()
 
-        def fetch() -> dict[str, Any]:
-            pos = _fetch_positions(context, address)
-            bal = _fetch_balances(context, address)
-            return {
-                "positions": pos["positions"],
-                "spotBalances": bal["spotBalances"],
-                "accountValue": pos["marginSummary"]["accountValue"],
-                "totalMarginUsed": pos["marginSummary"]["totalMarginUsed"],
-            }
+    def fetch() -> dict[str, Any]:
+        pos = _fetch_positions(context, address)
+        bal = _fetch_balances(context, address)
+        return {
+            "positions": pos["positions"],
+            "spotBalances": bal["spotBalances"],
+            "accountValue": pos["marginSummary"]["accountValue"],
+            "totalMarginUsed": pos["marginSummary"]["totalMarginUsed"],
+        }
 
-        if watch:
-            watch_loop(
-                fetch,
-                lambda d: (
-                    _render_table(
-                        f"Portfolio AccountValue={d['accountValue']} MarginUsed={d['totalMarginUsed']}",
-                        ["Coin", "Size", "Entry", "Value", "PnL", "Leverage"],
+    if watch:
+        watch_loop(
+            fetch,
+            lambda d: (
+                _render_table(
+                    f"Portfolio AccountValue={d['accountValue']} MarginUsed={d['totalMarginUsed']}",
+                    ["Coin", "Size", "Entry", "Value", "PnL", "Leverage"],
+                    [
                         [
-                            [
-                                p["coin"],
-                                p["size"],
-                                p["entryPx"],
-                                p["positionValue"],
-                                p["unrealizedPnl"],
-                                p["leverage"],
-                            ]
-                            for p in d["positions"]
-                        ],
-                    ),
-                    _render_table(
-                        "Spot Balances",
-                        ["Token", "Total", "Hold", "Available"],
-                        [
-                            [b["token"], b["total"], b["hold"], b.get("available", "-")]
-                            for b in d["spotBalances"]
-                        ],
-                    ),
+                            p["coin"],
+                            p["size"],
+                            p["entryPx"],
+                            p["positionValue"],
+                            p["unrealizedPnl"],
+                            p["leverage"],
+                        ]
+                        for p in d["positions"]
+                    ],
                 ),
-                as_json=_json(ctx),
-            )
-            return
-        out(fetch(), _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+                _render_table(
+                    "Spot Balances",
+                    ["Token", "Total", "Hold", "Available"],
+                    [
+                        [b["token"], b["total"], b["hold"], b.get("available", "-")]
+                        for b in d["spotBalances"]
+                    ],
+                ),
+            ),
+            as_json=_json(ctx),
+        )
+        return
+    out(fetch(), _json(ctx))
+    _done(ctx)
 
 
 @asset_app.command("price")
+@cli_command
 def asset_price(ctx: typer.Context, coin: str, watch: bool = typer.Option(False, "-w", "--watch")) -> None:
-    try:
-        context = _ctx(ctx)
+    context = _ctx(ctx)
 
-        def fetch() -> dict[str, str]:
-            resolved_coin = _resolve_tradable_coin(context, coin)
-            cache = _load_server_cache()
-            if ":" not in resolved_coin and cache and "allMids" in cache:
-                mids = cache["allMids"]
-            else:
-                mids = _mids_for_coin(context, resolved_coin)
-            if resolved_coin not in mids:
-                raise RuntimeError(f"Coin not found: {coin}")
-            return {"coin": coin, "price": mids[resolved_coin]}
+    def fetch() -> dict[str, str]:
+        resolved_coin = _resolve_tradable_coin(context, coin)
+        cache = _load_server_cache()
+        if ":" not in resolved_coin and cache and "allMids" in cache:
+            mids = cache["allMids"]
+        else:
+            mids = _mids_for_coin(context, resolved_coin)
+        if resolved_coin not in mids:
+            raise RuntimeError(f"Coin not found: {coin}")
+        return {"coin": coin, "price": mids[resolved_coin]}
 
-        if watch:
-            watch_loop(fetch, lambda d: print(f"{d['coin']}: {d['price']}"), as_json=_json(ctx))
-            return
-        out(fetch(), _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    if watch:
+        watch_loop(fetch, lambda d: print(f"{d['coin']}: {d['price']}"), as_json=_json(ctx))
+        return
+    out(fetch(), _json(ctx))
+    _done(ctx)
 
 
 @asset_app.command("book")
+@cli_command
 def asset_book(ctx: typer.Context, coin: str, watch: bool = typer.Option(False, "-w", "--watch")) -> None:
-    try:
-        context = _ctx(ctx)
+    context = _ctx(ctx)
 
-        def fetch() -> dict[str, Any]:
-            book = context.get_public_client().l2_snapshot(coin)
-            return book
+    def fetch() -> dict[str, Any]:
+        book = context.get_public_client().l2_snapshot(coin)
+        return book
 
-        def render_book(book: dict[str, Any]) -> None:
-            bids = book.get("levels", [[], []])[0][:10]
-            asks = book.get("levels", [[], []])[1][:10]
-            _render_table("Asks", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in asks[::-1]])
-            _render_table("Bids", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in bids])
+    def render_book(book: dict[str, Any]) -> None:
+        bids = book.get("levels", [[], []])[0][:10]
+        asks = book.get("levels", [[], []])[1][:10]
+        _render_table("Asks", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in asks[::-1]])
+        _render_table("Bids", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in bids])
 
-        if watch:
-            watch_loop(fetch, render_book, as_json=_json(ctx))
-            return
-        out(fetch(), _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    if watch:
+        watch_loop(fetch, render_book, as_json=_json(ctx))
+        return
+    out(fetch(), _json(ctx))
+    _done(ctx)
 
 
 @asset_app.command("leverage")
+@cli_command
 def asset_leverage(
     ctx: typer.Context,
     coin: str,
     user: Optional[str] = typer.Option(None, "--user"),
     watch: bool = typer.Option(False, "-w", "--watch"),
 ) -> None:
-    try:
-        context = _ctx(ctx)
-        address = validate_address(user) if user else context.get_wallet_address()
+    context = _ctx(ctx)
+    address = validate_address(user) if user else context.get_wallet_address()
 
-        def fetch() -> dict[str, Any]:
-            state = context.get_public_client().user_state(address)
-            meta = context.get_public_client().meta()
-            mids = context.get_public_client().all_mids()
-            pos = next(
-                (p["position"] for p in state["assetPositions"] if p["position"]["coin"] == coin),
-                None,
-            )
-            m = next((m for m in meta["universe"] if m["name"] == coin), None)
-            account_value = float(state["marginSummary"]["accountValue"])
-            margin_used = float(state["marginSummary"]["totalMarginUsed"])
-            return {
-                "coin": coin,
-                "markPx": mids.get(coin),
-                "maxLeverage": (m or {}).get("maxLeverage", 0),
-                "position": pos,
-                "margin": {
-                    "accountValue": state["marginSummary"]["accountValue"],
-                    "totalMarginUsed": state["marginSummary"]["totalMarginUsed"],
-                    "availableMargin": f"{max(0.0, account_value - margin_used):.2f}",
-                },
-            }
+    def fetch() -> dict[str, Any]:
+        state = context.get_public_client().user_state(address)
+        meta = context.get_public_client().meta()
+        mids = context.get_public_client().all_mids()
+        pos = next(
+            (p["position"] for p in state["assetPositions"] if p["position"]["coin"] == coin),
+            None,
+        )
+        m = next((m for m in meta["universe"] if m["name"] == coin), None)
+        account_value = float(state["marginSummary"]["accountValue"])
+        margin_used = float(state["marginSummary"]["totalMarginUsed"])
+        return {
+            "coin": coin,
+            "markPx": mids.get(coin),
+            "maxLeverage": (m or {}).get("maxLeverage", 0),
+            "position": pos,
+            "margin": {
+                "accountValue": state["marginSummary"]["accountValue"],
+                "totalMarginUsed": state["marginSummary"]["totalMarginUsed"],
+                "availableMargin": f"{max(0.0, account_value - margin_used):.2f}",
+            },
+        }
 
-        if watch:
-            watch_loop(fetch, lambda d: out(d, False), as_json=_json(ctx))
-            return
-        out(fetch(), _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    if watch:
+        watch_loop(fetch, lambda d: out(d, False), as_json=_json(ctx))
+        return
+    out(fetch(), _json(ctx))
+    _done(ctx)
 
 
 def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) -> dict[str, list[dict[str, Any]]]:
@@ -831,149 +801,132 @@ def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) ->
 
 
 @markets_app.command("ls")
+@cli_command
 def markets_ls(
     ctx: typer.Context,
     spot_only: bool = typer.Option(False, "--spot-only"),
     perp_only: bool = typer.Option(False, "--perp-only"),
     watch: bool = typer.Option(False, "-w", "--watch"),
 ) -> None:
-    try:
-        context = _ctx(ctx)
+    context = _ctx(ctx)
 
-        if watch:
-            watch_loop(
-                lambda: _build_market_rows(context, spot_only, perp_only),
-                lambda d: _render_table(
-                    f"Markets ({len(d['perpMarkets'])} perps, {len(d['spotMarkets'])} spot)",
-                    ["Coin", "Pair", "Price", "24h%", "Vol", "Funding", "OI"],
+    if watch:
+        watch_loop(
+            lambda: _build_market_rows(context, spot_only, perp_only),
+            lambda d: _render_table(
+                f"Markets ({len(d['perpMarkets'])} perps, {len(d['spotMarkets'])} spot)",
+                ["Coin", "Pair", "Price", "24h%", "Vol", "Funding", "OI"],
+                [
                     [
-                        [
-                            x["coin"],
-                            x["pairName"],
-                            x["price"],
-                            "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
-                            x["volumeUsd"],
-                            x["funding"] if x["funding"] is not None else "-",
-                            x["openInterest"] if x["openInterest"] is not None else "-",
-                        ]
-                        for x in [*d["perpMarkets"], *d["spotMarkets"]]
-                    ],
-                ),
-                as_json=_json(ctx),
-            )
-            return
+                        x["coin"],
+                        x["pairName"],
+                        x["price"],
+                        "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
+                        x["volumeUsd"],
+                        x["funding"] if x["funding"] is not None else "-",
+                        x["openInterest"] if x["openInterest"] is not None else "-",
+                    ]
+                    for x in [*d["perpMarkets"], *d["spotMarkets"]]
+                ],
+            ),
+            as_json=_json(ctx),
+        )
+        return
 
-        out(_build_market_rows(context, spot_only, perp_only), _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    out(_build_market_rows(context, spot_only, perp_only), _json(ctx))
+    _done(ctx)
 
 
 @markets_app.command("search")
+@cli_command
 def markets_search(
     ctx: typer.Context,
     query: str,
     spot_only: bool = typer.Option(False, "--spot-only"),
     perp_only: bool = typer.Option(False, "--perp-only"),
 ) -> None:
-    try:
-        context = _ctx(ctx)
-        q = query.strip().lower()
-        if not q:
-            raise RuntimeError("query must not be empty")
-        rows = _build_market_rows(context, spot_only, perp_only)
-        perps = [
-            x for x in rows["perpMarkets"] if q in str(x.get("coin", "")).lower() or q in str(x.get("pairName", "")).lower()
-        ]
-        spots = [
-            x for x in rows["spotMarkets"] if q in str(x.get("coin", "")).lower() or q in str(x.get("pairName", "")).lower()
-        ]
-        out({"perpMarkets": perps, "spotMarkets": spots}, _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    context = _ctx(ctx)
+    q = query.strip().lower()
+    if not q:
+        raise RuntimeError("query must not be empty")
+    rows = _build_market_rows(context, spot_only, perp_only)
+    perps = [
+        x for x in rows["perpMarkets"] if q in str(x.get("coin", "")).lower() or q in str(x.get("pairName", "")).lower()
+    ]
+    spots = [
+        x for x in rows["spotMarkets"] if q in str(x.get("coin", "")).lower() or q in str(x.get("pairName", "")).lower()
+    ]
+    out({"perpMarkets": perps, "spotMarkets": spots}, _json(ctx))
+    _done(ctx)
 
 
 @referral_app.command("set")
+@cli_command
 def referral_set(ctx: typer.Context, code: str) -> None:
-    try:
-        result = _ctx(ctx).get_wallet_client().set_referrer(code)
-        out(result, _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    result = _ctx(ctx).get_wallet_client().set_referrer(code)
+    out(result, _json(ctx))
+    _done(ctx)
 
 
 @referral_app.command("status")
+@cli_command
 def referral_status(ctx: typer.Context) -> None:
-    try:
-        context = _ctx(ctx)
-        user = context.get_wallet_address()
-        result = context.get_public_client().query_referral_state(user)
-        out(result, _json(ctx))
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    context = _ctx(ctx)
+    user = context.get_wallet_address()
+    result = context.get_public_client().query_referral_state(user)
+    out(result, _json(ctx))
+    _done(ctx)
 
 
 @server_app.command("start")
+@cli_command
 def server_start(ctx: typer.Context) -> None:
-    try:
+    if SERVER_PID_PATH.exists():
+        pid = int(SERVER_PID_PATH.read_text().strip())
+        if _pid_running(pid):
+            raise RuntimeError(f"Server is already running (pid: {pid})")
+
+    args = [sys.executable, "-m", "hl_cli.server_process"]
+    if _ctx(ctx).config.testnet:
+        args.append("--testnet")
+
+    logf = SERVER_LOG_PATH.open("a", encoding="utf-8")
+    subprocess.Popen(args, stdout=logf, stderr=logf, start_new_session=True)
+
+    timeout = time.time() + 10
+    while time.time() < timeout:
         if SERVER_PID_PATH.exists():
-            pid = int(SERVER_PID_PATH.read_text().strip())
-            if _pid_running(pid):
-                raise RuntimeError(f"Server is already running (pid: {pid})")
+            break
+        time.sleep(0.2)
 
-        args = [sys.executable, "-m", "hl_cli.server_process"]
-        if _ctx(ctx).config.testnet:
-            args.append("--testnet")
+    if not SERVER_PID_PATH.exists():
+        raise RuntimeError(f"Failed to start server. Check log: {SERVER_LOG_PATH}")
 
-        logf = SERVER_LOG_PATH.open("a", encoding="utf-8")
-        subprocess.Popen(args, stdout=logf, stderr=logf, start_new_session=True)
-
-        timeout = time.time() + 10
-        while time.time() < timeout:
-            if SERVER_PID_PATH.exists():
-                break
-            time.sleep(0.2)
-
-        if not SERVER_PID_PATH.exists():
-            raise RuntimeError(f"Failed to start server. Check log: {SERVER_LOG_PATH}")
-
-        out_success("Server started")
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    out_success("Server started")
+    _done(ctx)
 
 
 @server_app.command("stop")
+@cli_command
 def server_stop(ctx: typer.Context) -> None:
-    try:
-        if not SERVER_PID_PATH.exists():
-            raise RuntimeError("Server is not running")
-        pid = int(SERVER_PID_PATH.read_text().strip())
-        if _pid_running(pid):
-            os.kill(pid, signal.SIGTERM)
-        timeout = time.time() + 5
-        while time.time() < timeout and _pid_running(pid):
-            time.sleep(0.2)
-        if _pid_running(pid):
-            os.kill(pid, signal.SIGKILL)
-        if SERVER_PID_PATH.exists():
-            SERVER_PID_PATH.unlink()
-        out_success("Server stopped")
-        _done(ctx)
-    except Exception as exc:  # noqa: BLE001
-        out_error(str(exc))
-        raise typer.Exit(1)
+    if not SERVER_PID_PATH.exists():
+        raise RuntimeError("Server is not running")
+    pid = int(SERVER_PID_PATH.read_text().strip())
+    if _pid_running(pid):
+        os.kill(pid, signal.SIGTERM)
+    timeout = time.time() + 5
+    while time.time() < timeout and _pid_running(pid):
+        time.sleep(0.2)
+    if _pid_running(pid):
+        os.kill(pid, signal.SIGKILL)
+    if SERVER_PID_PATH.exists():
+        SERVER_PID_PATH.unlink()
+    out_success("Server stopped")
+    _done(ctx)
 
 
 @server_app.command("status")
+@cli_command
 def server_status(ctx: typer.Context) -> None:
     running = False
     state: dict[str, Any] = {"running": False}
