@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
 from typing import Any, Optional
@@ -7,6 +8,7 @@ from hyperliquid.utils.constants import MAINNET_API_URL
 from hyperliquid.utils.signing import float_to_wire, get_timestamp_ms, sign_l1_action
 
 from .cli_runtime import cli_command, cli_context, confirm, finish_command, json_output_enabled, render_table
+from .cli_runtime import run_blocking
 from .context import CLIContext
 from .order_config import get_order_config, update_order_config
 from .output import out, out_success
@@ -252,12 +254,13 @@ def _resolve_tradable_coin(context: CLIContext, coin: str) -> str:
             return name
 
     perp_candidates: list[tuple[str, int]] = []
-    for dex_item in info.perp_dexs():
-        dex_name = str(dex_item.get("name", "")) if isinstance(dex_item, dict) else ""
-        if not dex_name:
-            continue
-        dex_mids = info.all_mids(dex=dex_name)
-        meta = info.meta(dex=dex_name)
+    dex_names = [
+        str(dex_item.get("name", ""))
+        for dex_item in info.perp_dexs()
+        if isinstance(dex_item, dict) and dex_item.get("name")
+    ]
+    builder_market_data = run_blocking(_fetch_all_builder_resolution_data(info, dex_names))
+    for meta, dex_mids in builder_market_data:
         for m in meta.get("universe", []):
             full_name = str(m.get("name", ""))
             if not full_name:
@@ -392,8 +395,8 @@ def _resolve_position_for_close(context: CLIContext, coin: str) -> tuple[str, fl
     with_prefix = ":" in target
     up = target.upper()
     matches: list[tuple[str, float]] = []
-    for dex in context.get_perp_dexs():
-        state = info.user_state(user, dex=dex)
+    states = run_blocking(_fetch_all_perp_states(info, user, context.get_perp_dexs()))
+    for state in states:
         for row in state.get("assetPositions", []):
             pos = row.get("position", {})
             pos_coin = str(pos.get("coin", ""))
@@ -419,6 +422,25 @@ def _resolve_position_for_close(context: CLIContext, coin: str) -> tuple[str, fl
         )
     resolved_coin, szi = matches[0]
     return resolved_coin, abs(szi), (szi < 0)
+
+
+def _fetch_builder_resolution_data(info: Any, dex_name: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    return info.meta(dex=dex_name), info.all_mids(dex=dex_name)
+
+
+async def _fetch_all_builder_resolution_data(
+    info: Any,
+    dex_names: list[str],
+) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    return await asyncio.gather(
+        *(asyncio.to_thread(_fetch_builder_resolution_data, info, dex_name) for dex_name in dex_names)
+    )
+
+
+async def _fetch_all_perp_states(info: Any, user: str, dexs: list[str]) -> list[dict[str, Any]]:
+    return await asyncio.gather(
+        *(asyncio.to_thread(info.user_state, user, dex) for dex in dexs)
+    )
 
 
 def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:

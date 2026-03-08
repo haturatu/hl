@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import signal
@@ -20,6 +21,7 @@ from .cli_runtime import (
     finish_command,
     json_output_enabled,
     render_table,
+    run_blocking,
 )
 from .context import CLIContext, load_config
 from .db import (
@@ -430,12 +432,18 @@ def account_remove(
 
 
 def _fetch_positions(context: CLIContext, user: str) -> dict[str, Any]:
+    return run_blocking(_fetch_positions_async(context, user))
+
+
+async def _fetch_positions_async(context: CLIContext, user: str) -> dict[str, Any]:
     info = context.get_public_client()
+    states = await asyncio.gather(
+        *(asyncio.to_thread(info.user_state, user, dex) for dex in context.get_perp_dexs())
+    )
     positions: list[dict[str, Any]] = []
     summaries: list[dict[str, Any]] = []
 
-    for dex in context.get_perp_dexs():
-        state = info.user_state(user, dex=dex)
+    for state in states:
         summaries.append(state["marginSummary"])
         positions.extend(
             [
@@ -539,8 +547,14 @@ def account_orders(
 
 
 def _fetch_balances(context: CLIContext, user: str) -> dict[str, Any]:
-    perp = context.get_public_client().user_state(user)
-    spot = context.get_public_client().spot_user_state(user)
+    return run_blocking(_fetch_balances_async(context, user))
+
+
+async def _fetch_balances_async(context: CLIContext, user: str) -> dict[str, Any]:
+    info = context.get_public_client()
+    perp_task = asyncio.to_thread(info.user_state, user)
+    spot_task = asyncio.to_thread(info.spot_user_state, user)
+    perp, spot = await asyncio.gather(perp_task, spot_task)
     balances = []
     for b in spot["balances"]:
         if float(b["total"]) == 0:
@@ -556,6 +570,58 @@ def _fetch_balances(context: CLIContext, user: str) -> dict[str, Any]:
             }
         )
     return {"spotBalances": balances, "perpBalance": perp["marginSummary"]["accountValue"]}
+
+
+async def _fetch_portfolio_async(context: CLIContext, user: str) -> dict[str, Any]:
+    info = context.get_public_client()
+    perp_tasks = [
+        asyncio.to_thread(info.user_state, user, dex)
+        for dex in context.get_perp_dexs()
+    ]
+    spot_task = asyncio.to_thread(info.spot_user_state, user)
+    *perp_states, spot = await asyncio.gather(*perp_tasks, spot_task)
+
+    positions: list[dict[str, Any]] = []
+    for state in perp_states:
+        positions.extend(
+            [
+                {
+                    "coin": p["position"]["coin"],
+                    "size": p["position"]["szi"],
+                    "entryPx": p["position"].get("entryPx"),
+                    "positionValue": p["position"].get("positionValue"),
+                    "unrealizedPnl": p["position"].get("unrealizedPnl"),
+                    "leverage": f"{p['position']['leverage']['value']}x {p['position']['leverage']['type']}",
+                    "liquidationPx": p["position"].get("liquidationPx") or "-",
+                }
+                for p in state["assetPositions"]
+                if float(p["position"]["szi"]) != 0
+            ]
+        )
+
+    spot_balances = []
+    for b in spot["balances"]:
+        if float(b["total"]) == 0:
+            continue
+        total = float(b["total"])
+        hold = float(b["hold"])
+        spot_balances.append(
+            {
+                "token": b["coin"],
+                "total": b["total"],
+                "hold": b["hold"],
+                "available": f"{total - hold}",
+            }
+        )
+
+    account_value = sum(float(s["marginSummary"]["accountValue"]) for s in perp_states)
+    margin_used = sum(float(s["marginSummary"]["totalMarginUsed"]) for s in perp_states)
+    return {
+        "positions": positions,
+        "spotBalances": spot_balances,
+        "accountValue": f"{account_value:.8f}",
+        "totalMarginUsed": f"{margin_used:.8f}",
+    }
 
 
 @account_app.command("balances")
@@ -593,14 +659,7 @@ def account_portfolio(
     address = validate_address(user) if user else context.get_wallet_address()
 
     def fetch() -> dict[str, Any]:
-        pos = _fetch_positions(context, address)
-        bal = _fetch_balances(context, address)
-        return {
-            "positions": pos["positions"],
-            "spotBalances": bal["spotBalances"],
-            "accountValue": pos["marginSummary"]["accountValue"],
-            "totalMarginUsed": pos["marginSummary"]["totalMarginUsed"],
-        }
+        return run_blocking(_fetch_portfolio_async(context, address))
 
     if watch:
         watch_loop(
@@ -694,9 +753,10 @@ def asset_leverage(
     address = validate_address(user) if user else context.get_wallet_address()
 
     def fetch() -> dict[str, Any]:
-        state = context.get_public_client().user_state(address)
-        meta = context.get_public_client().meta()
-        mids = context.get_public_client().all_mids()
+        info = context.get_public_client()
+        state, meta, mids = run_blocking(
+            _fetch_asset_leverage_inputs_async(info, address)
+        )
         pos = next(
             (p["position"] for p in state["assetPositions"] if p["position"]["coin"] == coin),
             None,
@@ -723,9 +783,21 @@ def asset_leverage(
     _done(ctx)
 
 
+async def _fetch_asset_leverage_inputs_async(info: Any, address: str) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    state_task = asyncio.to_thread(info.user_state, address)
+    meta_task = asyncio.to_thread(info.meta)
+    mids_task = asyncio.to_thread(info.all_mids)
+    state, meta, mids = await asyncio.gather(state_task, meta_task, mids_task)
+    return state, meta, mids
+
+
 def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) -> dict[str, list[dict[str, Any]]]:
+    return run_blocking(_build_market_rows_async(context, spot_only, perp_only))
+
+
+async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_only: bool) -> dict[str, list[dict[str, Any]]]:
     info = context.get_public_client()
-    spot_meta, spot_ctxs = info.spot_meta_and_asset_ctxs()
+    spot_meta, spot_ctxs = await asyncio.to_thread(info.spot_meta_and_asset_ctxs)
 
     spot_rows: list[dict[str, Any]] = []
     perp_rows: list[dict[str, Any]] = []
@@ -753,7 +825,7 @@ def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) ->
 
     if not spot_only:
         # Main perp dex (keeps richer fields like funding/openInterest).
-        perp_meta, perp_ctxs = info.meta_and_asset_ctxs()
+        perp_meta, perp_ctxs = await asyncio.to_thread(info.meta_and_asset_ctxs)
         collateral = spot_meta["tokens"][perp_meta.get("collateralToken", 0)].get("name", "USD")
         for i, market in enumerate(perp_meta["universe"]):
             c = perp_ctxs[i] if i < len(perp_ctxs) else {}
@@ -774,11 +846,14 @@ def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) ->
 
         # Builder perps (stocks and other external markets).
         # These are dex-qualified symbols such as xyz:TSLA or flx:CRCL.
-        for dex in context.get_perp_dexs():
+        dexs = [dex for dex in context.get_perp_dexs() if dex]
+        builder_results = await asyncio.gather(
+            *(asyncio.to_thread(_fetch_builder_market_data, info, dex) for dex in dexs)
+        )
+        for meta, mids in builder_results:
+            dex = str(meta.get("dex", ""))
             if not dex:
                 continue
-            meta = info.meta(dex=dex)
-            mids = info.all_mids(dex=dex)
             coll_idx = meta.get("collateralToken", 0)
             collateral = spot_meta["tokens"][coll_idx].get("name", "USD")
             for market in meta.get("universe", []):
@@ -798,6 +873,13 @@ def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) ->
                 )
 
     return {"perpMarkets": perp_rows, "spotMarkets": spot_rows}
+
+
+def _fetch_builder_market_data(info: Any, dex: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    meta = info.meta(dex=dex)
+    meta["dex"] = dex
+    mids = info.all_mids(dex=dex)
+    return meta, mids
 
 
 @markets_app.command("ls")

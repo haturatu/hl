@@ -1,6 +1,9 @@
+import asyncio
+from concurrent.futures import Future
 from functools import wraps
+import threading
 import time
-from typing import Any, Callable, ParamSpec, TypeVar
+from typing import Any, Awaitable, Callable, ParamSpec, TypeVar
 
 import typer
 from rich.console import Console
@@ -43,6 +46,27 @@ def render_table(title: str, columns: list[str], rows: list[list[Any]]) -> None:
     for row in rows:
         table.add_row(*[str(v) for v in row])
     console.print(table)
+
+
+def run_blocking(coro: Awaitable[R]) -> R:
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+    result: Future[R] = Future()
+
+    def runner() -> None:
+        try:
+            value = asyncio.run(coro)
+        except BaseException as exc:  # noqa: BLE001
+            result.set_exception(exc)
+            return
+        result.set_result(value)
+
+    thread = threading.Thread(target=runner, daemon=True)
+    thread.start()
+    return result.result()
 
 
 def cli_command(fn: Callable[P, R]) -> Callable[P, R]:
