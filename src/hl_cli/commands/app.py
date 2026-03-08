@@ -6,12 +6,9 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from typing import Annotated, Any, Optional
+from typing import Any, Optional
 
-import click
-import typer
 from eth_account import Account as EthAccount
-from typer.core import TyperGroup
 
 from ..cli.runtime import (
     cli_command,
@@ -23,7 +20,7 @@ from ..cli.runtime import (
     render_table,
     run_blocking,
 )
-from ..core.context import CLIContext, load_config
+from ..core.context import CLIContext
 from ..infra.db import (
     create_account,
     delete_account,
@@ -36,7 +33,6 @@ from ..infra.db import (
 from .order import (
     _mids_for_coin,
     _resolve_tradable_coin,
-    order_app,
     order_cancel,
     order_cancel_all,
     order_configure,
@@ -62,111 +58,15 @@ from ..utils.validators import (
 )
 from ..utils.watch import watch_loop
 
-class FullHelpTyperGroup(TyperGroup):
-    def format_help(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
-        formatter.write_heading("Usage")
-        formatter.write_text(f"{ctx.info_name or 'hl'} [OPTIONS] COMMAND [ARGS]...")
-        formatter.write_paragraph()
-        if self.help:
-            formatter.write_heading("Description")
-            formatter.write_text(self.help)
-            formatter.write_paragraph()
-        formatter.write_heading("Command Tree (argparse style)")
-        for line in self._collect_help_lines(ctx=ctx, cmd=self, path=ctx.info_name or "hl", depth=0):
-            formatter.write_text(line)
-
-    def _collect_help_lines(
-        self,
-        ctx: click.Context,
-        cmd: click.Command,
-        path: str,
-        depth: int,
-    ) -> list[str]:
-        indent = "  " * depth
-        lines: list[str] = [f"{indent}{path}"]
-
-        options: list[str] = []
-        arguments: list[str] = []
-        for param in cmd.get_params(ctx):
-            if isinstance(param, click.Option):
-                if param.hidden:
-                    continue
-                flags = " | ".join([*param.opts, *param.secondary_opts]).strip()
-                if flags:
-                    options.append(flags)
-            elif isinstance(param, click.Argument):
-                arguments.append(param.human_readable_name)
-
-        usage_chunks = [path]
-        if arguments:
-            usage_chunks.extend([f"<{a}>" for a in arguments])
-        if options:
-            usage_chunks.extend([f"[{o}]" for o in options])
-        lines.append(f"{indent}  usage: {' '.join(usage_chunks)}")
-
-        short_help = cmd.short_help or cmd.help
-        if short_help:
-            lines.append(f"{indent}  help: {short_help.splitlines()[0]}")
-
-        if isinstance(cmd, click.Group):
-            sub_ctx = click.Context(cmd, info_name=path, parent=ctx)
-            for sub_name in cmd.list_commands(sub_ctx):
-                sub_cmd = cmd.get_command(sub_ctx, sub_name)
-                if sub_cmd is None or sub_cmd.hidden:
-                    continue
-                lines.extend(
-                    self._collect_help_lines(
-                        ctx=sub_ctx,
-                        cmd=sub_cmd,
-                        path=f"{path} {sub_name}",
-                        depth=depth + 1,
-                    )
-                )
-
-        return lines
-
-
-app = typer.Typer(help="CLI for Hyperliquid DEX (Python)", no_args_is_help=True, cls=FullHelpTyperGroup)
-account_app = typer.Typer(
-    help="Account management and information.\n"
-    "Wallet add quick start: run 'hl account add' and follow prompts.",
-    no_args_is_help=False,
-)
-asset_app = typer.Typer(help="Asset-specific information", no_args_is_help=True)
-markets_app = typer.Typer(help="Market information", no_args_is_help=True)
-referral_app = typer.Typer(help="Referral management", no_args_is_help=True)
-server_app = typer.Typer(help="Manage background cache server", no_args_is_help=True)
-
-app.add_typer(account_app, name="account")
-app.add_typer(order_app, name="order")
-app.add_typer(asset_app, name="asset")
-app.add_typer(markets_app, name="markets")
-app.add_typer(referral_app, name="referral")
-app.add_typer(server_app, name="server")
-
-
-@app.callback()
-def root_callback(
-    ctx: typer.Context,
-    json_output: bool = typer.Option(False, "--json", help="Output in JSON format"),
-    testnet: bool = typer.Option(False, "--testnet", help="Use testnet"),
-) -> None:
-    ctx.obj = {
-        "context": CLIContext(load_config(testnet)),
-        "json": json_output,
-        "start": time.perf_counter(),
-    }
-
-
-def _ctx(ctx: typer.Context) -> CLIContext:
+def _ctx(ctx: Any) -> CLIContext:
     return cli_context(ctx)
 
 
-def _json(ctx: typer.Context) -> bool:
+def _json(ctx: Any) -> bool:
     return json_output_enabled(ctx)
 
 
-def _done(ctx: typer.Context) -> None:
+def _done(ctx: Any) -> None:
     finish_command(ctx)
 
 
@@ -394,17 +294,8 @@ def _print_account_add_guide() -> None:
     console.print(" - [bold]hl account set-default <alias>[/bold]\n")
 
 
-@account_app.callback(invoke_without_command=True)
-def account_callback(ctx: typer.Context) -> None:
-    if ctx.invoked_subcommand is None:
-        _print_account_add_guide()
-        print(ctx.get_help())
-        raise typer.Exit()
-
-
-@account_app.command("add")
 @cli_command
-def account_add(ctx: typer.Context) -> None:
+def account_add(ctx: Any) -> None:
     context = _ctx(ctx)
     is_testnet = context.config.testnet
 
@@ -472,9 +363,8 @@ def account_add(ctx: typer.Context) -> None:
     _done(ctx)
 
 
-@account_app.command("ls")
 @cli_command
-def account_ls(ctx: typer.Context) -> None:
+def account_ls(ctx: Any) -> None:
     accounts = get_all_accounts()
     if _json(ctx):
         out([a.__dict__ for a in accounts], True)
@@ -499,9 +389,8 @@ def account_ls(ctx: typer.Context) -> None:
     _done(ctx)
 
 
-@account_app.command("set-default")
 @cli_command
-def account_set_default(ctx: typer.Context, alias: str) -> None:
+def account_set_default(ctx: Any, alias: str) -> None:
     if not get_account_by_alias(alias):
         raise RuntimeError(f'Account with alias "{alias}" not found')
     updated = set_default_account(alias)
@@ -509,19 +398,18 @@ def account_set_default(ctx: typer.Context, alias: str) -> None:
     _done(ctx)
 
 
-@account_app.command("remove")
 @cli_command
 def account_remove(
-    ctx: typer.Context,
+    ctx: Any,
     alias: str,
-    force: bool = typer.Option(False, "-f", "--force"),
+    force: bool = False,
 ) -> None:
     existing = get_account_by_alias(alias)
     if not existing:
         raise RuntimeError(f'Account with alias "{alias}" not found')
     if not force and not _confirm(f'Remove account "{alias}" ({existing.user_address})?', False):
         print("Cancelled.")
-        raise typer.Exit(0)
+        raise SystemExit(0)
     ok = delete_account(alias)
     if not ok:
         raise RuntimeError("Failed to remove account")
@@ -570,12 +458,11 @@ async def _fetch_positions_async(context: CLIContext, user: str) -> dict[str, An
     }
 
 
-@account_app.command("positions")
 @cli_command
 def account_positions(
-    ctx: typer.Context,
-    user: Optional[str] = typer.Option(None, "--user"),
-    watch: bool = typer.Option(False, "-w", "--watch"),
+    ctx: Any,
+    user: Optional[str] = None,
+    watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
@@ -620,12 +507,11 @@ def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
     ]
 
 
-@account_app.command("orders")
 @cli_command
 def account_orders(
-    ctx: typer.Context,
-    user: Optional[str] = typer.Option(None, "--user"),
-    watch: bool = typer.Option(False, "-w", "--watch"),
+    ctx: Any,
+    user: Optional[str] = None,
+    watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
@@ -722,12 +608,11 @@ async def _fetch_portfolio_async(context: CLIContext, user: str) -> dict[str, An
     }
 
 
-@account_app.command("balances")
 @cli_command
 def account_balances(
-    ctx: typer.Context,
-    user: Optional[str] = typer.Option(None, "--user"),
-    watch: bool = typer.Option(False, "-w", "--watch"),
+    ctx: Any,
+    user: Optional[str] = None,
+    watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
@@ -746,12 +631,11 @@ def account_balances(
     _done(ctx)
 
 
-@account_app.command("portfolio")
 @cli_command
 def account_portfolio(
-    ctx: typer.Context,
-    user: Optional[str] = typer.Option(None, "--user"),
-    watch: bool = typer.Option(False, "-w", "--watch"),
+    ctx: Any,
+    user: Optional[str] = None,
+    watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
@@ -794,9 +678,8 @@ def account_portfolio(
     _done(ctx)
 
 
-@asset_app.command("price")
 @cli_command
-def asset_price(ctx: typer.Context, coin: str, watch: bool = typer.Option(False, "-w", "--watch")) -> None:
+def asset_price(ctx: Any, coin: str, watch: bool = False) -> None:
     context = _ctx(ctx)
 
     def fetch() -> dict[str, str]:
@@ -817,9 +700,8 @@ def asset_price(ctx: typer.Context, coin: str, watch: bool = typer.Option(False,
     _done(ctx)
 
 
-@asset_app.command("book")
 @cli_command
-def asset_book(ctx: typer.Context, coin: str, watch: bool = typer.Option(False, "-w", "--watch")) -> None:
+def asset_book(ctx: Any, coin: str, watch: bool = False) -> None:
     context = _ctx(ctx)
 
     def fetch() -> dict[str, Any]:
@@ -839,13 +721,12 @@ def asset_book(ctx: typer.Context, coin: str, watch: bool = typer.Option(False, 
     _done(ctx)
 
 
-@asset_app.command("leverage")
 @cli_command
 def asset_leverage(
-    ctx: typer.Context,
+    ctx: Any,
     coin: str,
-    user: Optional[str] = typer.Option(None, "--user"),
-    watch: bool = typer.Option(False, "-w", "--watch"),
+    user: Optional[str] = None,
+    watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
@@ -990,17 +871,13 @@ def _fetch_builder_market_data(info: Any, dex: str) -> tuple[dict[str, Any], lis
     return meta, ctxs
 
 
-@markets_app.command("ls")
 @cli_command
 def markets_ls(
-    ctx: typer.Context,
-    spot_only: Annotated[bool, typer.Option("--spot-only")] = False,
-    perp_only: Annotated[bool, typer.Option("--perp-only")] = False,
-    sort_by: Annotated[
-        str,
-        typer.Option("--sort-by", help="Sort markets by volume, oi, price, change, funding, or coin"),
-    ] = "volume",
-    watch: Annotated[bool, typer.Option("-w", "--watch")] = False,
+    ctx: Any,
+    spot_only: bool = False,
+    perp_only: bool = False,
+    sort_by: str = "volume",
+    watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
 
@@ -1031,17 +908,13 @@ def markets_ls(
     _done(ctx)
 
 
-@markets_app.command("search")
 @cli_command
 def markets_search(
-    ctx: typer.Context,
+    ctx: Any,
     query: str,
-    spot_only: Annotated[bool, typer.Option("--spot-only")] = False,
-    perp_only: Annotated[bool, typer.Option("--perp-only")] = False,
-    sort_by: Annotated[
-        str,
-        typer.Option("--sort-by", help="Sort matches by volume, oi, price, change, funding, or coin"),
-    ] = "volume",
+    spot_only: bool = False,
+    perp_only: bool = False,
+    sort_by: str = "volume",
 ) -> None:
     context = _ctx(ctx)
     q = query.strip().lower()
@@ -1058,17 +931,15 @@ def markets_search(
     _done(ctx)
 
 
-@referral_app.command("set")
 @cli_command
-def referral_set(ctx: typer.Context, code: str) -> None:
+def referral_set(ctx: Any, code: str) -> None:
     result = _ctx(ctx).get_wallet_client().set_referrer(code)
     out(result, _json(ctx))
     _done(ctx)
 
 
-@referral_app.command("status")
 @cli_command
-def referral_status(ctx: typer.Context) -> None:
+def referral_status(ctx: Any) -> None:
     context = _ctx(ctx)
     user = context.get_wallet_address()
     result = context.get_public_client().query_referral_state(user)
@@ -1076,9 +947,8 @@ def referral_status(ctx: typer.Context) -> None:
     _done(ctx)
 
 
-@server_app.command("start")
 @cli_command
-def server_start(ctx: typer.Context) -> None:
+def server_start(ctx: Any) -> None:
     if SERVER_PID_PATH.exists():
         pid = int(SERVER_PID_PATH.read_text().strip())
         if _pid_running(pid):
@@ -1104,9 +974,8 @@ def server_start(ctx: typer.Context) -> None:
     _done(ctx)
 
 
-@server_app.command("stop")
 @cli_command
-def server_stop(ctx: typer.Context) -> None:
+def server_stop(ctx: Any) -> None:
     if not SERVER_PID_PATH.exists():
         raise RuntimeError("Server is not running")
     pid = int(SERVER_PID_PATH.read_text().strip())
@@ -1123,9 +992,8 @@ def server_stop(ctx: typer.Context) -> None:
     _done(ctx)
 
 
-@server_app.command("status")
 @cli_command
-def server_status(ctx: typer.Context) -> None:
+def server_status(ctx: Any) -> None:
     running = False
     state: dict[str, Any] = {"running": False}
 

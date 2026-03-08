@@ -3,7 +3,6 @@ from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
 from typing import Any, Optional
 
-import typer
 from hyperliquid.utils.constants import MAINNET_API_URL
 from hyperliquid.utils.signing import float_to_wire, get_timestamp_ms, sign_l1_action
 
@@ -20,18 +19,16 @@ from ..utils.validators import (
 )
 from ..utils.watch import watch_loop
 
-order_app = typer.Typer(help="Order management and trading", no_args_is_help=True)
 
-
-def _ctx(ctx: typer.Context) -> CLIContext:
+def _ctx(ctx: Any) -> CLIContext:
     return cli_context(ctx)
 
 
-def _json(ctx: typer.Context) -> bool:
+def _json(ctx: Any) -> bool:
     return json_output_enabled(ctx)
 
 
-def _done(ctx: typer.Context) -> None:
+def _done(ctx: Any) -> None:
     finish_command(ctx)
 
 
@@ -458,12 +455,11 @@ def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
     ]
 
 
-@order_app.command("ls")
 @cli_command
 def order_ls(
-    ctx: typer.Context,
-    user: Optional[str] = typer.Option(None, "--user"),
-    watch: bool = typer.Option(False, "-w", "--watch"),
+    ctx: Any,
+    user: Optional[str] = None,
+    watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
     address = user if user else context.get_wallet_address()
@@ -482,20 +478,19 @@ def order_ls(
     _done(ctx)
 
 
-@order_app.command("limit")
 @cli_command
 def order_limit(
-    ctx: typer.Context,
+    ctx: Any,
     side: str,
     size: str,
     coin: str,
     price: str,
-    tif: str = typer.Option("Gtc", "--tif"),
-    reduce_only: bool = typer.Option(False, "--reduce-only"),
-    stake: Optional[float] = typer.Option(None, "--stake", help="USD margin to derive size (size = stake * leverage / price)"),
-    leverage: Optional[int] = typer.Option(None, "--leverage", help="Set leverage before placing order"),
-    cross: bool = typer.Option(False, "--cross", help="Use cross margin when setting leverage"),
-    isolated: bool = typer.Option(False, "--isolated", help="Use isolated margin when setting leverage"),
+    tif: str = "Gtc",
+    reduce_only: bool = False,
+    stake: Optional[float] = None,
+    leverage: Optional[int] = None,
+    cross: bool = False,
+    isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
     client = context.get_wallet_client()
@@ -538,19 +533,18 @@ def order_limit(
     _done(ctx)
 
 
-@order_app.command("market")
 @cli_command
 def order_market(
-    ctx: typer.Context,
+    ctx: Any,
     side: str,
     size: str,
     coin: str,
-    reduce_only: bool = typer.Option(False, "--reduce-only"),
-    slippage: Optional[float] = typer.Option(None, "--slippage"),
-    stake: Optional[float] = typer.Option(None, "--stake", help="USD margin to derive size (size = stake * leverage / price)"),
-    leverage: Optional[int] = typer.Option(None, "--leverage", help="Set leverage before placing order"),
-    cross: bool = typer.Option(False, "--cross", help="Use cross margin when setting leverage"),
-    isolated: bool = typer.Option(False, "--isolated", help="Use isolated margin when setting leverage"),
+    reduce_only: bool = False,
+    slippage: Optional[float] = None,
+    stake: Optional[float] = None,
+    leverage: Optional[int] = None,
+    cross: bool = False,
+    isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
     client = context.get_wallet_client()
@@ -612,7 +606,7 @@ def order_market(
 
 @cli_command
 def order_market_close(
-    ctx: typer.Context,
+    ctx: Any,
     coin: str,
     slippage: Optional[float] = None,
     ratio: float = 1.0,
@@ -643,17 +637,13 @@ def order_market_close(
     _done(ctx)
 
 
-order_app.command("market-close", hidden=True)(order_market_close)
-
-
-@order_app.command("tpsl")
 @cli_command
 def order_tpsl(
-    ctx: typer.Context,
+    ctx: Any,
     coin: str,
-    tp: Optional[float] = typer.Option(None, "--tp", help="Take-profit trigger price"),
-    sl: Optional[float] = typer.Option(None, "--sl", help="Stop-loss trigger price"),
-    ratio: float = typer.Option(1.0, "--ratio", help="Position ratio to protect (0 < ratio <= 1)"),
+    tp: Optional[float] = None,
+    sl: Optional[float] = None,
+    ratio: float = 1.0,
 ) -> None:
     if tp is None and sl is None:
         raise RuntimeError("Specify at least one of --tp or --sl")
@@ -711,20 +701,19 @@ def order_tpsl(
     _done(ctx)
 
 
-@order_app.command("twap")
 @cli_command
 def order_twap(
-    ctx: typer.Context,
+    ctx: Any,
     side: str,
     size: str,
     coin: str,
     interval: str,
-    stake: Optional[float] = typer.Option(None, "--stake", help="USD margin to derive total TWAP size"),
-    reduce_only: bool = typer.Option(False, "--reduce-only"),
-    randomize: bool = typer.Option(False, "--randomize", help="Enable randomized execution timing"),
-    leverage: Optional[int] = typer.Option(None, "--leverage", help="Set leverage before placing order"),
-    cross: bool = typer.Option(False, "--cross", help="Use cross margin when setting leverage"),
-    isolated: bool = typer.Option(False, "--isolated", help="Use isolated margin when setting leverage"),
+    stake: Optional[float] = None,
+    reduce_only: bool = False,
+    randomize: bool = False,
+    leverage: Optional[int] = None,
+    cross: bool = False,
+    isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
     resolved_coin = _resolve_tradable_coin(context, coin)
@@ -787,9 +776,8 @@ def order_twap(
     _done(ctx)
 
 
-@order_app.command("twap-cancel")
 @cli_command
-def order_twap_cancel(ctx: typer.Context, coin: str, twap_id: str) -> None:
+def order_twap_cancel(ctx: Any, coin: str, twap_id: str) -> None:
     context = _ctx(ctx)
     twap_num = validate_positive_integer(twap_id, "twap_id")
     response = _cancel_native_twap(context=context, coin=coin, twap_id=twap_num)
@@ -797,9 +785,8 @@ def order_twap_cancel(ctx: typer.Context, coin: str, twap_id: str) -> None:
     _done(ctx)
 
 
-@order_app.command("cancel")
 @cli_command
-def order_cancel(ctx: typer.Context, oid: Optional[str] = None) -> None:
+def order_cancel(ctx: Any, oid: Optional[str] = None) -> None:
     context = _ctx(ctx)
     user = context.get_wallet_address()
     exchange = context.get_wallet_client()
@@ -842,12 +829,11 @@ def order_cancel(ctx: typer.Context, oid: Optional[str] = None) -> None:
     _done(ctx)
 
 
-@order_app.command("cancel-all")
 @cli_command
 def order_cancel_all(
-    ctx: typer.Context,
-    yes: bool = typer.Option(False, "-y", "--yes"),
-    coin: Optional[str] = typer.Option(None, "--coin"),
+    ctx: Any,
+    yes: bool = False,
+    coin: Optional[str] = None,
 ) -> None:
     context = _ctx(ctx)
     user = context.get_wallet_address()
@@ -881,14 +867,13 @@ def order_cancel_all(
     _done(ctx)
 
 
-@order_app.command("set-leverage")
 @cli_command
 def order_set_leverage(
-    ctx: typer.Context,
+    ctx: Any,
     coin: str,
     leverage: str,
-    cross: bool = typer.Option(False, "--cross"),
-    isolated: bool = typer.Option(False, "--isolated"),
+    cross: bool = False,
+    isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
     if cross and isolated:
@@ -916,9 +901,8 @@ def order_set_leverage(
     _done(ctx)
 
 
-@order_app.command("configure")
 @cli_command
-def order_configure(ctx: typer.Context, slippage: Optional[float] = typer.Option(None, "--slippage")) -> None:
+def order_configure(ctx: Any, slippage: Optional[float] = None) -> None:
     if slippage is None:
         out(get_order_config(), _json(ctx))
     else:

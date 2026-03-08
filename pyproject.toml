@@ -11,7 +11,6 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "hyperliquid-cli contributors" }]
 dependencies = [
-  "typer>=0.12.3",
   "rich>=13.7.1",
   "hyperliquid-python-sdk>=0.18.0",
   "eth-account>=0.13.4",

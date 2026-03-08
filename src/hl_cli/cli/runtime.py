@@ -5,7 +5,6 @@ import threading
 import time
 from typing import Any, Awaitable, Callable, ParamSpec, TypeVar
 
-import typer
 from rich.console import Console
 from rich.table import Table
 
@@ -17,15 +16,15 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def cli_context(ctx: typer.Context) -> CLIContext:
+def cli_context(ctx: Any) -> CLIContext:
     return ctx.obj["context"]
 
 
-def json_output_enabled(ctx: typer.Context) -> bool:
+def json_output_enabled(ctx: Any) -> bool:
     return bool(ctx.obj["json"])
 
 
-def finish_command(ctx: typer.Context) -> None:
+def finish_command(ctx: Any) -> None:
     if not json_output_enabled(ctx):
         elapsed = time.perf_counter() - float(ctx.obj["start"])
         print(f"\nExecution time: {elapsed:.2f}s")
@@ -74,10 +73,10 @@ def cli_command(fn: Callable[P, R]) -> Callable[P, R]:
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         try:
             return fn(*args, **kwargs)
-        except typer.Exit:
+        except SystemExit:
             raise
         except Exception as exc:  # noqa: BLE001
             out_error(str(exc))
-            raise typer.Exit(1) from exc
+            raise SystemExit(1) from exc
 
     return wrapper
