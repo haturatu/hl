@@ -7,7 +7,7 @@ from hyperliquid.exchange import Exchange
 from hyperliquid.info import Info
 from hyperliquid.utils.constants import MAINNET_API_URL, TESTNET_API_URL
 
-from .db import Account, get_default_account
+from ..infra.db import Account, get_default_account
 
 
 @dataclass

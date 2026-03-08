@@ -6,8 +6,8 @@ import time
 from types import SimpleNamespace
 from typing import Any, Callable, Optional
 
-from .context import CLIContext, load_config
-from . import main as legacy
+from ..core.context import CLIContext, load_config
+from ..commands import app as legacy
 
 
 def _ctx(json_output: bool, testnet: bool) -> SimpleNamespace:

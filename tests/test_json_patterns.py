@@ -1,10 +1,14 @@
 import io
 import json
+import pathlib
+import sys
 import unittest
 from contextlib import redirect_stdout
 from unittest.mock import patch
 
-from hl_cli import argparse_main
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
+
+from hl_cli.cli import argparse_main
 
 
 async def _call_stub(fn, *_args, **_kwargs):

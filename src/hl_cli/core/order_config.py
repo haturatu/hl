@@ -1,6 +1,6 @@
 import json
 
-from .paths import HL_DIR, ORDER_CONFIG_PATH
+from ..infra.paths import HL_DIR, ORDER_CONFIG_PATH
 
 DEFAULT_CONFIG = {"slippage": 1.0}
 

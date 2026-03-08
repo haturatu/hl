@@ -9,8 +9,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from .context import CLIContext
-from .output import out_error
+from ..core.context import CLIContext
+from ..utils.output import out_error
 
 console = Console()
 P = ParamSpec("P")

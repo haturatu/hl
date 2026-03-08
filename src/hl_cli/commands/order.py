@@ -7,18 +7,18 @@ import typer
 from hyperliquid.utils.constants import MAINNET_API_URL
 from hyperliquid.utils.signing import float_to_wire, get_timestamp_ms, sign_l1_action
 
-from .cli_runtime import cli_command, cli_context, confirm, finish_command, json_output_enabled, render_table
-from .cli_runtime import run_blocking
-from .context import CLIContext
-from .order_config import get_order_config, update_order_config
-from .output import out, out_success
-from .validators import (
+from ..cli.runtime import cli_command, cli_context, confirm, finish_command, json_output_enabled, render_table
+from ..cli.runtime import run_blocking
+from ..core.context import CLIContext
+from ..core.order_config import get_order_config, update_order_config
+from ..utils.output import out, out_success
+from ..utils.validators import (
     normalize_side,
     normalize_tif,
     validate_positive_integer,
     validate_positive_number,
 )
-from .watch import watch_loop
+from ..utils.watch import watch_loop
 
 order_app = typer.Typer(help="Order management and trading", no_args_is_help=True)
 

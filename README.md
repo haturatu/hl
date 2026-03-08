@@ -43,7 +43,7 @@ Environment variable fallback (when DB account is not configured):
 
 ```bash
 cd hl
-python -m hl_cli.main --help
+PYTHONPATH=src python -m hl_cli.cli.argparse_main --help
 ```
 
 ## JSON Pattern Tests
@@ -52,7 +52,7 @@ python -m hl_cli.main --help
 
 ```bash
 cd hl
-PYTHONPATH=. python -m unittest -v tests.test_json_patterns
+PYTHONPATH=src python -m unittest -v tests.test_json_patterns
 ```
 
 ## TWAP Orders

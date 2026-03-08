@@ -18,11 +18,12 @@ dependencies = [
 ]
 
 [project.scripts]
-hl = "hl_cli.argparse_main:main"
+hl = "hl_cli.cli.argparse_main:main"
 
 [tool.setuptools]
 include-package-data = true
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 include = ["hl_cli*"]

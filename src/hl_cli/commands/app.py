@@ -13,7 +13,7 @@ import typer
 from eth_account import Account as EthAccount
 from typer.core import TyperGroup
 
-from .cli_runtime import (
+from ..cli.runtime import (
     cli_command,
     cli_context,
     console,
@@ -23,8 +23,8 @@ from .cli_runtime import (
     render_table,
     run_blocking,
 )
-from .context import CLIContext, load_config
-from .db import (
+from ..core.context import CLIContext, load_config
+from ..infra.db import (
     create_account,
     delete_account,
     get_account_by_alias,
@@ -33,7 +33,7 @@ from .db import (
     is_alias_taken,
     set_default_account,
 )
-from .order_commands import (
+from .order import (
     _mids_for_coin,
     _resolve_tradable_coin,
     order_app,
@@ -49,18 +49,18 @@ from .order_commands import (
     order_twap,
     order_twap_cancel,
 )
-from .output import out, out_success
-from .paths import (
+from ..utils.output import out, out_success
+from ..infra.paths import (
     SERVER_CACHE_PATH,
     SERVER_LOG_PATH,
     SERVER_PID_PATH,
     SERVER_STATE_PATH,
 )
-from .validators import (
+from ..utils.validators import (
     normalize_private_key,
     validate_address,
 )
-from .watch import watch_loop
+from ..utils.watch import watch_loop
 
 class FullHelpTyperGroup(TyperGroup):
     def format_help(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
@@ -1084,7 +1084,7 @@ def server_start(ctx: typer.Context) -> None:
         if _pid_running(pid):
             raise RuntimeError(f"Server is already running (pid: {pid})")
 
-    args = [sys.executable, "-m", "hl_cli.server_process"]
+    args = [sys.executable, "-m", "hl_cli.infra.server_process"]
     if _ctx(ctx).config.testnet:
         args.append("--testnet")
 
