@@ -850,38 +850,41 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
         builder_results = await asyncio.gather(
             *(asyncio.to_thread(_fetch_builder_market_data, info, dex) for dex in dexs)
         )
-        for meta, mids in builder_results:
+        for meta, ctxs in builder_results:
             dex = str(meta.get("dex", ""))
             if not dex:
                 continue
             coll_idx = meta.get("collateralToken", 0)
             collateral = spot_meta["tokens"][coll_idx].get("name", "USD")
-            for market in meta.get("universe", []):
+            for i, market in enumerate(meta.get("universe", [])):
                 coin = str(market.get("name"))
                 if not coin:
                     continue
                 if market.get("isDelisted"):
                     continue
+                c = ctxs[i] if i < len(ctxs) else {}
+                prev = float(c.get("prevDayPx", 0) or 0)
+                mark = float(c.get("markPx", 0) or 0)
+                chg = ((mark - prev) / prev * 100) if prev else None
                 perp_rows.append(
                     {
                         "coin": coin,
                         "pairName": f"{coin}/{collateral} {market.get('maxLeverage', '?')}x",
-                        "price": mids.get(coin, "?"),
-                        "priceChange": None,
-                        "volumeUsd": "?",
-                        "funding": None,
-                        "openInterest": None,
+                        "price": c.get("markPx", "?"),
+                        "priceChange": chg,
+                        "volumeUsd": c.get("dayNtlVlm", "?"),
+                        "funding": c.get("funding"),
+                        "openInterest": c.get("openInterest"),
                     }
                 )
 
     return {"perpMarkets": perp_rows, "spotMarkets": spot_rows}
 
 
-def _fetch_builder_market_data(info: Any, dex: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    meta = info.meta(dex=dex)
+def _fetch_builder_market_data(info: Any, dex: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    meta, ctxs = info.post("/info", {"type": "metaAndAssetCtxs", "dex": dex})
     meta["dex"] = dex
-    mids = info.all_mids(dex=dex)
-    return meta, mids
+    return meta, ctxs
 
 
 @markets_app.command("ls")
