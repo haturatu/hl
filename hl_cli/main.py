@@ -860,6 +860,8 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
                 coin = str(market.get("name"))
                 if not coin:
                     continue
+                if market.get("isDelisted"):
+                    continue
                 perp_rows.append(
                     {
                         "coin": coin,
