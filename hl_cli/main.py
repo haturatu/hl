@@ -190,6 +190,29 @@ def _format_usd(value: str | float | int | None) -> str:
         return f"${value}" if value is not None else "-"
 
 
+def _format_price(value: str | float | int | None) -> str:
+    try:
+        n = float(value)  # type: ignore[arg-type]
+    except Exception:
+        return f"${value}" if value is not None else "-"
+
+    abs_n = abs(n)
+    if abs_n >= 1000:
+        s = f"{n:,.2f}"
+    elif abs_n >= 1:
+        s = f"{n:,.4f}"
+    elif abs_n >= 0.01:
+        s = f"{n:,.4f}"
+    elif abs_n >= 0.0001:
+        s = f"{n:,.6f}"
+    else:
+        s = f"{n:,.8f}"
+
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return f"${s}"
+
+
 def _extract_statuses(result: dict[str, Any]) -> list[dict[str, Any] | str]:
     try:
         statuses = result.get("response", {}).get("data", {}).get("statuses", [])
@@ -713,7 +736,7 @@ def asset_price(ctx: typer.Context, coin: str, watch: bool = typer.Option(False,
         return {"coin": coin, "price": mids[resolved_coin]}
 
     if watch:
-        watch_loop(fetch, lambda d: print(f"{d['coin']}: {d['price']}"), as_json=_json(ctx))
+        watch_loop(fetch, lambda d: print(f"{d['coin']}: {_format_price(d['price'])}"), as_json=_json(ctx))
         return
     out(fetch(), _json(ctx))
     _done(ctx)
@@ -907,9 +930,9 @@ def markets_ls(
                     [
                         x["coin"],
                         x["pairName"],
-                        x["price"],
+                        _format_price(x["price"]),
                         "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
-                        x["volumeUsd"],
+                        _format_usd(x["volumeUsd"]),
                         x["funding"] if x["funding"] is not None else "-",
                         x["openInterest"] if x["openInterest"] is not None else "-",
                     ]

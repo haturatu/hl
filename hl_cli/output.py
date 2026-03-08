@@ -57,7 +57,7 @@ def _render_known(data: Any) -> bool:
     if "coin" in data and "price" in data and len(data.keys()) <= 3:
         console.print("Market Price")
         console.print(f"- Asset: {data.get('coin')}")
-        console.print(f"- Price: {_fmt_usd(data.get('price'))}")
+        console.print(f"- Price: {_fmt_price(data.get('price'))}")
         return True
 
     if "coin" in data and "markPx" in data and "maxLeverage" in data and "margin" in data:
@@ -276,7 +276,7 @@ def _print_markets_payload(data: dict[str, Any]) -> None:
             tbl.add_row(
                 str(r.get("coin", "")),
                 str(r.get("pairName", "")),
-                _fmt_usd(r.get("price")),
+                _fmt_price(r.get("price")),
                 _fmt_pct(r.get("priceChange")),
                 _fmt_usd(r.get("volumeUsd")),
                 _fmt_pct(r.get("funding")),
@@ -291,7 +291,7 @@ def _print_markets_payload(data: dict[str, Any]) -> None:
             tbl.add_row(
                 str(r.get("coin", "")),
                 str(r.get("pairName", "")),
-                _fmt_usd(r.get("price")),
+                _fmt_price(r.get("price")),
                 _fmt_pct(r.get("priceChange")),
                 _fmt_usd(r.get("volumeUsd")),
             )
@@ -380,6 +380,31 @@ def _fmt_usd(value: Any) -> str:
     except (TypeError, ValueError):
         return str(value)
     return f"${n:,.2f}"
+
+
+def _fmt_price(value: Any) -> str:
+    if value is None:
+        return "-"
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+    abs_n = abs(n)
+    if abs_n >= 1000:
+        s = f"{n:,.2f}"
+    elif abs_n >= 1:
+        s = f"{n:,.4f}"
+    elif abs_n >= 0.01:
+        s = f"{n:,.4f}"
+    elif abs_n >= 0.0001:
+        s = f"{n:,.6f}"
+    else:
+        s = f"{n:,.8f}"
+
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return f"${s}"
 
 
 def _fmt_pct(value: Any) -> str:
