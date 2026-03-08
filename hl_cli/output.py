@@ -279,7 +279,7 @@ def _print_markets_payload(data: dict[str, Any]) -> None:
                 _fmt_price(r.get("price")),
                 _fmt_pct(r.get("priceChange")),
                 _fmt_usd(r.get("volumeUsd")),
-                _fmt_pct(r.get("funding")),
+                _fmt_rate_pct(r.get("funding")),
                 str(r.get("openInterest", "-")),
             )
         console.print(tbl)
@@ -415,6 +415,30 @@ def _fmt_pct(value: Any) -> str:
     except (TypeError, ValueError):
         return str(value)
     return f"{n:+.2f}%"
+
+
+def _fmt_rate_pct(value: Any) -> str:
+    if value is None:
+        return "-"
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+    abs_n = abs(n)
+    if abs_n >= 1:
+        s = f"{n:+.2f}"
+    elif abs_n >= 0.01:
+        s = f"{n:+.4f}"
+    else:
+        s = f"{n:+.6f}"
+
+    if "." in s:
+        sign = s[0] if s[0] in "+-" else ""
+        digits = s[1:] if sign else s
+        digits = digits.rstrip("0").rstrip(".")
+        s = f"{sign}{digits}"
+    return f"{s}%"
 
 
 def out_error(message: str) -> None:

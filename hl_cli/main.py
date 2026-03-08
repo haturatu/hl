@@ -213,6 +213,28 @@ def _format_price(value: str | float | int | None) -> str:
     return f"${s}"
 
 
+def _format_rate_pct(value: str | float | int | None) -> str:
+    try:
+        n = float(value)  # type: ignore[arg-type]
+    except Exception:
+        return str(value) if value is not None else "-"
+
+    abs_n = abs(n)
+    if abs_n >= 1:
+        s = f"{n:+.2f}"
+    elif abs_n >= 0.01:
+        s = f"{n:+.4f}"
+    else:
+        s = f"{n:+.6f}"
+
+    if "." in s:
+        sign = s[0] if s[0] in "+-" else ""
+        digits = s[1:] if sign else s
+        digits = digits.rstrip("0").rstrip(".")
+        s = f"{sign}{digits}"
+    return f"{s}%"
+
+
 def _extract_statuses(result: dict[str, Any]) -> list[dict[str, Any] | str]:
     try:
         statuses = result.get("response", {}).get("data", {}).get("statuses", [])
@@ -933,7 +955,7 @@ def markets_ls(
                         _format_price(x["price"]),
                         "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
                         _format_usd(x["volumeUsd"]),
-                        x["funding"] if x["funding"] is not None else "-",
+                        _format_rate_pct(x["funding"]),
                         x["openInterest"] if x["openInterest"] is not None else "-",
                     ]
                     for x in [*d["perpMarkets"], *d["spotMarkets"]]
