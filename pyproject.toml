@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hyperliquid-cli-python"
+version = "0.1.0"
+description = "Python CLI for Hyperliquid DEX"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "hyperliquid-cli contributors" }]
+dependencies = [
+  "typer>=0.12.3",
+  "rich>=13.7.1",
+  "hyperliquid-python-sdk>=0.18.0",
+  "eth-account>=0.13.4",
+]
+
+[project.scripts]
+hl = "hl_cli.argparse_main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hl_cli*"]

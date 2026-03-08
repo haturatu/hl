@@ -1,0 +1,400 @@
+import json
+from typing import Any, Iterable
+
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
+
+
+def out(data: Any, as_json: bool = False) -> None:
+    if as_json:
+        print(json.dumps(data, ensure_ascii=False, indent=2))
+        return
+    if _render_known(data):
+        return
+    if isinstance(data, str):
+        console.print(data)
+        return
+    console.print_json(json.dumps(data, ensure_ascii=False))
+
+
+def _render_known(data: Any) -> bool:
+    if isinstance(data, list):
+        if _print_open_orders_list(data):
+            return True
+        if _print_accounts_list(data):
+            return True
+        return False
+
+    if not isinstance(data, dict):
+        return False
+
+    if "perpMarkets" in data and "spotMarkets" in data:
+        _print_markets_payload(data)
+        return True
+
+    if (
+        "positions" in data
+        and "spotBalances" in data
+        and "accountValue" in data
+        and "totalMarginUsed" in data
+    ):
+        _print_portfolio_payload(data)
+        return True
+
+    if "positions" in data and isinstance(data.get("positions"), list):
+        _print_positions_payload(data)
+        return True
+
+    if _print_account_record(data):
+        return True
+
+    if "spotBalances" in data and "perpBalance" in data:
+        _print_balances_payload(data)
+        return True
+
+    if "coin" in data and "price" in data and len(data.keys()) <= 3:
+        console.print("Market Price")
+        console.print(f"- Asset: {data.get('coin')}")
+        console.print(f"- Price: {_fmt_usd(data.get('price'))}")
+        return True
+
+    if "coin" in data and "markPx" in data and "maxLeverage" in data and "margin" in data:
+        _print_asset_leverage_payload(data)
+        return True
+
+    if "levels" in data and isinstance(data.get("levels"), list):
+        _print_book_payload(data)
+        return True
+
+    if "slippage" in data and len(data.keys()) == 1:
+        console.print("Order Defaults")
+        console.print(f"- Slippage: {_fmt_pct(data.get('slippage'))}")
+        return True
+
+    if "twapCancel" in data and isinstance(data["twapCancel"], dict):
+        _print_twap_cancel_payload(data["twapCancel"])
+        return True
+
+    if data.get("status") == "ok" and isinstance(data.get("response"), dict):
+        _print_exchange_response(data["response"])
+        return True
+
+    if _print_cancel_noop(data):
+        return True
+
+    if data.get("status") == "err":
+        console.print("[red]❌ Request failed[/red]")
+        console.print(f"Reason: {data.get('response')}")
+        return True
+
+    if _print_flat_dict(data):
+        return True
+
+    return False
+
+
+def _print_positions_payload(data: dict[str, Any]) -> None:
+    positions = data.get("positions", [])
+    if positions:
+        tbl = Table(title="Positions")
+        for c in ["coin", "size", "entryPx", "positionValue", "unrealizedPnl", "leverage", "liquidationPx"]:
+            tbl.add_column(c)
+        for p in positions:
+            tbl.add_row(
+                str(p.get("coin", "")),
+                str(p.get("size", "")),
+                str(p.get("entryPx", "")),
+                str(p.get("positionValue", "")),
+                str(p.get("unrealizedPnl", "")),
+                str(p.get("leverage", "")),
+                str(p.get("liquidationPx", "")),
+            )
+        console.print(tbl)
+    else:
+        console.print("No open positions")
+
+    ms = data.get("marginSummary")
+    if isinstance(ms, dict):
+        console.print("Margin Summary")
+        console.print(f"- Account value: {_fmt_usd(ms.get('accountValue'))}")
+        console.print(f"- Total margin used: {_fmt_usd(ms.get('totalMarginUsed'))}")
+
+
+def _print_balances_payload(data: dict[str, Any]) -> None:
+    console.print("Balances")
+    console.print(f"- Perp balance: {_fmt_usd(data.get('perpBalance'))}")
+    balances = data.get("spotBalances", [])
+    if not balances:
+        console.print("No spot balances")
+        return
+
+    tbl = Table(title="Spot Balances")
+    cols = ["token", "total", "hold", "available"]
+    for c in cols:
+        tbl.add_column(c)
+    for b in balances:
+        tbl.add_row(*[str(b.get(c, "")) for c in cols])
+    console.print(tbl)
+
+
+def _iter_statuses(statuses: Iterable[Any]) -> None:
+    for s in statuses:
+        if isinstance(s, str):
+            console.print(s)
+            continue
+        if not isinstance(s, dict):
+            console.print(str(s))
+            continue
+        if "error" in s:
+            console.print("[red]❌ Order rejected[/red]")
+            console.print(f"Reason: {s['error']}")
+            continue
+        if "filled" in s and isinstance(s["filled"], dict):
+            f = s["filled"]
+            console.print("[green]✅ Order filled[/green]")
+            console.print(f"Filled size: {f.get('totalSz')}")
+            console.print(f"Average price: {_fmt_usd(f.get('avgPx'))}")
+            console.print(f"Order ID: {f.get('oid')}")
+            continue
+        if "resting" in s and isinstance(s["resting"], dict):
+            r = s["resting"]
+            console.print("[cyan]🕒 Order resting on book[/cyan]")
+            console.print(f"Order ID: {r.get('oid')}")
+            continue
+        console.print(json.dumps(s, ensure_ascii=False))
+
+
+def _print_exchange_response(resp: dict[str, Any]) -> None:
+    rtype = resp.get("type")
+    data = resp.get("data")
+
+    if rtype == "order":
+        statuses = []
+        if isinstance(data, dict):
+            statuses = data.get("statuses") or []
+        if statuses:
+            _iter_statuses(statuses)
+            return
+        console.print("Order request accepted")
+        return
+
+    if rtype in {"cancel", "batchModify", "twapOrder", "twapCancel", "default"}:
+        if isinstance(data, dict) and "statuses" in data:
+            _iter_statuses(data.get("statuses") or [])
+            return
+        if isinstance(data, dict) and "status" in data:
+            s = data.get("status")
+            if isinstance(s, dict) and "error" in s:
+                console.print(f"[red]Error:[/red] {s['error']}")
+            else:
+                console.print(f"{rtype}: {s}")
+            return
+        console.print(f"{rtype}: ok")
+        return
+
+    console.print_json(json.dumps({"status": "ok", "response": resp}, ensure_ascii=False))
+
+
+def _print_open_orders_list(data: list[Any]) -> bool:
+    if not all(isinstance(x, dict) for x in data):
+        return False
+    rows = [x for x in data if {"oid", "coin", "side", "sz", "limitPx"}.issubset(x.keys())]
+    if len(rows) != len(data):
+        return False
+    if not rows:
+        console.print("No open orders")
+        return True
+    tbl = Table(title="Open Orders")
+    for c in ["oid", "coin", "side", "sz", "limitPx", "timestamp"]:
+        tbl.add_column(c)
+    for r in rows:
+        tbl.add_row(
+            str(r.get("oid", "")),
+            str(r.get("coin", "")),
+            str(r.get("side", "")),
+            str(r.get("sz", "")),
+            _fmt_usd(r.get("limitPx")),
+            str(r.get("timestamp", "")),
+        )
+    console.print(tbl)
+    return True
+
+
+def _print_accounts_list(data: list[Any]) -> bool:
+    if not all(isinstance(x, dict) for x in data):
+        return False
+    rows = [x for x in data if {"alias", "user_address", "type", "is_default"}.issubset(x.keys())]
+    if len(rows) != len(data):
+        return False
+    tbl = Table(title="Accounts")
+    for c in ["alias", "user_address", "type", "source", "api_wallet_public_key", "is_default"]:
+        tbl.add_column(c)
+    for r in rows:
+        tbl.add_row(
+            str(r.get("alias", "")),
+            str(r.get("user_address", "")),
+            str(r.get("type", "")),
+            str(r.get("source", "")),
+            str(r.get("api_wallet_public_key") or "-"),
+            "yes" if r.get("is_default") else "",
+        )
+    console.print(tbl)
+    return True
+
+
+def _print_account_record(data: dict[str, Any]) -> bool:
+    if not {"alias", "user_address", "type"}.issubset(data.keys()):
+        return False
+    console.print("[green]✅ Account saved[/green]")
+    console.print(f"Alias: {data.get('alias')}")
+    console.print(f"Address: {data.get('user_address')}")
+    console.print(f"Type: {data.get('type')}")
+    if data.get("api_wallet_public_key"):
+        console.print(f"API wallet: {data.get('api_wallet_public_key')}")
+    return True
+
+
+def _print_portfolio_payload(data: dict[str, Any]) -> None:
+    console.print("Portfolio")
+    console.print(f"- Account value: {_fmt_usd(data.get('accountValue'))}")
+    console.print(f"- Margin used: {_fmt_usd(data.get('totalMarginUsed'))}")
+    _print_positions_payload({"positions": data.get("positions", [])})
+    _print_balances_payload({"spotBalances": data.get("spotBalances", []), "perpBalance": data.get("accountValue")})
+
+
+def _print_markets_payload(data: dict[str, Any]) -> None:
+    perp = data.get("perpMarkets", [])
+    spot = data.get("spotMarkets", [])
+    console.print(f"Markets: {len(perp)} perp / {len(spot)} spot")
+    if perp:
+        tbl = Table(title="Perp Markets")
+        for c in ["coin", "pairName", "price", "priceChange", "volumeUsd", "funding", "openInterest"]:
+            tbl.add_column(c)
+        for r in perp:
+            tbl.add_row(
+                str(r.get("coin", "")),
+                str(r.get("pairName", "")),
+                _fmt_usd(r.get("price")),
+                _fmt_pct(r.get("priceChange")),
+                _fmt_usd(r.get("volumeUsd")),
+                _fmt_pct(r.get("funding")),
+                str(r.get("openInterest", "-")),
+            )
+        console.print(tbl)
+    if spot:
+        tbl = Table(title="Spot Markets")
+        for c in ["coin", "pairName", "price", "priceChange", "volumeUsd"]:
+            tbl.add_column(c)
+        for r in spot:
+            tbl.add_row(
+                str(r.get("coin", "")),
+                str(r.get("pairName", "")),
+                _fmt_usd(r.get("price")),
+                _fmt_pct(r.get("priceChange")),
+                _fmt_usd(r.get("volumeUsd")),
+            )
+        console.print(tbl)
+
+
+def _print_asset_leverage_payload(data: dict[str, Any]) -> None:
+    console.print("Asset Leverage")
+    console.print(f"- Asset: {data.get('coin')}")
+    console.print(f"- Mark price: {_fmt_usd(data.get('markPx'))}")
+    console.print(f"- Max leverage: {data.get('maxLeverage')}x")
+    margin = data.get("margin") or {}
+    console.print("Margin")
+    console.print(f"- Account value: {_fmt_usd(margin.get('accountValue'))}")
+    console.print(f"- Margin used: {_fmt_usd(margin.get('totalMarginUsed'))}")
+    console.print(f"- Available margin: {_fmt_usd(margin.get('availableMargin'))}")
+    pos = data.get("position")
+    if isinstance(pos, dict):
+        console.print("Position")
+        console.print(f"- Size: {pos.get('szi')}")
+        console.print(f"- Entry: {_fmt_usd(pos.get('entryPx'))}")
+        console.print(f"- Value: {_fmt_usd(pos.get('positionValue'))}")
+        console.print(f"- Unrealized PnL: {_fmt_usd(pos.get('unrealizedPnl'))}")
+    else:
+        console.print("Position: none")
+
+
+def _print_book_payload(data: dict[str, Any]) -> None:
+    levels = data.get("levels", [[], []])
+    bids = levels[0][:10] if len(levels) > 0 else []
+    asks = levels[1][:10] if len(levels) > 1 else []
+    if asks:
+        tbl = Table(title=f"Asks ({data.get('coin', '-')})")
+        for c in ["px", "sz", "n"]:
+            tbl.add_column(c)
+        for x in asks[::-1]:
+            tbl.add_row(_fmt_usd(x.get("px")), str(x.get("sz", "")), str(x.get("n", "")))
+        console.print(tbl)
+    if bids:
+        tbl = Table(title=f"Bids ({data.get('coin', '-')})")
+        for c in ["px", "sz", "n"]:
+            tbl.add_column(c)
+        for x in bids:
+            tbl.add_row(_fmt_usd(x.get("px")), str(x.get("sz", "")), str(x.get("n", "")))
+        console.print(tbl)
+
+
+def _print_twap_cancel_payload(data: dict[str, Any]) -> None:
+    coin = data.get("coin")
+    twap_id = data.get("twapId")
+    response = data.get("response") or {}
+    status = response.get("response", {}).get("data", {}).get("status", {})
+    if isinstance(status, dict) and status.get("error"):
+        console.print("[red]❌ TWAP cancel rejected[/red]")
+        console.print(f"Asset: {coin}")
+        console.print(f"TWAP ID: {twap_id}")
+        console.print(f"Reason: {status.get('error')}")
+        return
+    console.print("[green]✅ TWAP cancel submitted[/green]")
+    console.print(f"Asset: {coin}")
+    console.print(f"TWAP ID: {twap_id}")
+
+
+def _print_cancel_noop(data: dict[str, Any]) -> bool:
+    if "cancelled" in data and "reason" in data:
+        console.print(data.get("message", "No-op"))
+        return True
+    return False
+
+
+def _print_flat_dict(data: dict[str, Any]) -> bool:
+    if not data:
+        return False
+    if any(isinstance(v, (dict, list, tuple, set)) for v in data.values()):
+        return False
+    for k, v in data.items():
+        console.print(f"{k}: {v}")
+    return True
+
+
+def _fmt_usd(value: Any) -> str:
+    if value is None:
+        return "-"
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    return f"${n:,.2f}"
+
+
+def _fmt_pct(value: Any) -> str:
+    if value is None:
+        return "-"
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    return f"{n:+.2f}%"
+
+
+def out_error(message: str) -> None:
+    console.print(f"[red]Error:[/red] {message}")
+
+
+def out_success(message: str) -> None:
+    console.print(f"[green]{message}[/green]")
