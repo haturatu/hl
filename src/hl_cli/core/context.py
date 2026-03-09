@@ -22,6 +22,7 @@ class CLIContext:
     def __init__(self, config: Config):
         self.config = config
         self._info: Optional[Info] = None
+        self._multi_perp_info: Optional[Info] = None
         self._exchange: Optional[Exchange] = None
         self._perp_dexs: Optional[list[str]] = None
 
@@ -31,8 +32,17 @@ class CLIContext:
 
     def get_public_client(self) -> Info:
         if self._info is None:
-            self._info = Info(self.base_url, skip_ws=True, perp_dexs=self.get_perp_dexs())
+            self._info = Info(self.base_url, skip_ws=True)
         return self._info
+
+    def get_multi_perp_public_client(self) -> Info:
+        if self._multi_perp_info is None:
+            self._multi_perp_info = Info(
+                self.base_url,
+                skip_ws=True,
+                perp_dexs=self.get_perp_dexs(),
+            )
+        return self._multi_perp_info
 
     def get_wallet_client(self) -> Exchange:
         if self._exchange is None:
