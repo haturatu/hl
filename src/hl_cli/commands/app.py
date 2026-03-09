@@ -1,10 +1,12 @@
 import asyncio
 import json
 import os
+from queue import Empty, Queue
 from datetime import datetime
 from typing import Any, Optional
 
 from eth_account import Account as EthAccount
+from hyperliquid.info import Info
 
 from ..cli.runtime import (
     cli_command,
@@ -711,7 +713,41 @@ def asset_book(ctx: Any, coin: str, watch: bool = False) -> None:
         _render_table("Bids", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in bids])
 
     if watch:
-        watch_loop(fetch, render_book, as_json=_json(ctx))
+        stream_info = Info(context.base_url, skip_ws=False)
+        updates: Queue[dict[str, Any]] = Queue()
+        subscription = {"type": "l2Book", "coin": coin}
+        subscription_id = stream_info.subscribe(subscription, lambda msg: updates.put(msg["data"]))
+
+        try:
+            initial = fetch()
+            if _json(ctx):
+                print(json.dumps(initial, ensure_ascii=False))
+            else:
+                console.clear()
+                render_book(initial)
+
+            while True:
+                try:
+                    book = updates.get(timeout=30.0)
+                except Empty:
+                    continue
+                if _json(ctx):
+                    print(json.dumps(book, ensure_ascii=False))
+                else:
+                    console.clear()
+                    render_book(book)
+        except KeyboardInterrupt:
+            return
+        finally:
+            try:
+                stream_info.unsubscribe(subscription, subscription_id)
+            except Exception:
+                pass
+            if stream_info.ws_manager is not None:
+                try:
+                    stream_info.ws_manager.stop()
+                except Exception:
+                    pass
         return
     out(fetch(), _json(ctx))
     _done(ctx)
