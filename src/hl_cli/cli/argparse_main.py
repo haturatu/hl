@@ -11,14 +11,13 @@ from ..core.context import CLIContext, load_config
 from ..commands import app as legacy
 
 
-TOP_LEVEL_COMMANDS = ["account", "order", "asset", "markets", "referral", "server", "completion"]
+TOP_LEVEL_COMMANDS = ["account", "order", "asset", "markets", "referral", "completion"]
 SUBCOMMANDS: dict[str, list[str]] = {
     "account": ["add", "ls", "set-default", "remove", "positions", "orders", "balances", "portfolio"],
     "order": ["ls", "limit", "market", "tpsl", "twap", "twap-cancel", "cancel", "cancel-all", "set-leverage", "configure"],
     "asset": ["price", "book", "leverage"],
     "markets": ["ls", "search"],
     "referral": ["set", "status"],
-    "server": ["start", "stop", "status"],
     "completion": ["bash"],
 }
 GLOBAL_OPTIONS = ["--json", "--testnet", "-h", "--help"]
@@ -152,7 +151,6 @@ def _build_parser() -> argparse.ArgumentParser:
         "  asset price|book|leverage\n"
         "  markets ls\n"
         "  referral set|status\n"
-        "  server start|stop|status\n"
         "Examples:\n"
         "  hl account add\n"
         "  hl order twap buy 1 BTC 30 --randomize\n"
@@ -442,18 +440,6 @@ def _build_parser() -> argparse.ArgumentParser:
     rf_set = add_cmd_parser(rf_sub, "set", "Set referral code", ["hl referral set MYCODE"])
     rf_set.add_argument("code")
     add_cmd_parser(rf_sub, "status", "Get referral status", ["hl referral status"])
-
-    # server
-    server = add_cmd_parser(
-        sub,
-        "server",
-        "Manage background cache server",
-        ["hl server start", "hl server status", "hl server stop"],
-    )
-    sv_sub = server.add_subparsers(dest="server_command")
-    add_cmd_parser(sv_sub, "start", "Start server", ["hl server start"])
-    add_cmd_parser(sv_sub, "stop", "Stop server", ["hl server stop"])
-    add_cmd_parser(sv_sub, "status", "Server status", ["hl server status", "hl --json server status"])
 
     completion = add_cmd_parser(
         sub,
@@ -790,20 +776,6 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
             await _call(legacy.referral_status, ctx)
         else:
             _exit_with_error(f"Unknown referral subcommand: {sc}")
-        return
-
-    if cmd == "server":
-        sc = args.server_command
-        if sc is None:
-            _exit_with_error("Missing server subcommand. Run: hl server -h")
-        if sc == "start":
-            await _call(legacy.server_start, ctx)
-        elif sc == "stop":
-            await _call(legacy.server_stop, ctx)
-        elif sc == "status":
-            await _call(legacy.server_status, ctx)
-        else:
-            _exit_with_error(f"Unknown server subcommand: {sc}")
         return
 
     if cmd == "completion":

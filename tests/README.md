@@ -16,6 +16,5 @@ PYTHONPATH=. python -m unittest -v tests.test_json_patterns
 - asset/*
 - markets/*
 - referral/*
-- server/*
 
 To avoid network dependency, command execution internals are mocked in these tests.

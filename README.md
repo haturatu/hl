@@ -61,13 +61,11 @@ make uninstall
 - `hl asset price|book|leverage`
 - `hl markets ls|search`
 - `hl referral set|status`
-- `hl server start|stop|status`
 
 ## Configuration
 
 - DB: `~/.hl/hl.db`
 - Order config: `~/.hl/order-config.json`
-- Server files: `~/.hl/server.pid`, `~/.hl/server.log`, `~/.hl/server-cache.json`
 
 Environment variable fallback (when DB account is not configured):
 

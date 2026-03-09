@@ -1,10 +1,6 @@
 import asyncio
 import json
 import os
-import signal
-import subprocess
-import sys
-import time
 from datetime import datetime
 from typing import Any, Optional
 
@@ -45,13 +41,7 @@ from .order import (
     order_twap,
     order_twap_cancel,
 )
-from ..utils.output import out, out_success
-from ..infra.paths import (
-    SERVER_CACHE_PATH,
-    SERVER_LOG_PATH,
-    SERVER_PID_PATH,
-    SERVER_STATE_PATH,
-)
+from ..utils.output import out
 from ..utils.validators import (
     normalize_private_key,
     validate_address,
@@ -258,23 +248,6 @@ def _print_order_feedback(
         return
 
     print("ℹ️  Request completed.")
-
-
-def _pid_running(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-        return True
-    except OSError:
-        return False
-
-
-def _load_server_cache() -> Optional[dict[str, Any]]:
-    if not SERVER_CACHE_PATH.exists():
-        return None
-    try:
-        return json.loads(SERVER_CACHE_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return None
 
 
 def _print_account_add_guide() -> None:
@@ -684,11 +657,7 @@ def asset_price(ctx: Any, coin: str, watch: bool = False) -> None:
 
     def fetch() -> dict[str, str]:
         resolved_coin = _resolve_tradable_coin(context, coin)
-        cache = _load_server_cache()
-        if ":" not in resolved_coin and cache and "allMids" in cache:
-            mids = cache["allMids"]
-        else:
-            mids = _mids_for_coin(context, resolved_coin)
+        mids = _mids_for_coin(context, resolved_coin)
         if resolved_coin not in mids:
             raise RuntimeError(f"Coin not found: {coin}")
         return {"coin": coin, "price": mids[resolved_coin]}
@@ -944,88 +913,6 @@ def referral_status(ctx: Any) -> None:
     user = context.get_wallet_address()
     result = context.get_public_client().query_referral_state(user)
     out(result, _json(ctx))
-    _done(ctx)
-
-
-@cli_command
-def server_start(ctx: Any) -> None:
-    if SERVER_PID_PATH.exists():
-        pid = int(SERVER_PID_PATH.read_text().strip())
-        if _pid_running(pid):
-            raise RuntimeError(f"Server is already running (pid: {pid})")
-
-    args = [sys.executable, "-m", "hl_cli.infra.server_process"]
-    if _ctx(ctx).config.testnet:
-        args.append("--testnet")
-
-    logf = SERVER_LOG_PATH.open("a", encoding="utf-8")
-    subprocess.Popen(args, stdout=logf, stderr=logf, start_new_session=True)
-
-    timeout = time.time() + 10
-    while time.time() < timeout:
-        if SERVER_PID_PATH.exists():
-            break
-        time.sleep(0.2)
-
-    if not SERVER_PID_PATH.exists():
-        raise RuntimeError(f"Failed to start server. Check log: {SERVER_LOG_PATH}")
-
-    out_success("Server started")
-    _done(ctx)
-
-
-@cli_command
-def server_stop(ctx: Any) -> None:
-    if not SERVER_PID_PATH.exists():
-        raise RuntimeError("Server is not running")
-    pid = int(SERVER_PID_PATH.read_text().strip())
-    if _pid_running(pid):
-        os.kill(pid, signal.SIGTERM)
-    timeout = time.time() + 5
-    while time.time() < timeout and _pid_running(pid):
-        time.sleep(0.2)
-    if _pid_running(pid):
-        os.kill(pid, signal.SIGKILL)
-    if SERVER_PID_PATH.exists():
-        SERVER_PID_PATH.unlink()
-    out_success("Server stopped")
-    _done(ctx)
-
-
-@cli_command
-def server_status(ctx: Any) -> None:
-    running = False
-    state: dict[str, Any] = {"running": False}
-
-    if SERVER_PID_PATH.exists():
-        try:
-            pid = int(SERVER_PID_PATH.read_text().strip())
-            running = _pid_running(pid)
-        except Exception:
-            running = False
-
-    if running and SERVER_STATE_PATH.exists():
-        try:
-            state = json.loads(SERVER_STATE_PATH.read_text(encoding="utf-8"))
-        except Exception:
-            state = {"running": True}
-    else:
-        state = {"running": False}
-
-    if _json(ctx):
-        out(state, True)
-    else:
-        if not state.get("running"):
-            print("Server is not running")
-        else:
-            print("Status: running")
-            print(f"Network: {'testnet' if state.get('testnet') else 'mainnet'}")
-            print(f"Uptime: {state.get('uptime', 0)}ms")
-            cache = state.get("cache", {})
-            print("Cache:")
-            print(f"  Mid Prices: {'cached' if cache.get('hasMids') else 'not loaded'}")
-            print(f"  Perp Meta: {'cached' if cache.get('hasPerpMetas') else 'not loaded'}")
-            print(f"  Spot Meta: {'cached' if cache.get('hasSpotMeta') else 'not loaded'}")
     _done(ctx)
 
 

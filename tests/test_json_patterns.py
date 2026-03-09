@@ -56,9 +56,6 @@ class JsonPatternTests(unittest.TestCase):
             (["--json", "markets", "search", "ORCL"], "markets_search"),
             (["--json", "referral", "set", "MYCODE"], "referral_set"),
             (["--json", "referral", "status"], "referral_status"),
-            (["--json", "server", "start"], "server_start"),
-            (["--json", "server", "stop"], "server_stop"),
-            (["--json", "server", "status"], "server_status"),
         ]
 
         for argv, expected in patterns:
