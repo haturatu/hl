@@ -267,13 +267,20 @@ def _print_portfolio_payload(data: dict[str, Any]) -> None:
 def _print_markets_payload(data: dict[str, Any]) -> None:
     perp = data.get("perpMarkets", [])
     spot = data.get("spotMarkets", [])
+    show_perp_category = any("category" in r for r in perp)
+    show_spot_category = any("category" in r for r in spot)
     console.print(f"Markets: {len(perp)} perp / {len(spot)} spot")
     if perp:
         tbl = Table(title="Perp Markets")
-        for c in ["coin", "pairName", "price", "priceChange", "volumeUsd", "funding", "openInterest"]:
+        columns = (
+            ["coin", "category", "pairName", "price", "priceChange", "volumeUsd", "funding", "openInterest"]
+            if show_perp_category
+            else ["coin", "pairName", "price", "priceChange", "volumeUsd", "funding", "openInterest"]
+        )
+        for c in columns:
             tbl.add_column(c)
         for r in perp:
-            tbl.add_row(
+            row = [
                 str(r.get("coin", "")),
                 str(r.get("pairName", "")),
                 _fmt_price(r.get("price")),
@@ -281,20 +288,31 @@ def _print_markets_payload(data: dict[str, Any]) -> None:
                 _fmt_usd(r.get("volumeUsd")),
                 _fmt_rate_pct(r.get("funding")),
                 _fmt_usd(r.get("openInterestUsd")),
-            )
+            ]
+            if show_perp_category:
+                row.insert(1, str(r.get("category") or "-"))
+            tbl.add_row(*row)
         console.print(tbl)
     if spot:
         tbl = Table(title="Spot Markets")
-        for c in ["coin", "pairName", "price", "priceChange", "volumeUsd"]:
+        columns = (
+            ["coin", "category", "pairName", "price", "priceChange", "volumeUsd"]
+            if show_spot_category
+            else ["coin", "pairName", "price", "priceChange", "volumeUsd"]
+        )
+        for c in columns:
             tbl.add_column(c)
         for r in spot:
-            tbl.add_row(
+            row = [
                 str(r.get("coin", "")),
                 str(r.get("pairName", "")),
                 _fmt_price(r.get("price")),
                 _fmt_pct(r.get("priceChange")),
                 _fmt_usd(r.get("volumeUsd")),
-            )
+            ]
+            if show_spot_category:
+                row.insert(1, str(r.get("category") or "-"))
+            tbl.add_row(*row)
         console.print(tbl)
 
 

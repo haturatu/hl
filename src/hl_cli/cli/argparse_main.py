@@ -409,6 +409,12 @@ def _build_parser() -> argparse.ArgumentParser:
     mk_ls.add_argument("--spot-only", action="store_true")
     mk_ls.add_argument("--perp-only", action="store_true")
     mk_ls.add_argument(
+        "--category",
+        nargs="?",
+        const="*",
+        help="Filter perp markets by category (e.g. stocks, commodities, indices, fx, preipo, crypto)",
+    )
+    mk_ls.add_argument(
         "--sort-by",
         default="volume",
         help="Sort markets by volume, oi, price, change, funding, or coin",
@@ -423,6 +429,12 @@ def _build_parser() -> argparse.ArgumentParser:
     mk_search.add_argument("query")
     mk_search.add_argument("--spot-only", action="store_true")
     mk_search.add_argument("--perp-only", action="store_true")
+    mk_search.add_argument(
+        "--category",
+        nargs="?",
+        const="*",
+        help="Filter perp markets by category (e.g. stocks, commodities, indices, fx, preipo, crypto)",
+    )
     mk_search.add_argument(
         "--sort-by",
         default="volume",
@@ -750,6 +762,7 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
                 ctx,
                 spot_only=args.spot_only,
                 perp_only=args.perp_only,
+                category=args.category,
                 sort_by=args.sort_by,
                 watch=args.watch,
             )
@@ -760,6 +773,7 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
                 args.query,
                 spot_only=args.spot_only,
                 perp_only=args.perp_only,
+                category=args.category,
                 sort_by=args.sort_by,
             )
         else:

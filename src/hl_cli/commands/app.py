@@ -178,6 +178,33 @@ def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> di
     }
 
 
+def _filter_market_rows_by_category(rows: dict[str, list[dict[str, Any]]], category: Optional[str]) -> dict[str, list[dict[str, Any]]]:
+    if category is None or category == "*":
+        return rows
+    needle = category.strip().lower()
+    if not needle:
+        return rows
+    return {
+        "perpMarkets": [
+            row for row in rows["perpMarkets"] if str(row.get("category", "")).lower() == needle
+        ],
+        "spotMarkets": [],
+    }
+
+
+def _prepare_market_output(rows: dict[str, list[dict[str, Any]]], include_category: bool) -> dict[str, list[dict[str, Any]]]:
+    if include_category:
+        return rows
+
+    def strip_category(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [{k: v for k, v in row.items() if k != "category"} for row in items]
+
+    return {
+        "perpMarkets": strip_category(rows["perpMarkets"]),
+        "spotMarkets": strip_category(rows["spotMarkets"]),
+    }
+
+
 def _extract_statuses(result: dict[str, Any]) -> list[dict[str, Any] | str]:
     try:
         statuses = result.get("response", {}).get("data", {}).get("statuses", [])
@@ -745,7 +772,14 @@ def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) ->
 
 async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_only: bool) -> dict[str, list[dict[str, Any]]]:
     info = context.get_public_client()
-    spot_meta, spot_ctxs = await asyncio.to_thread(info.spot_meta_and_asset_ctxs)
+    spot_task = asyncio.to_thread(info.spot_meta_and_asset_ctxs)
+    perp_categories_task = asyncio.to_thread(info.post, "/info", {"type": "perpCategories"})
+    (spot_meta, spot_ctxs), perp_categories_raw = await asyncio.gather(spot_task, perp_categories_task)
+    perp_categories = {
+        str(coin): str(category)
+        for coin, category in perp_categories_raw
+        if isinstance(coin, str) and isinstance(category, str)
+    }
 
     spot_rows: list[dict[str, Any]] = []
     perp_rows: list[dict[str, Any]] = []
@@ -762,6 +796,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
             spot_rows.append(
                 {
                     "coin": pair["name"],
+                    "category": None,
                     "pairName": f"[Spot] {base}/{quote}",
                     "price": c.get("markPx", "?"),
                     "priceChange": chg,
@@ -787,6 +822,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
             perp_rows.append(
                 {
                     "coin": market["name"],
+                    "category": perp_categories.get(str(market["name"])),
                     "pairName": f"{market['name']}/{collateral} {market.get('maxLeverage', '?')}x",
                     "price": c.get("markPx", "?"),
                     "priceChange": chg,
@@ -823,6 +859,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
                 perp_rows.append(
                     {
                         "coin": coin,
+                        "category": perp_categories.get(coin),
                         "pairName": f"{coin}/{collateral} {market.get('maxLeverage', '?')}x",
                         "price": c.get("markPx", "?"),
                         "priceChange": chg,
@@ -847,27 +884,50 @@ def markets_ls(
     ctx: Any,
     spot_only: bool = False,
     perp_only: bool = False,
+    category: Optional[str] = None,
     sort_by: str = "volume",
     watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
+    include_category = category is not None
 
     if watch:
         watch_loop(
-            lambda: _sort_market_rows(_build_market_rows(context, spot_only, perp_only), sort_by),
+            lambda: _prepare_market_output(
+                _sort_market_rows(
+                    _filter_market_rows_by_category(_build_market_rows(context, spot_only, perp_only), category),
+                    sort_by,
+                ),
+                include_category,
+            ),
             lambda d: _render_table(
                 f"Markets ({len(d['perpMarkets'])} perps, {len(d['spotMarkets'])} spot)",
-                ["Coin", "Pair", "Price", "24h%", "Vol", "Funding", "OI"],
+                ["Coin", "Category", "Pair", "Price", "24h%", "Vol", "Funding", "OI"]
+                if include_category
+                else ["Coin", "Pair", "Price", "24h%", "Vol", "Funding", "OI"],
                 [
-                    [
-                        x["coin"],
-                        x["pairName"],
-                        _format_price(x["price"]),
-                        "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
-                        _format_usd(x["volumeUsd"]),
-                        _format_rate_pct(x["funding"]),
-                        _format_usd(x["openInterestUsd"]),
-                    ]
+                    (
+                        [
+                            x["coin"],
+                            x.get("category") or "-",
+                            x["pairName"],
+                            _format_price(x["price"]),
+                            "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
+                            _format_usd(x["volumeUsd"]),
+                            _format_rate_pct(x["funding"]),
+                            _format_usd(x["openInterestUsd"]),
+                        ]
+                        if include_category
+                        else [
+                            x["coin"],
+                            x["pairName"],
+                            _format_price(x["price"]),
+                            "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
+                            _format_usd(x["volumeUsd"]),
+                            _format_rate_pct(x["funding"]),
+                            _format_usd(x["openInterestUsd"]),
+                        ]
+                    )
                     for x in [*d["perpMarkets"], *d["spotMarkets"]]
                 ],
             ),
@@ -875,7 +935,16 @@ def markets_ls(
         )
         return
 
-    out(_sort_market_rows(_build_market_rows(context, spot_only, perp_only), sort_by), _json(ctx))
+    out(
+        _prepare_market_output(
+            _sort_market_rows(
+                _filter_market_rows_by_category(_build_market_rows(context, spot_only, perp_only), category),
+                sort_by,
+            ),
+            include_category,
+        ),
+        _json(ctx),
+    )
     _done(ctx)
 
 
@@ -885,18 +954,34 @@ def markets_search(
     query: str,
     spot_only: bool = False,
     perp_only: bool = False,
+    category: Optional[str] = None,
     sort_by: str = "volume",
 ) -> None:
     context = _ctx(ctx)
+    include_category = category is not None
     q = query.strip().lower()
     if not q:
         raise RuntimeError("query must not be empty")
-    rows = _sort_market_rows(_build_market_rows(context, spot_only, perp_only), sort_by)
+    rows = _prepare_market_output(
+        _sort_market_rows(
+            _filter_market_rows_by_category(_build_market_rows(context, spot_only, perp_only), category),
+            sort_by,
+        ),
+        include_category,
+    )
     perps = [
-        x for x in rows["perpMarkets"] if q in str(x.get("coin", "")).lower() or q in str(x.get("pairName", "")).lower()
+        x
+        for x in rows["perpMarkets"]
+        if q in str(x.get("coin", "")).lower()
+        or q in str(x.get("pairName", "")).lower()
+        or q in str(x.get("category", "")).lower()
     ]
     spots = [
-        x for x in rows["spotMarkets"] if q in str(x.get("coin", "")).lower() or q in str(x.get("pairName", "")).lower()
+        x
+        for x in rows["spotMarkets"]
+        if q in str(x.get("coin", "")).lower()
+        or q in str(x.get("pairName", "")).lower()
+        or q in str(x.get("category", "")).lower()
     ]
     out({"perpMarkets": perps, "spotMarkets": spots}, _json(ctx))
     _done(ctx)

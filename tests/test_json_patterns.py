@@ -53,7 +53,10 @@ class JsonPatternTests(unittest.TestCase):
             (["--json", "asset", "book", "BTC"], "asset_book"),
             (["--json", "asset", "leverage", "BTC"], "asset_leverage"),
             (["--json", "markets", "ls"], "markets_ls"),
+            (["--json", "markets", "ls", "--category"], "markets_ls"),
+            (["--json", "markets", "ls", "--category", "stocks"], "markets_ls"),
             (["--json", "markets", "search", "ORCL"], "markets_search"),
+            (["--json", "markets", "search", "ORCL", "--category", "stocks"], "markets_search"),
             (["--json", "referral", "set", "MYCODE"], "referral_set"),
             (["--json", "referral", "status"], "referral_status"),
         ]
