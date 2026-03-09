@@ -777,6 +777,8 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
         perp_meta, perp_ctxs = await asyncio.to_thread(info.meta_and_asset_ctxs)
         collateral = spot_meta["tokens"][perp_meta.get("collateralToken", 0)].get("name", "USD")
         for i, market in enumerate(perp_meta["universe"]):
+            if market.get("isDelisted"):
+                continue
             c = perp_ctxs[i] if i < len(perp_ctxs) else {}
             prev = float(c.get("prevDayPx", 0) or 0)
             mark = float(c.get("markPx", 0) or 0)
