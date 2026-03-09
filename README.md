@@ -74,6 +74,33 @@ Environment variable fallback (when DB account is not configured):
 - `HYPERLIQUID_PRIVATE_KEY`
 - `HYPERLIQUID_WALLET_ADDRESS`
 
+## Security Notes
+
+In this repository, API keys and private keys are read from the `HYPERLIQUID_PRIVATE_KEY`
+environment variable or stored in `~/.hl/hl.db`.
+
+I considered encrypting this data, but concluded that it is difficult to do so
+effectively without hurting the user experience. A Unix-style approach like
+WireGuard, which relies on root privileges for secret key handling, does not fit
+well here: requiring `sudo` for every `hl` invocation is not practical, and using
+root privileges just to run `hl` is not a good tradeoff.
+
+Another possible approach would be to keep the secret key in memory, but that would
+effectively require turning this application into a daemon, which seems excessive.
+If the `hl` command must be able to decrypt the key at execution time, then that
+decryption step can usually be bypassed in practice anyway, so the actual security
+benefit is limited.
+
+Because of that, the practical security guidance I can give is:
+
+- Use wallets or API keys that would not be catastrophic if leaked
+- Restrict which OS user can run this tool
+- If you need stronger protection, use disk encryption as the higher-level control
+
+I also considered using `age` for encryption, but invoking it via `subprocess` does
+not seem like a fundamental improvement, even if making `age` a required dependency
+would be acceptable.
+
 ## Run for Development
 
 ```bash
