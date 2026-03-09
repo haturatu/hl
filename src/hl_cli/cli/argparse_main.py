@@ -3,11 +3,25 @@ import asyncio
 import json
 import sys
 import time
+from textwrap import dedent
 from types import SimpleNamespace
 from typing import Any, Callable, Optional
 
 from ..core.context import CLIContext, load_config
 from ..commands import app as legacy
+
+
+TOP_LEVEL_COMMANDS = ["account", "order", "asset", "markets", "referral", "server", "completion"]
+SUBCOMMANDS: dict[str, list[str]] = {
+    "account": ["add", "ls", "set-default", "remove", "positions", "orders", "balances", "portfolio"],
+    "order": ["ls", "limit", "market", "tpsl", "twap", "twap-cancel", "cancel", "cancel-all", "set-leverage", "configure"],
+    "asset": ["price", "book", "leverage"],
+    "markets": ["ls", "search"],
+    "referral": ["set", "status"],
+    "server": ["start", "stop", "status"],
+    "completion": ["bash"],
+}
+GLOBAL_OPTIONS = ["--json", "--testnet", "-h", "--help"]
 
 
 def _ctx(json_output: bool, testnet: bool) -> SimpleNamespace:
@@ -23,6 +37,61 @@ def _ctx(json_output: bool, testnet: bool) -> SimpleNamespace:
 def _exit_with_error(msg: str, code: int = 2) -> None:
     print(msg, file=sys.stderr)
     raise SystemExit(code)
+
+
+def _bash_completion_script() -> str:
+    top_level = " ".join(TOP_LEVEL_COMMANDS)
+    global_options = " ".join(GLOBAL_OPTIONS)
+    case_lines = "\n".join(
+        [f'        {name}) COMPREPLY=( $(compgen -W "{ " ".join(values) }" -- "$cur") ) ;;' for name, values in SUBCOMMANDS.items()]
+    )
+    return dedent(
+        f"""\
+        # bash completion for hl
+        _hl_completion() {{
+            local cur prev cmd i
+            COMPREPLY=()
+            cur="${{COMP_WORDS[COMP_CWORD]}}"
+            prev="${{COMP_WORDS[COMP_CWORD-1]}}"
+            cmd=""
+
+            for ((i=1; i < COMP_CWORD; i++)); do
+                case "${{COMP_WORDS[i]}}" in
+                    -*) ;;
+                    *)
+                        cmd="${{COMP_WORDS[i]}}"
+                        break
+                        ;;
+                esac
+            done
+
+            if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "{global_options}" -- "$cur") )
+                return 0
+            fi
+
+            if [[ -z "$cmd" ]]; then
+                COMPREPLY=( $(compgen -W "{top_level}" -- "$cur") )
+                return 0
+            fi
+
+            case "$cmd" in
+{case_lines}
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+        }}
+
+        complete -F _hl_completion hl
+        """
+    )
+
+
+def _print_completion(shell: str) -> None:
+    if shell != "bash":
+        _exit_with_error(f"Unsupported shell: {shell}")
+    print(_bash_completion_script(), end="")
 
 
 def _parse_limit_shape(args: argparse.Namespace) -> tuple[str, str, str]:
@@ -386,6 +455,15 @@ def _build_parser() -> argparse.ArgumentParser:
     add_cmd_parser(sv_sub, "stop", "Stop server", ["hl server stop"])
     add_cmd_parser(sv_sub, "status", "Server status", ["hl server status", "hl --json server status"])
 
+    completion = add_cmd_parser(
+        sub,
+        "completion",
+        "Print shell completion script",
+        ['eval "$(hl completion bash)"'],
+    )
+    completion_sub = completion.add_subparsers(dest="completion_command")
+    add_cmd_parser(completion_sub, "bash", "Print bash completion script", ['eval "$(hl completion bash)"'])
+
     return p
 
 
@@ -726,6 +804,13 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
             await _call(legacy.server_status, ctx)
         else:
             _exit_with_error(f"Unknown server subcommand: {sc}")
+        return
+
+    if cmd == "completion":
+        sc = args.completion_command
+        if sc is None:
+            _exit_with_error("Missing completion subcommand. Run: hl completion -h")
+        _print_completion(sc)
         return
 
     _exit_with_error(f"Unknown command: {cmd}")
