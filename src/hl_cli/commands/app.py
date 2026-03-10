@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import time
 from queue import Empty, Queue
 from datetime import datetime
 from typing import Any, Optional
@@ -8,6 +9,7 @@ from typing import Any, Optional
 from eth_account import Account as EthAccount
 from hyperliquid.info import Info
 
+from ..cli.markets_tui import run_markets_tui
 from ..cli.runtime import (
     cli_command,
     cli_context,
@@ -199,12 +201,39 @@ def _prepare_market_output(rows: dict[str, list[dict[str, Any]]], include_catego
         return rows
 
     def strip_category(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return [{k: v for k, v in row.items() if k != "category"} for row in items]
+        return [{k: v for k, v in row.items() if k not in {"category", "marketType"}} for row in items]
 
     return {
         "perpMarkets": strip_category(rows["perpMarkets"]),
         "spotMarkets": strip_category(rows["spotMarkets"]),
     }
+def _watch_markets_prices(
+    context: CLIContext,
+    *,
+    spot_only: bool,
+    perp_only: bool,
+    category: Optional[str],
+    sort_by: str,
+    as_json: bool,
+) -> None:
+    include_category = category is not None
+    base_rows = _build_market_rows(context, spot_only, perp_only)
+    filtered_rows = _filter_market_rows_by_category(base_rows, category)
+    rows = _sort_market_rows(filtered_rows, sort_by)
+
+    info = context.get_public_client()
+    run_markets_tui(
+        console=console,
+        rows=rows,
+        include_category=include_category,
+        next_mids=lambda dex: info.all_mids(dex=dex) if dex else info.all_mids(),
+        sort_rows=lambda current: _sort_market_rows(current, sort_by),
+        prepare_output=lambda current: _prepare_market_output(current, include_category),
+        format_price=_format_price,
+        format_usd=_format_usd,
+        format_rate_pct=_format_rate_pct,
+        as_json=as_json,
+    )
 
 
 def _extract_statuses(result: dict[str, Any]) -> list[dict[str, Any] | str]:
@@ -832,6 +861,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
             spot_rows.append(
                 {
                     "coin": pair["name"],
+                    "marketType": "spot",
                     "category": None,
                     "pairName": f"[Spot] {base}/{quote}",
                     "price": c.get("markPx", "?"),
@@ -858,6 +888,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
             perp_rows.append(
                 {
                     "coin": market["name"],
+                    "marketType": "perp",
                     "category": perp_categories.get(str(market["name"])),
                     "pairName": f"{market['name']}/{collateral} {market.get('maxLeverage', '?')}x",
                     "price": c.get("markPx", "?"),
@@ -895,6 +926,7 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
                 perp_rows.append(
                     {
                         "coin": coin,
+                        "marketType": "perp",
                         "category": perp_categories.get(coin),
                         "pairName": f"{coin}/{collateral} {market.get('maxLeverage', '?')}x",
                         "price": c.get("markPx", "?"),
@@ -928,45 +960,12 @@ def markets_ls(
     include_category = category is not None
 
     if watch:
-        watch_loop(
-            lambda: _prepare_market_output(
-                _sort_market_rows(
-                    _filter_market_rows_by_category(_build_market_rows(context, spot_only, perp_only), category),
-                    sort_by,
-                ),
-                include_category,
-            ),
-            lambda d: _render_table(
-                f"Markets ({len(d['perpMarkets'])} perps, {len(d['spotMarkets'])} spot)",
-                ["Coin", "Category", "Pair", "Price", "24h%", "Vol", "Funding", "OI"]
-                if include_category
-                else ["Coin", "Pair", "Price", "24h%", "Vol", "Funding", "OI"],
-                [
-                    (
-                        [
-                            x["coin"],
-                            x.get("category") or "-",
-                            x["pairName"],
-                            _format_price(x["price"]),
-                            "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
-                            _format_usd(x["volumeUsd"]),
-                            _format_rate_pct(x["funding"]),
-                            _format_usd(x["openInterestUsd"]),
-                        ]
-                        if include_category
-                        else [
-                            x["coin"],
-                            x["pairName"],
-                            _format_price(x["price"]),
-                            "-" if x["priceChange"] is None else f"{x['priceChange']:.2f}%",
-                            _format_usd(x["volumeUsd"]),
-                            _format_rate_pct(x["funding"]),
-                            _format_usd(x["openInterestUsd"]),
-                        ]
-                    )
-                    for x in [*d["perpMarkets"], *d["spotMarkets"]]
-                ],
-            ),
+        _watch_markets_prices(
+            context,
+            spot_only=spot_only,
+            perp_only=perp_only,
+            category=category,
+            sort_by=sort_by,
             as_json=_json(ctx),
         )
         return
