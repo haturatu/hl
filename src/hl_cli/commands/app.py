@@ -325,10 +325,15 @@ def _print_account_add_guide() -> None:
     console.print(" - [bold]hl account set-default <alias>[/bold]\n")
 
 
+def _network_name(context: CLIContext) -> str:
+    return "testnet" if context.config.testnet else "mainnet"
+
+
 @cli_command
 def account_add(ctx: Any) -> None:
     context = _ctx(ctx)
     is_testnet = context.config.testnet
+    network = _network_name(context)
 
     print("\n=== Add New Account ===\n")
     _print_account_add_guide()
@@ -353,14 +358,15 @@ def account_add(ctx: Any) -> None:
             if not alias:
                 print("Alias cannot be empty.")
                 continue
-            if is_alias_taken(alias):
+            if is_alias_taken(alias, network):
                 print(f'Alias "{alias}" is already taken.')
                 continue
             break
 
-        set_as_default = get_account_count() == 0 or _confirm("Set as default account?", True)
+        set_as_default = get_account_count(network) == 0 or _confirm("Set as default account?", True)
         created = create_account(
             alias=alias,
+            network=network,
             user_address=user_address,
             account_type="api_wallet",
             api_wallet_private_key=api_key,
@@ -377,13 +383,14 @@ def account_add(ctx: Any) -> None:
             if not alias:
                 print("Alias cannot be empty.")
                 continue
-            if is_alias_taken(alias):
+            if is_alias_taken(alias, network):
                 print(f'Alias "{alias}" is already taken.')
                 continue
             break
-        set_as_default = get_account_count() == 0 or _confirm("Set as default account?", True)
+        set_as_default = get_account_count(network) == 0 or _confirm("Set as default account?", True)
         created = create_account(
             alias=alias,
+            network=network,
             user_address=user_address,
             account_type="readonly",
             set_as_default=set_as_default,
@@ -396,7 +403,8 @@ def account_add(ctx: Any) -> None:
 
 @cli_command
 def account_ls(ctx: Any) -> None:
-    accounts = get_all_accounts()
+    context = _ctx(ctx)
+    accounts = get_all_accounts(_network_name(context))
     if _json(ctx):
         out([a.__dict__ for a in accounts], True)
     else:
@@ -422,9 +430,11 @@ def account_ls(ctx: Any) -> None:
 
 @cli_command
 def account_set_default(ctx: Any, alias: str) -> None:
-    if not get_account_by_alias(alias):
+    context = _ctx(ctx)
+    network = _network_name(context)
+    if not get_account_by_alias(alias, network):
         raise RuntimeError(f'Account with alias "{alias}" not found')
-    updated = set_default_account(alias)
+    updated = set_default_account(alias, network)
     out(updated.__dict__, _json(ctx))
     _done(ctx)
 
@@ -435,13 +445,15 @@ def account_remove(
     alias: str,
     force: bool = False,
 ) -> None:
-    existing = get_account_by_alias(alias)
+    context = _ctx(ctx)
+    network = _network_name(context)
+    existing = get_account_by_alias(alias, network)
     if not existing:
         raise RuntimeError(f'Account with alias "{alias}" not found')
     if not force and not _confirm(f'Remove account "{alias}" ({existing.user_address})?', False):
         print("Cancelled.")
         raise SystemExit(0)
-    ok = delete_account(alias)
+    ok = delete_account(alias, network)
     if not ok:
         raise RuntimeError("Failed to remove account")
     out({"deleted": True, "alias": alias}, _json(ctx))
@@ -835,6 +847,12 @@ def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) ->
     return run_blocking(_build_market_rows_async(context, spot_only, perp_only))
 
 
+def _safe_token_name(tokens: list[dict[str, Any]], index: Any, default: str = "?") -> str:
+    if not isinstance(index, int) or index < 0 or index >= len(tokens):
+        return default
+    return str(tokens[index].get("name", default))
+
+
 async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_only: bool) -> dict[str, list[dict[str, Any]]]:
     info = context.get_public_client()
     spot_task = asyncio.to_thread(info.spot_meta_and_asset_ctxs)
@@ -851,9 +869,16 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
 
     if not perp_only:
         ctx_map = {c["coin"]: c for c in spot_ctxs}
-        for pair in spot_meta["universe"]:
-            base = spot_meta["tokens"][pair["tokens"][0]]["name"]
-            quote = spot_meta["tokens"][pair["tokens"][1]]["name"]
+        tokens = spot_meta.get("tokens", [])
+        for pair in spot_meta.get("universe", []):
+            refs = pair.get("tokens", [])
+            if not isinstance(refs, list) or len(refs) < 2:
+                continue
+            base = _safe_token_name(tokens, refs[0])
+            quote = _safe_token_name(tokens, refs[1])
+            # Testnet can return spot pairs whose token indexes do not exist.
+            if base == "?" or quote == "?":
+                continue
             c = ctx_map.get(pair["name"], {})
             prev = float(c.get("prevDayPx", 0) or 0)
             mark = float(c.get("markPx", 0) or 0)
@@ -876,7 +901,8 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
     if not spot_only:
         # Main perp dex (keeps richer fields like funding/openInterest).
         perp_meta, perp_ctxs = await asyncio.to_thread(info.meta_and_asset_ctxs)
-        collateral = spot_meta["tokens"][perp_meta.get("collateralToken", 0)].get("name", "USD")
+        tokens = spot_meta.get("tokens", [])
+        collateral = _safe_token_name(tokens, perp_meta.get("collateralToken", 0), "USD")
         for i, market in enumerate(perp_meta["universe"]):
             if market.get("isDelisted"):
                 continue
@@ -900,43 +926,45 @@ async def _build_market_rows_async(context: CLIContext, spot_only: bool, perp_on
                 }
             )
 
-        # Builder perps (stocks and other external markets).
-        # These are dex-qualified symbols such as xyz:TSLA or flx:CRCL.
-        dexs = [dex for dex in context.get_perp_dexs() if dex]
-        builder_results = await asyncio.gather(
-            *(asyncio.to_thread(_fetch_builder_market_data, info, dex) for dex in dexs)
-        )
-        for meta, ctxs in builder_results:
-            dex = str(meta.get("dex", ""))
-            if not dex:
-                continue
-            coll_idx = meta.get("collateralToken", 0)
-            collateral = spot_meta["tokens"][coll_idx].get("name", "USD")
-            for i, market in enumerate(meta.get("universe", [])):
-                coin = str(market.get("name"))
-                if not coin:
+        # Testnet uses main perp + spot only to avoid rate-limiting on bulk builder fetches.
+        if not context.config.testnet:
+            # Builder perps (stocks and other external markets).
+            # These are dex-qualified symbols such as xyz:TSLA or flx:CRCL.
+            dexs = [dex for dex in context.get_perp_dexs() if dex]
+            builder_results = await asyncio.gather(
+                *(asyncio.to_thread(_fetch_builder_market_data, info, dex) for dex in dexs)
+            )
+            for meta, ctxs in builder_results:
+                dex = str(meta.get("dex", ""))
+                if not dex:
                     continue
-                if market.get("isDelisted"):
-                    continue
-                c = ctxs[i] if i < len(ctxs) else {}
-                prev = float(c.get("prevDayPx", 0) or 0)
-                mark = float(c.get("markPx", 0) or 0)
-                oi_raw = _to_float(c.get("openInterest"))
-                chg = ((mark - prev) / prev * 100) if prev else None
-                perp_rows.append(
-                    {
-                        "coin": coin,
-                        "marketType": "perp",
-                        "category": perp_categories.get(coin),
-                        "pairName": f"{coin}/{collateral} {market.get('maxLeverage', '?')}x",
-                        "price": c.get("markPx", "?"),
-                        "priceChange": chg,
-                        "volumeUsd": c.get("dayNtlVlm", "?"),
-                        "funding": c.get("funding"),
-                        "openInterest": c.get("openInterest"),
-                        "openInterestUsd": (oi_raw * mark) if oi_raw is not None and mark > 0 else None,
-                    }
-                )
+                coll_idx = meta.get("collateralToken", 0)
+                collateral = _safe_token_name(tokens, coll_idx, "USD")
+                for i, market in enumerate(meta.get("universe", [])):
+                    coin = str(market.get("name"))
+                    if not coin:
+                        continue
+                    if market.get("isDelisted"):
+                        continue
+                    c = ctxs[i] if i < len(ctxs) else {}
+                    prev = float(c.get("prevDayPx", 0) or 0)
+                    mark = float(c.get("markPx", 0) or 0)
+                    oi_raw = _to_float(c.get("openInterest"))
+                    chg = ((mark - prev) / prev * 100) if prev else None
+                    perp_rows.append(
+                        {
+                            "coin": coin,
+                            "marketType": "perp",
+                            "category": perp_categories.get(coin),
+                            "pairName": f"{coin}/{collateral} {market.get('maxLeverage', '?')}x",
+                            "price": c.get("markPx", "?"),
+                            "priceChange": chg,
+                            "volumeUsd": c.get("dayNtlVlm", "?"),
+                            "funding": c.get("funding"),
+                            "openInterest": c.get("openInterest"),
+                            "openInterestUsd": (oi_raw * mark) if oi_raw is not None and mark > 0 else None,
+                        }
+                    )
 
     return {"perpMarkets": perp_rows, "spotMarkets": spot_rows}
 

@@ -32,6 +32,12 @@ def _done(ctx: Any) -> None:
     finish_command(ctx)
 
 
+def _wallet_perp_dexs_for_coin(coin: str) -> Optional[list[str]]:
+    if ":" not in coin:
+        return None
+    return [coin.split(":", 1)[0]]
+
+
 def _confirm(message: str, default: bool = False) -> bool:
     return confirm(message, default)
 
@@ -172,7 +178,7 @@ def _update_leverage_with_fallback(
     is_cross: bool,
     emit_warning: bool = True,
 ) -> dict[str, Any]:
-    wallet = context.get_wallet_client()
+    wallet = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     result = wallet.update_leverage(leverage, coin, is_cross=is_cross)
     if not _is_invalid_leverage_response(result):
         return result
@@ -216,7 +222,7 @@ def _maybe_update_leverage(
 def _normalize_size_for_coin(context: CLIContext, coin: str, raw_size: float) -> float:
     if raw_size <= 0:
         raise RuntimeError("size must be a positive number")
-    exchange = context.get_wallet_client()
+    exchange = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     asset = exchange.info.name_to_asset(coin)
     sz_decimals = int(exchange.info.asset_to_sz_decimals[asset])
 
@@ -341,7 +347,7 @@ def _place_native_twap(
     reduce_only: bool,
     randomize: bool,
 ) -> dict[str, Any]:
-    exchange = context.get_wallet_client()
+    exchange = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     asset = exchange.info.name_to_asset(coin)
     action = {
         "type": "twapOrder",
@@ -367,7 +373,7 @@ def _place_native_twap(
 
 
 def _cancel_native_twap(*, context: CLIContext, coin: str, twap_id: int) -> dict[str, Any]:
-    exchange = context.get_wallet_client()
+    exchange = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     asset = exchange.info.name_to_asset(coin)
     action = {"type": "twapCancel", "a": asset, "t": twap_id}
     nonce = get_timestamp_ms()
@@ -493,8 +499,8 @@ def order_limit(
     isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
-    client = context.get_wallet_client()
     resolved_coin = _resolve_tradable_coin(context, coin)
+    client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
     is_buy = normalize_side(side) == "buy"
     limit_price = validate_positive_number(price, "price")
     if stake is not None:
@@ -547,8 +553,8 @@ def order_market(
     isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
-    client = context.get_wallet_client()
     resolved_coin = _resolve_tradable_coin(context, coin)
+    client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
     is_buy = normalize_side(side) == "buy"
     cfg = get_order_config()
     slippage_pct = (slippage if slippage is not None else float(cfg["slippage"])) / 100
@@ -614,8 +620,8 @@ def order_market_close(
     if ratio <= 0 or ratio > 1:
         raise RuntimeError("ratio must be > 0 and <= 1")
     context = _ctx(ctx)
-    client = context.get_wallet_client()
     resolved_coin, order_size, is_buy = _resolve_position_for_close(context, coin)
+    client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
     close_size = order_size * ratio
     cfg = get_order_config()
     slippage_pct = (slippage if slippage is not None else float(cfg["slippage"])) / 100
@@ -655,8 +661,8 @@ def order_tpsl(
         raise RuntimeError("ratio must be > 0 and <= 1")
 
     context = _ctx(ctx)
-    client = context.get_wallet_client()
     resolved_coin, position_size, is_buy_to_close = _resolve_position_for_close(context, coin)
+    client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
     protected_size = _normalize_size_for_coin(context, resolved_coin, position_size * ratio)
 
     results: dict[str, Any] = {
