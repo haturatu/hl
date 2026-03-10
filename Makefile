@@ -27,4 +27,4 @@ uninstall:
 	sed -i '\|^eval "$$(hl completion bash)" # hl-cli-completion$$|d' "$(BASHRC)"
 
 test:
-	PYTHONPATH=src $(PYTHON) -m unittest -v tests.test_completion tests.test_json_patterns
+	PYTHONPATH=src $(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
