@@ -227,23 +227,26 @@ def _render_table(
     rows: MarketsRows,
     include_category: bool,
     *,
+    console: Console,
     state: MarketsTuiState,
     format_price: Callable[[Any], str],
     format_usd: Callable[[Any], str],
     format_rate_pct: Callable[[Any], str],
 ) -> Panel:
     current_rows = state.rows(rows)
-    window_size = 24
+    # Leave room for the panel border, title/subtitle, and terminal prompt line.
+    window_size = max(5, console.size.height - 8)
     state.clamp(len(current_rows), window_size)
     visible_rows = current_rows[state.scroll : state.scroll + window_size]
     selected_index = state.selected - state.scroll
 
     table = Table(title=f"Markets ({len(rows['perpMarkets'])} perps, {len(rows['spotMarkets'])} spot)")
-    columns = (
-        ["Coin", "Category", "Pair", "Price", "24h%", "Vol", "Funding", "OI"]
-        if include_category
-        else ["Coin", "Pair", "Price", "24h%", "Vol", "Funding", "OI"]
-    )
+    show_perp_only_fields = state.scope != "spot"
+    columns = ["Coin", "Pair", "Price", "24h%", "Vol"]
+    if include_category:
+        columns.insert(1, "Category")
+    if show_perp_only_fields:
+        columns.extend(["Funding", "OI"])
     for column in columns:
         table.add_column(column)
 
@@ -254,11 +257,16 @@ def _render_table(
             format_price(row.get("price")),
             "-" if row.get("priceChange") is None else f"{float(row['priceChange']):.2f}%",
             format_usd(row.get("volumeUsd")),
-            format_rate_pct(row.get("funding")),
-            format_usd(row.get("openInterestUsd")),
         ]
         if include_category:
             values.insert(1, str(row.get("category") or "-"))
+        if show_perp_only_fields:
+            values.extend(
+                [
+                    format_rate_pct(row.get("funding")),
+                    format_usd(row.get("openInterestUsd")),
+                ]
+            )
         style = "bold reverse" if idx == selected_index else ""
         table.add_row(*values, style=style)
 
@@ -319,12 +327,13 @@ def run_markets_tui(
             initial = _render_table(
                 rows,
                 include_category,
+                console=console,
                 state=state,
                 format_price=format_price,
                 format_usd=format_usd,
                 format_rate_pct=format_rate_pct,
             )
-            with Live(initial, console=console, refresh_per_second=8) as live:
+            with Live(initial, console=console, refresh_per_second=8, screen=True) as live:
                 for dex in cycle(dexes):
                     if _handle_key(_read_key(0.0), state, rows, 24):
                         return
@@ -338,6 +347,7 @@ def run_markets_tui(
                         _render_table(
                             refresh_rows(),
                             include_category,
+                            console=console,
                             state=state,
                             format_price=format_price,
                             format_usd=format_usd,
@@ -352,6 +362,7 @@ def run_markets_tui(
                             _render_table(
                                 refresh_rows(),
                                 include_category,
+                                console=console,
                                 state=state,
                                 format_price=format_price,
                                 format_usd=format_usd,
