@@ -4,6 +4,13 @@ from typing import Any, Iterable
 from rich.console import Console
 from rich.table import Table
 
+from .market_table import (
+    build_market_table,
+    market_table_columns,
+    market_table_row_values,
+    market_table_widths,
+)
+
 console = Console()
 
 
@@ -271,48 +278,50 @@ def _print_markets_payload(data: dict[str, Any]) -> None:
     show_spot_category = any("category" in r for r in spot)
     console.print(f"Markets: {len(perp)} perp / {len(spot)} spot")
     if perp:
-        tbl = Table(title="Perp Markets")
-        columns = (
-            ["coin", "category", "pairName", "price", "priceChange", "volumeUsd", "funding", "openInterest"]
-            if show_perp_category
-            else ["coin", "pairName", "price", "priceChange", "volumeUsd", "funding", "openInterest"]
+        columns = market_table_columns(
+            include_category=show_perp_category,
+            show_perp_only_fields=True,
         )
-        for c in columns:
-            tbl.add_column(c)
-        for r in perp:
-            row = [
-                str(r.get("coin", "")),
-                str(r.get("pairName", "")),
-                _fmt_price(r.get("price")),
-                _fmt_pct(r.get("priceChange")),
-                _fmt_usd(r.get("volumeUsd")),
-                _fmt_rate_pct(r.get("funding")),
-                _fmt_usd(r.get("openInterestUsd")),
-            ]
-            if show_perp_category:
-                row.insert(1, str(r.get("category") or "-"))
-            tbl.add_row(*row)
+        rendered_rows = [
+            market_table_row_values(
+                r,
+                include_category=show_perp_category,
+                show_perp_only_fields=True,
+                format_price=_fmt_price,
+                format_usd=_fmt_usd,
+                format_rate_pct=_fmt_rate_pct,
+            )
+            for r in perp
+        ]
+        tbl = build_market_table(
+            title="Perp Markets",
+            columns=columns,
+            rendered_rows=rendered_rows,
+            widths=market_table_widths(columns, rendered_rows),
+        )
         console.print(tbl)
     if spot:
-        tbl = Table(title="Spot Markets")
-        columns = (
-            ["coin", "category", "pairName", "price", "priceChange", "volumeUsd"]
-            if show_spot_category
-            else ["coin", "pairName", "price", "priceChange", "volumeUsd"]
+        columns = market_table_columns(
+            include_category=show_spot_category,
+            show_perp_only_fields=False,
         )
-        for c in columns:
-            tbl.add_column(c)
-        for r in spot:
-            row = [
-                str(r.get("coin", "")),
-                str(r.get("pairName", "")),
-                _fmt_price(r.get("price")),
-                _fmt_pct(r.get("priceChange")),
-                _fmt_usd(r.get("volumeUsd")),
-            ]
-            if show_spot_category:
-                row.insert(1, str(r.get("category") or "-"))
-            tbl.add_row(*row)
+        rendered_rows = [
+            market_table_row_values(
+                r,
+                include_category=show_spot_category,
+                show_perp_only_fields=False,
+                format_price=_fmt_price,
+                format_usd=_fmt_usd,
+                format_rate_pct=_fmt_rate_pct,
+            )
+            for r in spot
+        ]
+        tbl = build_market_table(
+            title="Spot Markets",
+            columns=columns,
+            rendered_rows=rendered_rows,
+            widths=market_table_widths(columns, rendered_rows),
+        )
         console.print(tbl)
 
 

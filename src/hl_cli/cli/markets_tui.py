@@ -11,7 +11,13 @@ from typing import Any, Callable, Literal, Optional
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
-from rich.table import Table
+
+from ..utils.market_table import (
+    build_market_table,
+    market_table_columns,
+    market_table_row_values,
+    market_table_widths,
+)
 
 
 MarketsRows = dict[str, list[dict[str, Any]]]
@@ -229,6 +235,7 @@ def _render_table(
     *,
     console: Console,
     state: MarketsTuiState,
+    widths_by_scope: dict[str, list[int]],
     format_price: Callable[[Any], str],
     format_usd: Callable[[Any], str],
     format_rate_pct: Callable[[Any], str],
@@ -240,35 +247,29 @@ def _render_table(
     visible_rows = current_rows[state.scroll : state.scroll + window_size]
     selected_index = state.selected - state.scroll
 
-    table = Table(title=f"Markets ({len(rows['perpMarkets'])} perps, {len(rows['spotMarkets'])} spot)")
     show_perp_only_fields = state.scope != "spot"
-    columns = ["Coin", "Pair", "Price", "24h%", "Vol"]
-    if include_category:
-        columns.insert(1, "Category")
-    if show_perp_only_fields:
-        columns.extend(["Funding", "OI"])
-    for column in columns:
-        table.add_column(column)
-
-    for idx, row in enumerate(visible_rows):
-        values = [
-            str(row.get("coin", "")),
-            str(row.get("pairName", "")),
-            format_price(row.get("price")),
-            "-" if row.get("priceChange") is None else f"{float(row['priceChange']):.2f}%",
-            format_usd(row.get("volumeUsd")),
-        ]
-        if include_category:
-            values.insert(1, str(row.get("category") or "-"))
-        if show_perp_only_fields:
-            values.extend(
-                [
-                    format_rate_pct(row.get("funding")),
-                    format_usd(row.get("openInterestUsd")),
-                ]
-            )
-        style = "bold reverse" if idx == selected_index else ""
-        table.add_row(*values, style=style)
+    columns = market_table_columns(
+        include_category=include_category,
+        show_perp_only_fields=show_perp_only_fields,
+    )
+    rendered_rows = [
+        market_table_row_values(
+            row,
+            include_category=include_category,
+            show_perp_only_fields=show_perp_only_fields,
+            format_price=format_price,
+            format_usd=format_usd,
+            format_rate_pct=format_rate_pct,
+        )
+        for row in visible_rows
+    ]
+    table = build_market_table(
+        title=f"Markets ({len(rows['perpMarkets'])} perps, {len(rows['spotMarkets'])} spot)",
+        columns=columns,
+        rendered_rows=rendered_rows,
+        widths=widths_by_scope[state.scope],
+        highlighted_index=selected_index,
+    )
 
     if state.mode == "search":
         prefix = "/" if state.search_direction == "forward" else "?"
@@ -322,6 +323,28 @@ def run_markets_tui(
         return
 
     state = MarketsTuiState()
+    widths_by_scope: dict[str, list[int]] = {}
+    for scope in ("all", "perp", "spot"):
+        state.scope = scope
+        scope_rows = state.rows(rows)
+        show_perp_only_fields = scope != "spot"
+        columns = market_table_columns(
+            include_category=include_category,
+            show_perp_only_fields=show_perp_only_fields,
+        )
+        rendered_rows = [
+            market_table_row_values(
+                row,
+                include_category=include_category,
+                show_perp_only_fields=show_perp_only_fields,
+                format_price=format_price,
+                format_usd=format_usd,
+                format_rate_pct=format_rate_pct,
+            )
+            for row in scope_rows
+        ]
+        widths_by_scope[scope] = market_table_widths(columns, rendered_rows)
+    state.scope = "all"
     try:
         with _raw_tty_mode():
             initial = _render_table(
@@ -329,6 +352,7 @@ def run_markets_tui(
                 include_category,
                 console=console,
                 state=state,
+                widths_by_scope=widths_by_scope,
                 format_price=format_price,
                 format_usd=format_usd,
                 format_rate_pct=format_rate_pct,
@@ -349,6 +373,7 @@ def run_markets_tui(
                             include_category,
                             console=console,
                             state=state,
+                            widths_by_scope=widths_by_scope,
                             format_price=format_price,
                             format_usd=format_usd,
                             format_rate_pct=format_rate_pct,
@@ -364,6 +389,7 @@ def run_markets_tui(
                                 include_category,
                                 console=console,
                                 state=state,
+                                widths_by_scope=widths_by_scope,
                                 format_price=format_price,
                                 format_usd=format_usd,
                                 format_rate_pct=format_rate_pct,
