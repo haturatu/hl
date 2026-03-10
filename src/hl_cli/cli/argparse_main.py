@@ -159,7 +159,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p = argparse.ArgumentParser(
         prog="hl",
-        description="CLI for Hyperliquid DEX (argparse)",
+        description="CLI for Hyperliquid DEX",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=epilog,
     )
