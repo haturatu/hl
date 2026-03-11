@@ -10,14 +10,12 @@ from .common import _ctx, _done, _format_price, _format_rate_pct, _format_usd, _
 
 MARKET_SORT_FIELDS = {"volume", "oi", "price", "change", "funding", "coin"}
 
-
 def _normalize_market_sort(sort_by: str) -> str:
     value = sort_by.strip().lower()
     if value not in MARKET_SORT_FIELDS:
         allowed = ", ".join(sorted(MARKET_SORT_FIELDS))
         raise RuntimeError(f"invalid sort field: {sort_by} (expected one of: {allowed})")
     return value
-
 
 def _to_float(value: Any) -> float | None:
     if value is None:
@@ -26,7 +24,6 @@ def _to_float(value: Any) -> float | None:
         return float(value)
     except Exception:
         return None
-
 
 def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> dict[str, list[dict[str, Any]]]:
     sort_by = _normalize_market_sort(sort_by)
@@ -60,7 +57,6 @@ def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> di
         "spotMarkets": sort_rows(rows["spotMarkets"]),
     }
 
-
 def _filter_market_rows_by_category(
     rows: dict[str, list[dict[str, Any]]], category: Optional[str]
 ) -> dict[str, list[dict[str, Any]]]:
@@ -73,7 +69,6 @@ def _filter_market_rows_by_category(
         "perpMarkets": [row for row in rows["perpMarkets"] if str(row.get("category", "")).lower() == needle],
         "spotMarkets": [],
     }
-
 
 def _prepare_market_output(
     rows: dict[str, list[dict[str, Any]]], include_category: bool
@@ -88,7 +83,6 @@ def _prepare_market_output(
         "perpMarkets": strip_category(rows["perpMarkets"]),
         "spotMarkets": strip_category(rows["spotMarkets"]),
     }
-
 
 def _watch_markets_prices(
     context: CLIContext,
@@ -118,16 +112,13 @@ def _watch_markets_prices(
         as_json=as_json,
     )
 
-
 def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) -> dict[str, list[dict[str, Any]]]:
     return run_blocking(_build_market_rows_async(context, spot_only, perp_only))
-
 
 def _safe_token_name(tokens: list[dict[str, Any]], index: Any, default: str = "?") -> str:
     if not isinstance(index, int) or index < 0 or index >= len(tokens):
         return default
     return str(tokens[index].get("name", default))
-
 
 async def _build_market_rows_async(
     context: CLIContext, spot_only: bool, perp_only: bool
@@ -241,12 +232,10 @@ async def _build_market_rows_async(
 
     return {"perpMarkets": perp_rows, "spotMarkets": spot_rows}
 
-
 def _fetch_builder_market_data(info: Any, dex: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     meta, ctxs = info.post("/info", {"type": "metaAndAssetCtxs", "dex": dex})
     meta["dex"] = dex
     return meta, ctxs
-
 
 @cli_command
 def markets_ls(
@@ -282,7 +271,6 @@ def markets_ls(
         _json(ctx),
     )
     _done(ctx)
-
 
 @cli_command
 def markets_search(

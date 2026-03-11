@@ -7,7 +7,6 @@ from rich.console import Console
 console = Console()
 T = TypeVar("T")
 
-
 def watch_loop(
     fetcher: Callable[[], T],
     renderer: Callable[[T], None],

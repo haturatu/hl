@@ -13,7 +13,6 @@ from .market_table import (
 
 console = Console()
 
-
 def out(data: Any, as_json: bool = False) -> None:
     if as_json:
         print(json.dumps(data, ensure_ascii=False, indent=2))
@@ -24,7 +23,6 @@ def out(data: Any, as_json: bool = False) -> None:
         console.print(data)
         return
     console.print_json(json.dumps(data, ensure_ascii=False))
-
 
 def _render_known(data: Any) -> bool:
     if isinstance(data, list):
@@ -101,7 +99,6 @@ def _render_known(data: Any) -> bool:
 
     return False
 
-
 def _print_positions_payload(data: dict[str, Any]) -> None:
     positions = data.get("positions", [])
     if positions:
@@ -128,7 +125,6 @@ def _print_positions_payload(data: dict[str, Any]) -> None:
         console.print(f"- Account value: {_fmt_usd(ms.get('accountValue'))}")
         console.print(f"- Total margin used: {_fmt_usd(ms.get('totalMarginUsed'))}")
 
-
 def _print_balances_payload(data: dict[str, Any]) -> None:
     console.print("Balances")
     console.print(f"- Perp balance: {_fmt_usd(data.get('perpBalance'))}")
@@ -144,7 +140,6 @@ def _print_balances_payload(data: dict[str, Any]) -> None:
     for b in balances:
         tbl.add_row(*[str(b.get(c, "")) for c in cols])
     console.print(tbl)
-
 
 def _iter_statuses(statuses: Iterable[Any]) -> None:
     for s in statuses:
@@ -171,7 +166,6 @@ def _iter_statuses(statuses: Iterable[Any]) -> None:
             console.print(f"Order ID: {r.get('oid')}")
             continue
         console.print(json.dumps(s, ensure_ascii=False))
-
 
 def _print_exchange_response(resp: dict[str, Any]) -> None:
     rtype = resp.get("type")
@@ -203,7 +197,6 @@ def _print_exchange_response(resp: dict[str, Any]) -> None:
 
     console.print_json(json.dumps({"status": "ok", "response": resp}, ensure_ascii=False))
 
-
 def _print_open_orders_list(data: list[Any]) -> bool:
     if not all(isinstance(x, dict) for x in data):
         return False
@@ -228,7 +221,6 @@ def _print_open_orders_list(data: list[Any]) -> bool:
     console.print(tbl)
     return True
 
-
 def _print_accounts_list(data: list[Any]) -> bool:
     if not all(isinstance(x, dict) for x in data):
         return False
@@ -250,7 +242,6 @@ def _print_accounts_list(data: list[Any]) -> bool:
     console.print(tbl)
     return True
 
-
 def _print_account_record(data: dict[str, Any]) -> bool:
     if not {"alias", "user_address", "type"}.issubset(data.keys()):
         return False
@@ -262,14 +253,12 @@ def _print_account_record(data: dict[str, Any]) -> bool:
         console.print(f"API wallet: {data.get('api_wallet_public_key')}")
     return True
 
-
 def _print_portfolio_payload(data: dict[str, Any]) -> None:
     console.print("Portfolio")
     console.print(f"- Account value: {_fmt_usd(data.get('accountValue'))}")
     console.print(f"- Margin used: {_fmt_usd(data.get('totalMarginUsed'))}")
     _print_positions_payload({"positions": data.get("positions", [])})
     _print_balances_payload({"spotBalances": data.get("spotBalances", []), "perpBalance": data.get("accountValue")})
-
 
 def _print_markets_payload(data: dict[str, Any]) -> None:
     perp = data.get("perpMarkets", [])
@@ -324,7 +313,6 @@ def _print_markets_payload(data: dict[str, Any]) -> None:
         )
         console.print(tbl)
 
-
 def _print_asset_leverage_payload(data: dict[str, Any]) -> None:
     console.print("Asset Leverage")
     console.print(f"- Asset: {data.get('coin')}")
@@ -345,7 +333,6 @@ def _print_asset_leverage_payload(data: dict[str, Any]) -> None:
     else:
         console.print("Position: none")
 
-
 def _print_book_payload(data: dict[str, Any]) -> None:
     levels = data.get("levels", [[], []])
     bids = levels[0][:10] if len(levels) > 0 else []
@@ -365,7 +352,6 @@ def _print_book_payload(data: dict[str, Any]) -> None:
             tbl.add_row(_fmt_usd(x.get("px")), str(x.get("sz", "")), str(x.get("n", "")))
         console.print(tbl)
 
-
 def _print_twap_cancel_payload(data: dict[str, Any]) -> None:
     coin = data.get("coin")
     twap_id = data.get("twapId")
@@ -381,13 +367,11 @@ def _print_twap_cancel_payload(data: dict[str, Any]) -> None:
     console.print(f"Asset: {coin}")
     console.print(f"TWAP ID: {twap_id}")
 
-
 def _print_cancel_noop(data: dict[str, Any]) -> bool:
     if "cancelled" in data and "reason" in data:
         console.print(data.get("message", "No-op"))
         return True
     return False
-
 
 def _print_flat_dict(data: dict[str, Any]) -> bool:
     if not data:
@@ -398,7 +382,6 @@ def _print_flat_dict(data: dict[str, Any]) -> bool:
         console.print(f"{k}: {v}")
     return True
 
-
 def _fmt_usd(value: Any) -> str:
     if value is None:
         return "-"
@@ -407,7 +390,6 @@ def _fmt_usd(value: Any) -> str:
     except (TypeError, ValueError):
         return str(value)
     return f"${n:,.2f}"
-
 
 def _fmt_price(value: Any) -> str:
     if value is None:
@@ -433,7 +415,6 @@ def _fmt_price(value: Any) -> str:
         s = s.rstrip("0").rstrip(".")
     return f"${s}"
 
-
 def _fmt_pct(value: Any) -> str:
     if value is None:
         return "-"
@@ -442,7 +423,6 @@ def _fmt_pct(value: Any) -> str:
     except (TypeError, ValueError):
         return str(value)
     return f"{n:+.2f}%"
-
 
 def _fmt_rate_pct(value: Any) -> str:
     if value is None:
@@ -467,10 +447,8 @@ def _fmt_rate_pct(value: Any) -> str:
         s = f"{sign}{digits}"
     return f"{s}%"
 
-
 def out_error(message: str) -> None:
     console.print(f"[red]Error:[/red] {message}")
-
 
 def out_success(message: str) -> None:
     console.print(f"[green]{message}[/green]")

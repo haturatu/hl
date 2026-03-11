@@ -11,7 +11,6 @@ from .db_crypto import (
     migrate_encrypted_account_fields,
 )
 
-
 @dataclass
 class Account:
     id: int
@@ -26,7 +25,6 @@ class Account:
     created_at: int
     updated_at: int
 
-
 def _conn() -> sqlite3.Connection:
     db_module.HL_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_module.DB_PATH)
@@ -36,7 +34,6 @@ def _conn() -> sqlite3.Connection:
     # account rows have been rewritten to encrypted storage.
     migrate_encrypted_account_fields(conn)
     return conn
-
 
 def _migrate(conn: sqlite3.Connection) -> None:
     conn.execute(
@@ -63,7 +60,6 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE accounts ADD COLUMN network TEXT NOT NULL DEFAULT 'mainnet'")
     conn.commit()
 
-
 def _to_account(row: sqlite3.Row) -> Account:
     return Account(
         id=row["id"],
@@ -79,7 +75,6 @@ def _to_account(row: sqlite3.Row) -> Account:
         updated_at=row["updated_at"],
     )
 
-
 def get_all_accounts(network: str) -> list[Account]:
     conn = _conn()
     rows = conn.execute(
@@ -89,13 +84,11 @@ def get_all_accounts(network: str) -> list[Account]:
     conn.close()
     return [_to_account(row) for row in rows]
 
-
 def get_account_by_alias(alias: str, network: str) -> Optional[Account]:
     conn = _conn()
     row = conn.execute("SELECT * FROM accounts WHERE alias = ? AND network = ?", (alias, network)).fetchone()
     conn.close()
     return _to_account(row) if row else None
-
 
 def get_default_account(network: str) -> Optional[Account]:
     conn = _conn()
@@ -103,17 +96,14 @@ def get_default_account(network: str) -> Optional[Account]:
     conn.close()
     return _to_account(row) if row else None
 
-
 def get_account_count(network: str) -> int:
     conn = _conn()
     count = conn.execute("SELECT COUNT(*) AS c FROM accounts WHERE network = ?", (network,)).fetchone()["c"]
     conn.close()
     return int(count)
 
-
 def is_alias_taken(alias: str, network: str) -> bool:
     return get_account_by_alias(alias, network) is not None
-
 
 def create_account(
     *,
@@ -154,7 +144,6 @@ def create_account(
     conn.close()
     return _to_account(row)
 
-
 def set_default_account(alias: str, network: str) -> Account:
     conn = _conn()
     conn.execute("UPDATE accounts SET is_default = 0 WHERE network = ? AND is_default = 1", (network,))
@@ -168,7 +157,6 @@ def set_default_account(alias: str, network: str) -> Account:
     if not row:
         raise ValueError(f'Account with alias "{alias}" not found')
     return _to_account(row)
-
 
 def delete_account(alias: str, network: str) -> bool:
     conn = _conn()

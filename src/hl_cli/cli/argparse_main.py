@@ -9,7 +9,6 @@ from typing import Any, Callable, Optional
 from ..core.context import CLIContext, load_config
 from ..commands import app as legacy
 
-
 TOP_LEVEL_COMMANDS = ["account", "order", "asset", "markets", "referral", "completion"]
 SUBCOMMANDS: dict[str, list[str]] = {
     "account": ["add", "ls", "set-default", "remove", "positions", "orders", "balances", "portfolio"],
@@ -21,7 +20,6 @@ SUBCOMMANDS: dict[str, list[str]] = {
 }
 GLOBAL_OPTIONS = ["--json", "--testnet", "-h", "--help"]
 
-
 def _ctx(json_output: bool, testnet: bool) -> SimpleNamespace:
     return SimpleNamespace(
         obj={
@@ -31,11 +29,9 @@ def _ctx(json_output: bool, testnet: bool) -> SimpleNamespace:
         }
     )
 
-
 def _exit_with_error(msg: str, code: int = 2) -> None:
     print(msg, file=sys.stderr)
     raise SystemExit(code)
-
 
 def _bash_completion_script() -> str:
     top_level = " ".join(TOP_LEVEL_COMMANDS)
@@ -85,12 +81,10 @@ def _bash_completion_script() -> str:
         """
     )
 
-
 def _print_completion(shell: str) -> None:
     if shell != "bash":
         _exit_with_error(f"Unsupported shell: {shell}")
     print(_bash_completion_script(), end="")
-
 
 def _parse_limit_shape(args: argparse.Namespace) -> tuple[str, str, str]:
     # Normal mode: hl order limit <side> <size> <coin> <price>
@@ -120,7 +114,6 @@ def _parse_limit_shape(args: argparse.Namespace) -> tuple[str, str, str]:
         _exit_with_error("Missing price. Syntax: hl order limit <side> <size> <coin> <price>")
     return a, b, c
 
-
 def _parse_market_shape(args: argparse.Namespace) -> tuple[str, str]:
     # Normal mode: hl order market <side> <size> <coin>
     # Stake mode:  hl order market <side> <coin> --stake <usd>
@@ -140,7 +133,6 @@ def _parse_market_shape(args: argparse.Namespace) -> tuple[str, str]:
     if b is None:
         _exit_with_error("Missing coin. Syntax: hl order market <side> <size> <coin>")
     return a, b
-
 
 def _build_parser() -> argparse.ArgumentParser:
     epilog = (
@@ -465,7 +457,6 @@ def _build_parser() -> argparse.ArgumentParser:
 
     return p
 
-
 async def _call(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> None:
     try:
         if asyncio.iscoroutinefunction(fn):
@@ -476,7 +467,6 @@ async def _call(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> None:
         raise
     except BaseException as exc:  # noqa: BLE001
         _exit_with_error(str(exc), 1)
-
 
 async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     ctx = _ctx(args.json, args.testnet)
@@ -667,12 +657,10 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
 
     _exit_with_error(f"Unknown command: {cmd}")
 
-
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
     asyncio.run(dispatch(args, parser))
-
 
 if __name__ == "__main__":
     main()

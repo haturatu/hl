@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 from hl_cli.commands.markets import _build_market_rows_async
 
-
 class _FakeInfo:
     def spot_meta_and_asset_ctxs(self):
         return (
@@ -29,10 +28,8 @@ class _FakeInfo:
             [{"markPx": "100", "prevDayPx": "90", "dayNtlVlm": "10", "funding": "0.1", "openInterest": "2"}],
         )
 
-
 class _FakeConfig:
     testnet = True
-
 
 class _FakeContext:
     config = _FakeConfig()
@@ -42,7 +39,6 @@ class _FakeContext:
 
     def get_perp_dexs(self):
         raise AssertionError("builder perps should be skipped on testnet")
-
 
 class MarketsTestnetModeTests(unittest.TestCase):
     def test_testnet_skips_builder_perp_fetches(self):
@@ -54,7 +50,6 @@ class MarketsTestnetModeTests(unittest.TestCase):
 
         self.assertEqual([x["coin"] for x in rows["perpMarkets"]], ["BTC"])
         self.assertEqual([x["coin"] for x in rows["spotMarkets"]], ["BTC/USDC"])
-
 
 if __name__ == "__main__":
     unittest.main()

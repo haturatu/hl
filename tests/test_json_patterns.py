@@ -10,10 +10,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
 from hl_cli.cli import argparse_main
 
-
 async def _call_stub(fn, *_args, **_kwargs):
     print(json.dumps({"ok": fn.__name__}))
-
 
 class JsonPatternTests(unittest.TestCase):
     def _run(self, argv):
@@ -65,7 +63,6 @@ class JsonPatternTests(unittest.TestCase):
             with self.subTest(argv=argv):
                 payload = self._run(argv)
                 self.assertEqual(payload.get("ok"), expected)
-
 
 if __name__ == "__main__":
     unittest.main()

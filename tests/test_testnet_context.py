@@ -4,7 +4,6 @@ from unittest.mock import Mock, patch
 from hl_cli.commands.markets import _safe_token_name
 from hl_cli.core.context import CLIContext, Config, _build_info_client, _load_safe_spot_meta
 
-
 class TestnetContextTests(unittest.TestCase):
     def test_safe_token_name_handles_invalid_indexes(self):
         tokens = [{"name": "USDC"}, {"name": "BTC"}]

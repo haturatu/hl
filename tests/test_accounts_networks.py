@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 from hl_cli.infra import db
 
-
 class AccountNetworkTests(unittest.TestCase):
     def test_accounts_are_scoped_by_network(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -139,7 +138,6 @@ class AccountNetworkTests(unittest.TestCase):
                 self.assertTrue(row["user_address"].startswith("enc_v1:"))
                 self.assertTrue(row["api_wallet_private_key"].startswith("enc_v1:"))
                 self.assertTrue(row["api_wallet_public_key"].startswith("enc_v1:"))
-
 
 if __name__ == "__main__":
     unittest.main()

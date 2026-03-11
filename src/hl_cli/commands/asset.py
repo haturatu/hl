@@ -12,7 +12,6 @@ from ..utils.watch import watch_loop
 from .common import _ctx, _done, _format_price, _json, _render_table
 from .order import _mids_for_coin, _resolve_tradable_coin
 
-
 @cli_command
 def asset_price(ctx: Any, coin: str, watch: bool = False) -> None:
     context = _ctx(ctx)
@@ -29,7 +28,6 @@ def asset_price(ctx: Any, coin: str, watch: bool = False) -> None:
         return
     out(fetch(), _json(ctx))
     _done(ctx)
-
 
 @cli_command
 def asset_book(ctx: Any, coin: str, watch: bool = False) -> None:
@@ -84,7 +82,6 @@ def asset_book(ctx: Any, coin: str, watch: bool = False) -> None:
     out(fetch(), _json(ctx))
     _done(ctx)
 
-
 @cli_command
 def asset_leverage(ctx: Any, coin: str, user: Optional[str] = None, watch: bool = False) -> None:
     context = _ctx(ctx)
@@ -114,7 +111,6 @@ def asset_leverage(ctx: Any, coin: str, user: Optional[str] = None, watch: bool 
         return
     out(fetch(), _json(ctx))
     _done(ctx)
-
 
 async def _fetch_asset_leverage_inputs_async(
     info: Any, address: str

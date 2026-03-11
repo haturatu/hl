@@ -10,19 +10,16 @@ from . import db as db_module
 
 _ENC_PREFIX = "enc_v1:"
 
-
 def chacha20_key() -> bytes:
     # Derive the encryption key from the current command path so only the same
     # installed command path can transparently decrypt the stored account data.
     return hashlib.sha256(db_module._command_path_for_key().encode("utf-8")).digest()
-
 
 def encrypt_value(value: str) -> str:
     nonce = secrets.token_bytes(12)
     cipher = ChaCha20.new(key=chacha20_key(), nonce=nonce)
     encrypted = cipher.encrypt(value.encode("utf-8"))
     return f"{_ENC_PREFIX}{base64.urlsafe_b64encode(nonce).decode()}:{base64.urlsafe_b64encode(encrypted).decode()}"
-
 
 def decrypt_value(value: str) -> str:
     if not value.startswith(_ENC_PREFIX):
@@ -34,18 +31,15 @@ def decrypt_value(value: str) -> str:
     cipher = ChaCha20.new(key=chacha20_key(), nonce=nonce)
     return cipher.decrypt(encrypted).decode("utf-8")
 
-
 def encrypt_optional_value(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
     return encrypt_value(value)
 
-
 def decrypt_optional_value(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
     return decrypt_value(value)
-
 
 def migrate_encrypted_account_fields(conn: sqlite3.Connection) -> None:
     # TODO: Remove this whole function after all existing plaintext account rows

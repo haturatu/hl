@@ -2,7 +2,6 @@ from typing import Any, Callable
 
 from rich.table import Table
 
-
 def market_table_columns(*, include_category: bool, show_perp_only_fields: bool) -> list[str]:
     columns = ["Coin", "Pair", "Price", "24h%", "Vol"]
     if include_category:
@@ -10,7 +9,6 @@ def market_table_columns(*, include_category: bool, show_perp_only_fields: bool)
     if show_perp_only_fields:
         columns.extend(["Funding", "OI"])
     return columns
-
 
 def market_table_row_values(
     row: dict[str, Any],
@@ -39,14 +37,12 @@ def market_table_row_values(
         )
     return values
 
-
 def market_table_widths(columns: list[str], rendered_rows: list[list[str]]) -> list[int]:
     widths = [len(column) for column in columns]
     for row in rendered_rows:
         for idx, value in enumerate(row):
             widths[idx] = max(widths[idx], len(value))
     return widths
-
 
 def build_market_table(
     *,

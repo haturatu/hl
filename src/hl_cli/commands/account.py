@@ -33,7 +33,6 @@ from .common import (
     _render_table,
 )
 
-
 def _print_account_add_guide() -> None:
     console.print("\n[bold]Wallet Setup Guide[/bold]")
     console.print("1. To add an API wallet:")
@@ -49,7 +48,6 @@ def _print_account_add_guide() -> None:
     console.print("Verification commands:")
     console.print(" - [bold]hl account ls[/bold]")
     console.print(" - [bold]hl account set-default <alias>[/bold]\n")
-
 
 @cli_command
 def account_add(ctx: Any) -> None:
@@ -122,7 +120,6 @@ def account_add(ctx: Any) -> None:
         raise RuntimeError("Invalid selection")
     _done(ctx)
 
-
 @cli_command
 def account_ls(ctx: Any) -> None:
     context = _ctx(ctx)
@@ -149,7 +146,6 @@ def account_ls(ctx: Any) -> None:
             )
     _done(ctx)
 
-
 @cli_command
 def account_set_default(ctx: Any, alias: str) -> None:
     context = _ctx(ctx)
@@ -159,7 +155,6 @@ def account_set_default(ctx: Any, alias: str) -> None:
     updated = set_default_account(alias, network)
     out(updated.__dict__, _json(ctx))
     _done(ctx)
-
 
 @cli_command
 def account_remove(ctx: Any, alias: str, force: bool = False) -> None:
@@ -177,18 +172,14 @@ def account_remove(ctx: Any, alias: str, force: bool = False) -> None:
     out({"deleted": True, "alias": alias}, _json(ctx))
     _done(ctx)
 
-
 def _account_perp_dexs(context: CLIContext) -> list[str]:
     return _service_account_perp_dexs(context)
-
 
 def _fetch_positions(context: CLIContext, user: str) -> dict[str, Any]:
     return run_blocking(_fetch_positions_async(context, user))
 
-
 async def _fetch_positions_async(context: CLIContext, user: str) -> dict[str, Any]:
     return await _service_fetch_positions_async(context, user)
-
 
 @cli_command
 def account_positions(ctx: Any, user: Optional[str] = None, watch: bool = False) -> None:
@@ -219,7 +210,6 @@ def account_positions(ctx: Any, user: Optional[str] = None, watch: bool = False)
     out(_fetch_positions(context, address), _json(ctx))
     _done(ctx)
 
-
 def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
     orders = context.get_public_client().open_orders(user)
     return [
@@ -233,7 +223,6 @@ def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
         }
         for o in orders
     ]
-
 
 @cli_command
 def account_orders(ctx: Any, user: Optional[str] = None, watch: bool = False) -> None:
@@ -253,18 +242,14 @@ def account_orders(ctx: Any, user: Optional[str] = None, watch: bool = False) ->
     out(_fetch_orders(context, address), _json(ctx))
     _done(ctx)
 
-
 def _fetch_balances(context: CLIContext, user: str) -> dict[str, Any]:
     return run_blocking(_fetch_balances_async(context, user))
-
 
 async def _fetch_balances_async(context: CLIContext, user: str) -> dict[str, Any]:
     return await _service_fetch_balances_async(context, user)
 
-
 async def _fetch_portfolio_async(context: CLIContext, user: str) -> dict[str, Any]:
     return await _service_fetch_portfolio_async(context, user)
-
 
 @cli_command
 def account_balances(ctx: Any, user: Optional[str] = None, watch: bool = False) -> None:
@@ -283,7 +268,6 @@ def account_balances(ctx: Any, user: Optional[str] = None, watch: bool = False) 
         return
     out(_fetch_balances(context, address), _json(ctx))
     _done(ctx)
-
 
 @cli_command
 def account_portfolio(ctx: Any, user: Optional[str] = None, watch: bool = False) -> None:

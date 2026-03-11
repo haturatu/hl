@@ -19,9 +19,7 @@ from ..utils.market_table import (
     market_table_widths,
 )
 
-
 MarketsRows = dict[str, list[dict[str, Any]]]
-
 
 def _market_row_dex(row: dict[str, Any]) -> str:
     if row.get("marketType") == "spot":
@@ -31,10 +29,8 @@ def _market_row_dex(row: dict[str, Any]) -> str:
         return coin.split(":", 1)[0]
     return ""
 
-
 def _market_row_kind(row: dict[str, Any]) -> Literal["perp", "spot"]:
     return "spot" if row.get("marketType") == "spot" else "perp"
-
 
 class MarketsTuiState:
     def __init__(self) -> None:
@@ -65,7 +61,6 @@ class MarketsTuiState:
             self.scroll = self.selected - window_size + 1
         self.scroll = max(0, min(self.scroll, max_scroll))
 
-
 @contextlib.contextmanager
 def _raw_tty_mode() -> Any:
     if not sys.stdin.isatty():
@@ -78,7 +73,6 @@ def _raw_tty_mode() -> Any:
         yield True
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
-
 
 def _read_key(timeout: float = 0.0) -> Optional[str]:
     if not sys.stdin.isatty():
@@ -101,7 +95,6 @@ def _read_key(timeout: float = 0.0) -> Optional[str]:
     third = sys.stdin.read(1)
     return first + second + third
 
-
 def _matches_query(row: dict[str, Any], query: str) -> bool:
     needle = query.strip().lower()
     if not needle:
@@ -112,7 +105,6 @@ def _matches_query(row: dict[str, Any], query: str) -> bool:
         str(row.get("category", "")),
     ]
     return any(needle in value.lower() for value in haystacks)
-
 
 def _find_match(rows: list[dict[str, Any]], start: int, query: str, *, forward: bool) -> Optional[int]:
     if not rows or not query.strip():
@@ -125,7 +117,6 @@ def _find_match(rows: list[dict[str, Any]], start: int, query: str, *, forward: 
         if _matches_query(rows[index], query):
             return index
     return None
-
 
 def _jump_to_match(
     state: MarketsTuiState,
@@ -146,7 +137,6 @@ def _jump_to_match(
         return
     state.selected = match
     state.clamp(len(current_rows), window_size)
-
 
 def _handle_key(key: Optional[str], state: MarketsTuiState, rows: MarketsRows, window_size: int) -> bool:
     current_rows = state.rows(rows)
@@ -228,7 +218,6 @@ def _handle_key(key: Optional[str], state: MarketsTuiState, rows: MarketsRows, w
     state.clamp(len(state.rows(rows)), window_size)
     return False
 
-
 def _render_table(
     rows: MarketsRows,
     include_category: bool,
@@ -281,7 +270,6 @@ def _render_table(
             "hjkl/arrows move  gg/G top/bottom  / ? search  n/N next/prev  h perp  l spot  a all  q quit"
         )
     return Panel(table, subtitle=help_text)
-
 
 def run_markets_tui(
     *,
