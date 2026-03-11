@@ -51,7 +51,7 @@ Install from source for local development:
 
 ```bash
 cd hl
-pip install -e .
+python3 -m pip install --user -e .
 ```
 
 Install from PyPI:
