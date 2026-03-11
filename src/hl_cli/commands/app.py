@@ -464,10 +464,17 @@ def _fetch_positions(context: CLIContext, user: str) -> dict[str, Any]:
     return run_blocking(_fetch_positions_async(context, user))
 
 
+def _account_perp_dexs(context: CLIContext) -> list[str]:
+    # Testnet uses main perp only to avoid rate-limiting on bulk per-dex account reads.
+    if context.config.testnet:
+        return [""]
+    return context.get_perp_dexs()
+
+
 async def _fetch_positions_async(context: CLIContext, user: str) -> dict[str, Any]:
     info = context.get_public_client()
     states = await asyncio.gather(
-        *(asyncio.to_thread(info.user_state, user, dex) for dex in context.get_perp_dexs())
+        *(asyncio.to_thread(info.user_state, user, dex) for dex in _account_perp_dexs(context))
     )
     positions: list[dict[str, Any]] = []
     summaries: list[dict[str, Any]] = []
@@ -603,7 +610,7 @@ async def _fetch_portfolio_async(context: CLIContext, user: str) -> dict[str, An
     info = context.get_public_client()
     perp_tasks = [
         asyncio.to_thread(info.user_state, user, dex)
-        for dex in context.get_perp_dexs()
+        for dex in _account_perp_dexs(context)
     ]
     spot_task = asyncio.to_thread(info.spot_user_state, user)
     *perp_states, spot = await asyncio.gather(*perp_tasks, spot_task)
