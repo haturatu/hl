@@ -11,4 +11,4 @@ env/
 *.egg-info/
 build/
 pip-wheel-metadata/
-
+dist/
