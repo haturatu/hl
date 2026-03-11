@@ -122,6 +122,9 @@ Environment variable fallback still exists when DB account data is not configure
 - `HYPERLIQUID_PRIVATE_KEY`
 - `HYPERLIQUID_WALLET_ADDRESS`
 
+These environment variables are not stored in the encrypted DB. They are read as
+plain process environment values at runtime.
+
 Practical guidance:
 
 - Use wallets or API keys that would not be catastrophic if leaked
