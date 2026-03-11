@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hyperliquid-cli-python"
-version = "0.1.1"
+version = "0.1.2"
 description = "Python CLI for Hyperliquid DEX"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,6 +15,9 @@ dependencies = [
   "hyperliquid-python-sdk>=0.18.0",
   "eth-account>=0.13.4",
 ]
+
+[project.urls]
+Source = "https://github.com/haturatu/hl"
 
 [project.scripts]
 hl = "hl_cli.cli.argparse_main:main"
