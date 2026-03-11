@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest.mock import patch
 
-from hl_cli.commands.app import _build_market_rows_async
+from hl_cli.commands.markets import _build_market_rows_async
 
 
 class _FakeInfo:
@@ -49,7 +49,7 @@ class MarketsTestnetModeTests(unittest.TestCase):
         async def fake_to_thread(func, /, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch("hl_cli.commands.app.asyncio.to_thread", side_effect=fake_to_thread):
+        with patch("hl_cli.commands.markets.asyncio.to_thread", side_effect=fake_to_thread):
             rows = asyncio.run(_build_market_rows_async(_FakeContext(), False, False))
 
         self.assertEqual([x["coin"] for x in rows["perpMarkets"]], ["BTC"])

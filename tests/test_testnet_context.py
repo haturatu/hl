@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from hl_cli.commands.app import _safe_token_name
+from hl_cli.commands.markets import _safe_token_name
 from hl_cli.core.context import CLIContext, Config, _build_info_client, _load_safe_spot_meta
 
 
