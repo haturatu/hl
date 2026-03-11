@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import json
 import sys
 import time
 from textwrap import dedent
@@ -479,141 +478,6 @@ async def _call(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> None:
         _exit_with_error(str(exc), 1)
 
 
-async def _fetch_balances_async(context: CLIContext, user: str) -> dict[str, Any]:
-    info = context.get_public_client()
-    perp_task = asyncio.to_thread(info.user_state, user)
-    spot_task = asyncio.to_thread(info.spot_user_state, user)
-    perp, spot = await asyncio.gather(perp_task, spot_task)
-
-    balances = []
-    for b in spot["balances"]:
-        if float(b["total"]) == 0:
-            continue
-        total = float(b["total"])
-        hold = float(b["hold"])
-        balances.append(
-            {
-                "token": b["coin"],
-                "total": b["total"],
-                "hold": b["hold"],
-                "available": f"{total - hold}",
-            }
-        )
-    return {"spotBalances": balances, "perpBalance": perp["marginSummary"]["accountValue"]}
-
-
-async def _account_balances_async(ctx: SimpleNamespace, *, user: Optional[str], watch: bool) -> None:
-    context = legacy._ctx(ctx)
-    address = legacy.validate_address(user) if user else context.get_wallet_address()
-
-    if not watch:
-        data = await _fetch_balances_async(context, address)
-        legacy.out(data, legacy._json(ctx))
-        legacy._done(ctx)
-        return
-
-    try:
-        while True:
-            data = await _fetch_balances_async(context, address)
-            if legacy._json(ctx):
-                print(json.dumps(data, ensure_ascii=False))
-            else:
-                legacy.console.clear()
-                legacy._render_table(
-                    f"Balances (Perp USD: {data['perpBalance']})",
-                    ["Token", "Total", "Hold", "Available"],
-                    [[b["token"], b["total"], b["hold"], b["available"]] for b in data["spotBalances"]],
-                )
-            await asyncio.sleep(1.0)
-    except KeyboardInterrupt:
-        return
-
-
-async def _fetch_portfolio_async(context: CLIContext, user: str) -> dict[str, Any]:
-    info = context.get_public_client()
-    perp_tasks = [
-        asyncio.to_thread(info.user_state, user, dex)
-        for dex in context.get_perp_dexs()
-    ]
-    spot_task = asyncio.to_thread(info.spot_user_state, user)
-    *perp_states, spot = await asyncio.gather(*perp_tasks, spot_task)
-
-    positions = []
-    for state in perp_states:
-        positions.extend(
-            [
-                {
-                    "coin": p["position"]["coin"],
-                    "size": p["position"]["szi"],
-                    "entryPx": p["position"].get("entryPx"),
-                    "positionValue": p["position"].get("positionValue"),
-                    "unrealizedPnl": p["position"].get("unrealizedPnl"),
-                    "leverage": f"{p['position']['leverage']['value']}x {p['position']['leverage']['type']}",
-                    "liquidationPx": p["position"].get("liquidationPx") or "-",
-                }
-                for p in state["assetPositions"]
-                if float(p["position"]["szi"]) != 0
-            ]
-        )
-    spot_balances = []
-    for b in spot["balances"]:
-        if float(b["total"]) == 0:
-            continue
-        total = float(b["total"])
-        hold = float(b["hold"])
-        spot_balances.append(
-            {
-                "token": b["coin"],
-                "total": b["total"],
-                "hold": b["hold"],
-                "available": f"{total - hold}",
-            }
-        )
-    account_value = sum(float(s["marginSummary"]["accountValue"]) for s in perp_states)
-    margin_used = sum(float(s["marginSummary"]["totalMarginUsed"]) for s in perp_states)
-    return {
-        "positions": positions,
-        "spotBalances": spot_balances,
-        "accountValue": f"{account_value:.8f}",
-        "totalMarginUsed": f"{margin_used:.8f}",
-    }
-
-
-async def _account_portfolio_async(ctx: SimpleNamespace, *, user: Optional[str], watch: bool) -> None:
-    context = legacy._ctx(ctx)
-    address = legacy.validate_address(user) if user else context.get_wallet_address()
-
-    if not watch:
-        data = await _fetch_portfolio_async(context, address)
-        legacy.out(data, legacy._json(ctx))
-        legacy._done(ctx)
-        return
-
-    try:
-        while True:
-            data = await _fetch_portfolio_async(context, address)
-            if legacy._json(ctx):
-                print(json.dumps(data, ensure_ascii=False))
-            else:
-                legacy.console.clear()
-                legacy._render_table(
-                    f"Portfolio AccountValue={data['accountValue']} MarginUsed={data['totalMarginUsed']}",
-                    ["Coin", "Size", "Entry", "Value", "PnL", "Leverage"],
-                    [
-                        [p["coin"], p["size"], p["entryPx"], p["positionValue"], p["unrealizedPnl"], p["leverage"]]
-                        for p in data["positions"]
-                    ],
-                )
-                legacy._render_table(
-                    "Spot Balances",
-                    ["Token", "Total", "Hold", "Available"],
-                    [[b["token"], b["total"], b["hold"], b["available"]] for b in data["spotBalances"]],
-                )
-            await asyncio.sleep(1.0)
-    except KeyboardInterrupt:
-        return
-
-
 async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     ctx = _ctx(args.json, args.testnet)
 
@@ -640,9 +504,9 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
         elif sc == "orders":
             await _call(legacy.account_orders, ctx, user=args.user, watch=args.watch)
         elif sc == "balances":
-            await _call(_account_balances_async, ctx, user=args.user, watch=args.watch)
+            await _call(legacy.account_balances, ctx, user=args.user, watch=args.watch)
         elif sc == "portfolio":
-            await _call(_account_portfolio_async, ctx, user=args.user, watch=args.watch)
+            await _call(legacy.account_portfolio, ctx, user=args.user, watch=args.watch)
         else:
             _exit_with_error(f"Unknown account subcommand: {sc}")
         return
