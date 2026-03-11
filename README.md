@@ -208,7 +208,8 @@ Order side semantics:
 ### TWAP Orders
 
 `hyperliquid-python-sdk` does not provide a high-level TWAP method, so this CLI signs and submits the official
-`exchange` actions `twapOrder` / `twapCancel`.
+`exchange` actions `twapOrder` / `twapCancel`. Successful submissions store the returned `twapId`
+locally under `~/.hl/twap_orders.json` so the CLI can show and cancel tracked TWAPs later.
 
 TWAP is perp-only, so use `long` / `short`.
 
@@ -224,6 +225,9 @@ hl order twap short 2.0 ETH 5,10 --randomize
 
 # Cancel TWAP
 hl order twap-cancel BTC 12345
+
+# Or list tracked active TWAPs and pick one interactively
+hl order twap-cancel
 ```
 
 ### Stake-Based Orders

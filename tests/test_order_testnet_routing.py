@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from hl_cli.commands.order import (
     _close_position_perp_dexs,
+    _extract_twap_id,
     _resolve_coin_for_side,
     _resolve_spot_coin,
     _validate_side_mode_args,
@@ -77,6 +78,20 @@ class OrderTestnetRoutingTests(unittest.TestCase):
         context = _FakeContext(False)
         context.info = _FakeInfo()
         self.assertEqual(_resolve_spot_coin(context, "@1035"), "@1035")
+
+    def test_extract_twap_id_from_running_status(self):
+        response = {
+            "response": {
+                "data": {
+                    "status": {
+                        "running": {
+                            "twapId": 12345,
+                        }
+                    }
+                }
+            }
+        }
+        self.assertEqual(_extract_twap_id(response), 12345)
 
 if __name__ == "__main__":
     unittest.main()

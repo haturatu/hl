@@ -318,11 +318,11 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_twap_cancel = add_cmd_parser(
         ord_sub,
         "twap-cancel",
-        "Cancel native TWAP order",
-        ["hl order twap-cancel BTC 12345"],
+        "Cancel native TWAP order (interactive if omitted)",
+        ["hl order twap-cancel BTC 12345", "hl order twap-cancel"],
     )
-    ord_twap_cancel.add_argument("coin")
-    ord_twap_cancel.add_argument("twap_id")
+    ord_twap_cancel.add_argument("coin", nargs="?")
+    ord_twap_cancel.add_argument("twap_id", nargs="?")
 
     ord_cancel = add_cmd_parser(
         ord_sub,

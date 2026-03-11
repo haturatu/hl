@@ -11,6 +11,12 @@ from ..cli.runtime import run_blocking
 from ..core.context import CLIContext
 from ..core.order_config import get_order_config, update_order_config
 from ..core.testnet_policy import uses_main_perp_only
+from ..infra.twap_registry import (
+    find_twap_order,
+    list_twap_orders,
+    mark_twap_cancelled,
+    register_twap_order,
+)
 from ..utils.output import out, out_success
 from ..utils.validators import (
     normalize_side,
@@ -486,6 +492,38 @@ def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
         for o in orders
     ]
 
+def _network_name(context: CLIContext) -> str:
+    return "testnet" if context.config.testnet else "mainnet"
+
+def _extract_twap_id(response: dict[str, Any]) -> Optional[int]:
+    status = response.get("response", {}).get("data", {}).get("status", {})
+    if not isinstance(status, dict):
+        return None
+    running = status.get("running")
+    if not isinstance(running, dict):
+        return None
+    try:
+        return int(running["twapId"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+def _render_twap_orders(title: str, records: list[Any]) -> None:
+    _render_table(
+        title,
+        ["TWAP ID", "Coin", "Side", "Total Size", "Minutes", "Submitted"],
+        [
+            [
+                record.twap_id,
+                record.coin,
+                record.side,
+                record.total_size,
+                record.duration_minutes,
+                record.submitted_at,
+            ]
+            for record in records
+        ],
+    )
+
 @cli_command
 def order_ls(
     ctx: Any,
@@ -494,6 +532,7 @@ def order_ls(
 ) -> None:
     context = _ctx(ctx)
     address = user if user else context.get_wallet_address()
+    tracked_twaps = list_twap_orders(network=_network_name(context), user=address)
     if watch:
         watch_loop(
             lambda: _fetch_orders(context, address),
@@ -505,7 +544,16 @@ def order_ls(
             as_json=_json(ctx),
         )
         return
-    out(_fetch_orders(context, address), _json(ctx))
+    orders = _fetch_orders(context, address)
+    if _json(ctx):
+        if tracked_twaps:
+            out({"openOrders": orders, "trackedTwaps": [record.__dict__ for record in tracked_twaps]}, True)
+        else:
+            out(orders, True)
+    else:
+        if tracked_twaps:
+            _render_twap_orders("Tracked TWAP Orders", tracked_twaps)
+        out(orders, False)
     _done(ctx)
 
 @cli_command
@@ -790,6 +838,7 @@ def order_twap(
         "twap": {
             "side": "buy" if is_buy else "sell",
             "coin": coin,
+            "resolvedCoin": resolved_coin,
             "totalSize": total_size,
             "stake": stake,
             "durationMinutes": minutes,
@@ -800,6 +849,23 @@ def order_twap(
             "response": response,
         }
     }
+    twap_id = _extract_twap_id(response)
+    if twap_id is not None:
+        # TODO: Replace the local TWAP registry with an official info endpoint once
+        # Hyperliquid exposes an API for listing/retrieving active TWAP orders by twapId.
+        register_twap_order(
+            network=_network_name(context),
+            user=context.get_wallet_address(),
+            coin=coin,
+            resolved_coin=resolved_coin,
+            twap_id=twap_id,
+            side="buy" if is_buy else "sell",
+            total_size=total_size,
+            duration_minutes=minutes,
+            randomize=randomize,
+            reduce_only=reduce_only,
+        )
+        result["twap"]["twapId"] = twap_id
     if _json(ctx):
         out(result, True)
     else:
@@ -815,14 +881,61 @@ def order_twap(
             print(f"Total size: {total_size} {coin}")
             print(f"Duration: {minutes} min")
             print(f"Randomize: {'on' if randomize else 'off'}")
+            if twap_id is not None:
+                print(f"TWAP ID: {twap_id}")
+                print("Manage it with 'hl order ls' or 'hl order twap-cancel'.")
     _done(ctx)
 
 @cli_command
-def order_twap_cancel(ctx: Any, coin: str, twap_id: str) -> None:
+def order_twap_cancel(ctx: Any, coin: Optional[str] = None, twap_id: Optional[str] = None) -> None:
     context = _ctx(ctx)
-    twap_num = validate_positive_integer(twap_id, "twap_id")
-    response = _cancel_native_twap(context=context, coin=coin, twap_id=twap_num)
-    out({"twapCancel": {"coin": coin, "twapId": twap_num, "response": response}}, _json(ctx))
+    address = context.get_wallet_address()
+    if coin is not None and twap_id is not None:
+        resolved_coin = coin
+        twap_num = validate_positive_integer(twap_id, "twap_id")
+    else:
+        records = list_twap_orders(network=_network_name(context), user=address)
+        if coin is not None:
+            records = [record for record in records if coin in {record.coin, record.resolved_coin}]
+        if not records:
+            raise RuntimeError("No tracked active TWAP orders found")
+        if twap_id is not None:
+            twap_num = validate_positive_integer(twap_id, "twap_id")
+            record = find_twap_order(
+                network=_network_name(context),
+                user=address,
+                twap_id=twap_num,
+                coin=coin,
+            )
+            if record is None:
+                raise RuntimeError(f"Tracked TWAP {twap_num} not found")
+            resolved_coin = record.resolved_coin
+        elif _json(ctx):
+            latest = records[0]
+            resolved_coin = latest.resolved_coin
+            twap_num = latest.twap_id
+        else:
+            _render_twap_orders("Tracked TWAP Orders", records)
+            selected = input("Select TWAP ID to cancel: ").strip()
+            twap_num = validate_positive_integer(selected, "twap_id")
+            record = find_twap_order(
+                network=_network_name(context),
+                user=address,
+                twap_id=twap_num,
+            )
+            if record is None:
+                raise RuntimeError(f"Tracked TWAP {twap_num} not found")
+            resolved_coin = record.resolved_coin
+    response = _cancel_native_twap(context=context, coin=resolved_coin, twap_id=twap_num)
+    status = response.get("response", {}).get("data", {}).get("status", {})
+    if not (isinstance(status, dict) and status.get("error")):
+        mark_twap_cancelled(
+            network=_network_name(context),
+            user=address,
+            twap_id=twap_num,
+            coin=resolved_coin,
+        )
+    out({"twapCancel": {"coin": resolved_coin, "twapId": twap_num, "response": response}}, _json(ctx))
     _done(ctx)
 
 @cli_command
