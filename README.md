@@ -2,9 +2,17 @@
 
 ## Installation
 
+Install from source for local development:
+
 ```bash
 cd hl
-make install
+pip install -e .
+```
+
+Install from PyPI:
+
+```bash
+pip install hyperliquid-cli-python
 ```
 
 After installation, the `hl` command is available:
@@ -13,18 +21,12 @@ After installation, the `hl` command is available:
 hl --help
 ```
 
-Manual install is still available:
-
-```bash
-pip install .
-```
-
 ## Bash Completion
 
 `hl` can print a Bash completion script for top-level commands and subcommands.
 
-`make install` installs the package and appends a managed completion line to
-`~/.bashrc` if it is not already present.
+Note: `pip install -e .` and `pip install hyperliquid-cli-python` install the
+`hl` command, but they do not automatically enable Bash completion.
 
 Enable it for the current shell:
 
@@ -38,11 +40,10 @@ Persist it in `~/.bashrc`:
 echo 'eval "$(hl completion bash)"' >> ~/.bashrc
 ```
 
-`make uninstall` removes the managed completion line from `~/.bashrc`.
+If you want the old helper flow that also edits `~/.bashrc`, `make install`
+still exists.
 
-`pip install .` alone still does not edit shell startup files automatically.
-
-To remove both the package and the managed `~/.bashrc` completion line:
+To remove the package and any managed `~/.bashrc` completion line:
 
 ```bash
 make uninstall
