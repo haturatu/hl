@@ -1,3 +1,23 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Hyperliquid CLI (Python)](#hyperliquid-cli-python)
+- [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Bash Completion](#bash-completion)
+  - [Global Options](#global-options)
+  - [Supported Commands](#supported-commands)
+  - [Configuration](#configuration)
+  - [Security Notes](#security-notes)
+  - [Run for Development](#run-for-development)
+  - [JSON Pattern Tests](#json-pattern-tests)
+  - [TWAP Orders](#twap-orders)
+  - [Stake-Based Orders](#stake-based-orders)
+  - [Acknowledgments](#acknowledgments)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Hyperliquid CLI (Python)
 
 # Requirements
