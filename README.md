@@ -250,6 +250,6 @@ This repository also includes changes such as expanded `order` subcommands, the
 `--stake` option, and additional `market` subcommand functionality.
 
 At the moment, I am not fully sure how this should be handled from a licensing and
-attribution perspective, so this repository is being published under my BSD 3-Clause
+attribution perspective, so this repository is being published under my BSD 2-Clause
 License as a temporary choice. If you have a better idea for the appropriate license
 notice or attribution, please open an issue.
