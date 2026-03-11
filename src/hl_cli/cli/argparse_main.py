@@ -237,8 +237,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "Place limit order",
         [
             "hl order limit buy 0.001 BTC 65000",
+            "hl order limit buy BTC 65000 --stake 50        # size is derived from about $50 notional when --leverage is omitted",
             "hl order limit buy BTC 65000 --stake 50",
-            "hl order limit buy BTC 65000 --stake 50 --leverage 20 --cross",
+            "hl order limit buy BTC 65000 --stake 50 --leverage 20 --cross  # about $1000 position notional",
             "hl order limit sell 0.1 ETH 3500 --tif Gtc",
             "hl order limit long 1 SOL 100 --reduce-only",
         ],
@@ -249,8 +250,8 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_limit.add_argument("c", nargs="?")
     ord_limit.add_argument("--tif", default="Gtc")
     ord_limit.add_argument("--reduce-only", action="store_true")
-    ord_limit.add_argument("--stake", type=float, help="USD margin (position value = stake * leverage)")
-    ord_limit.add_argument("--leverage", type=int, help="Set leverage before placing order")
+    ord_limit.add_argument("--stake", type=float, help="USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only")
+    ord_limit.add_argument("--leverage", type=int, help="Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation")
     ord_limit.add_argument("--cross", action="store_true", help="Use cross margin with --leverage")
     ord_limit.add_argument("--isolated", action="store_true", help="Use isolated margin with --leverage")
 
@@ -260,8 +261,8 @@ def _build_parser() -> argparse.ArgumentParser:
         "Place market order",
         [
             "hl order market buy 0.001 BTC",
-            "hl order market buy BTC --stake 50",
-            "hl order market buy BTC --stake 50 --leverage 20 --cross",
+            "hl order market buy BTC --stake 50              # size is derived from about $50 notional when --leverage is omitted",
+            "hl order market buy BTC --stake 50 --leverage 20 --cross  # about $1000 position notional",
             "hl order market sell 0.1 ETH --slippage 0.5",
             "hl order market close ETH",
             "hl order market close xyz:TSLA",
@@ -273,8 +274,8 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_market.add_argument("b", nargs="?")
     ord_market.add_argument("--reduce-only", action="store_true")
     ord_market.add_argument("--slippage", type=float)
-    ord_market.add_argument("--stake", type=float, help="USD margin (position value = stake * leverage)")
-    ord_market.add_argument("--leverage", type=int, help="Set leverage before placing order")
+    ord_market.add_argument("--stake", type=float, help="USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only")
+    ord_market.add_argument("--leverage", type=int, help="Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation")
     ord_market.add_argument("--cross", action="store_true", help="Use cross margin with --leverage")
     ord_market.add_argument("--isolated", action="store_true", help="Use isolated margin with --leverage")
     ord_market.add_argument("--ratio", type=float, default=1.0, help="Close ratio (0 < ratio <= 1) for market close")
@@ -285,7 +286,8 @@ def _build_parser() -> argparse.ArgumentParser:
         "Place TWAP order",
         [
             "hl order twap buy 1 BTC 30",
-            "hl order twap buy 0 BTC 30 --stake 5",
+            "hl order twap buy 0 BTC 30 --stake 5            # size is derived from about $5 total notional when --leverage is omitted",
+            "hl order twap buy 0 BTC 30 --stake 5 --leverage 20 --cross  # about $100 total notional",
             "hl order twap sell 2 ETH 5,10 --randomize",
             "hl order twap sell 1 BTC 30 --leverage 20 --isolated",
             "hl order twap sell 1 BTC 30 --reduce-only",
@@ -295,10 +297,10 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_twap.add_argument("size")
     ord_twap.add_argument("coin")
     ord_twap.add_argument("interval")
-    ord_twap.add_argument("--stake", type=float, help="USD margin to derive total TWAP size")
+    ord_twap.add_argument("--stake", type=float, help="USD margin used to derive total TWAP size. With --leverage, size uses stake x leverage; without it, size uses stake only")
     ord_twap.add_argument("--reduce-only", action="store_true")
     ord_twap.add_argument("--randomize", action="store_true")
-    ord_twap.add_argument("--leverage", type=int, help="Set leverage before placing order")
+    ord_twap.add_argument("--leverage", type=int, help="Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation")
     ord_twap.add_argument("--cross", action="store_true", help="Use cross margin with --leverage")
     ord_twap.add_argument("--isolated", action="store_true", help="Use isolated margin with --leverage")
 

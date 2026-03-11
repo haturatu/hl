@@ -136,15 +136,50 @@ hl order twap-cancel BTC 12345
 
 ## Stake-Based Orders
 
-`--stake` is treated as USD margin. Position value is calculated as:
-`position_notional = stake * leverage` (or `stake * 1` if `--leverage` is omitted).
+`--stake` is used by the CLI to derive order size.
+
+- If you pass `--stake 50 --leverage 20`, the CLI derives size from about `$1000`
+  of notional (`50 * 20`).
+- If you pass `--stake 50` without `--leverage`, the CLI derives size from about
+  `$50` of notional.
+
+Important: omitting `--leverage` does **not** mean your account or position is forced
+to `1x`. It only means the CLI does not multiply `--stake` by leverage when calculating
+the order size. If the exchange/account already has leverage set for that asset, the
+resulting position can still show that existing leverage in `hl account positions`.
+
+This means:
+
+- `--stake 50` means the CLI sizes the order from about `$50` of notional
+- `--stake 50 --leverage 20` means about `$1000` of position notional
+
+So:
+
+- `--leverage` changes how `--stake` is converted into order size
+- existing leverage on the exchange can still affect margin usage and the leverage
+  shown later in `hl account positions`
 
 ```bash
-# $50 margin, 20x leverage => about $1,000 BTC position notional
+# No --leverage: CLI sizes the order from about $50 of BTC notional
+hl order market buy BTC --stake 50
+
+# No --leverage: CLI sizes the order from about $50 of ETH notional
+hl order market buy ETH --stake 50
+
+# With --leverage 20: CLI sizes the order from about $1,000 of BTC notional
 hl order limit buy BTC 65000 --stake 50 --leverage 20 --cross
 
-# $50 margin, 20x leverage market long
+# With --leverage 20: CLI sizes the order from about $1,000 of BTC notional
 hl order market buy BTC --stake 50 --leverage 20 --isolated
+
+# Example:
+# BTC at 69,000
+# - --stake 50                 => about 0.000724 BTC of order size
+# - --stake 50 --leverage 20   => about 0.01449 BTC
+#
+# ETH at 2,020
+# - --stake 50                 => about 0.02475 ETH of order size
+# - --stake 50 --leverage 20   => about 0.2475 ETH
 
 # Set leverage and margin mode at order time
 hl order limit buy BTC 65000 --stake 50 --leverage 20 --cross
