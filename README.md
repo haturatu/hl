@@ -57,7 +57,7 @@ python3 -m pip install --user -e .
 Install from PyPI:
 
 ```bash
-pip install hyperliquid-cli-python
+pip install --user hyperliquid-cli-python
 ```
 
 After installation, the `hl` command is available:
