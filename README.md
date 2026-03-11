@@ -3,24 +3,33 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Hyperliquid CLI (Python)](#hyperliquid-cli-python)
-- [Requirements](#requirements)
-  - [Installation](#installation)
-  - [Bash Completion](#bash-completion)
-  - [Global Options](#global-options)
-  - [Supported Commands](#supported-commands)
-  - [Configuration](#configuration)
-  - [Security Notes](#security-notes)
-  - [Run for Development](#run-for-development)
-  - [JSON Pattern Tests](#json-pattern-tests)
-  - [TWAP Orders](#twap-orders)
-  - [Stake-Based Orders](#stake-based-orders)
-  - [Acknowledgments](#acknowledgments)
+  - [Setup](#setup)
+    - [Requirements](#requirements)
+    - [Installation](#installation)
+    - [Bash Completion](#bash-completion)
+  - [CLI Basics](#cli-basics)
+    - [Global Options](#global-options)
+    - [Supported Commands](#supported-commands)
+    - [Configuration](#configuration)
+    - [Security Notes](#security-notes)
+  - [Development](#development)
+    - [Run for Development](#run-for-development)
+    - [JSON Pattern Tests](#json-pattern-tests)
+  - [Order Features](#order-features)
+    - [TWAP Orders](#twap-orders)
+    - [Stake-Based Orders](#stake-based-orders)
+  - [Project](#project)
+    - [Acknowledgments](#acknowledgments)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Hyperliquid CLI (Python)
 
-# Requirements
+Python CLI for Hyperliquid account management, market data, and order execution.
+
+## Setup
+
+### Requirements
 
 - Python 3.10+
 - `hyperliquid-python-sdk` for API interactions
@@ -28,7 +37,7 @@
 - `eth-account` for key management
 - Optional: `make` for installation and uninstallation scripts
 
-## Installation
+### Installation
 
 Install from git and also set up Bash completion with `make install`:
 
@@ -57,7 +66,7 @@ After installation, the `hl` command is available:
 hl --help
 ```
 
-## Bash Completion
+### Bash Completion
 
 `hl` can print a Bash completion script for top-level commands and subcommands.
 
@@ -85,12 +94,14 @@ To remove the package and any managed `~/.bashrc` completion line:
 make uninstall
 ```
 
-## Global Options
+## CLI Basics
+
+### Global Options
 
 - `--json` Output JSON
 - `--testnet` Use testnet
 
-## Supported Commands
+### Supported Commands
 
 - `hl account add|ls|set-default|remove`
 - `hl account positions|orders|balances|portfolio`
@@ -99,7 +110,7 @@ make uninstall
 - `hl markets ls|search`
 - `hl referral set|status`
 
-## Configuration
+### Configuration
 
 - DB: `~/.hl/hl.db`
 - Order config: `~/.hl/order-config.json`
@@ -109,7 +120,7 @@ Environment variable fallback (when DB account is not configured):
 - `HYPERLIQUID_PRIVATE_KEY`
 - `HYPERLIQUID_WALLET_ADDRESS`
 
-## Security Notes
+### Security Notes
 
 Account data stored in `~/.hl/hl.db` is encrypted at rest for these fields:
 
@@ -168,14 +179,16 @@ Practical guidance:
 - Restrict which OS user can run this tool
 - If you need stronger protection, use disk encryption as the higher-level control
 
-## Run for Development
+## Development
+
+### Run for Development
 
 ```bash
 cd hl
 PYTHONPATH=src python -m hl_cli.cli.argparse_main --help
 ```
 
-## JSON Pattern Tests
+### JSON Pattern Tests
 
 `tests/` validates that every subcommand pattern produces parseable raw JSON output in `--json` mode.
 
@@ -184,7 +197,9 @@ cd hl
 PYTHONPATH=src python -m unittest -v tests.test_json_patterns
 ```
 
-## TWAP Orders
+## Order Features
+
+### TWAP Orders
 
 `hyperliquid-python-sdk` does not provide a high-level TWAP method, so this CLI signs and submits the official
 `exchange` actions `twapOrder` / `twapCancel`.
@@ -203,7 +218,7 @@ hl order twap sell 2.0 ETH 5,10 --randomize
 hl order twap-cancel BTC 12345
 ```
 
-## Stake-Based Orders
+### Stake-Based Orders
 
 `--stake` is used by the CLI to derive order size.
 
@@ -272,7 +287,9 @@ hl order tpsl ETH --tp 1900 --sl 1800
 hl order tpsl ETH --sl 1800 --ratio 0.5
 ```
 
-## Acknowledgments
+## Project
+
+### Acknowledgments
 
 - https://app.hyperliquid.xyz/
 - https://github.com/chrisling-dev/hyperliquid-cli
