@@ -48,7 +48,7 @@ class AccountTestnetModeTests(unittest.TestCase):
         async def fake_to_thread(func, /, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch("hl_cli.commands.account.asyncio.to_thread", side_effect=fake_to_thread):
+        with patch("hl_cli.services.account_fetch.asyncio.to_thread", side_effect=fake_to_thread):
             asyncio.run(_fetch_positions_async(context, "0xabc"))
 
         self.assertEqual(context.info.user_state_calls, [("0xabc", "")])
@@ -59,7 +59,7 @@ class AccountTestnetModeTests(unittest.TestCase):
         async def fake_to_thread(func, /, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch("hl_cli.commands.account.asyncio.to_thread", side_effect=fake_to_thread):
+        with patch("hl_cli.services.account_fetch.asyncio.to_thread", side_effect=fake_to_thread):
             asyncio.run(_fetch_portfolio_async(context, "0xabc"))
 
         self.assertEqual(context.info.user_state_calls, [("0xabc", "")])

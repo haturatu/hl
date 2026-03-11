@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 from typing import Any, Optional
 
@@ -14,6 +13,12 @@ from ..infra.db import (
     get_all_accounts,
     is_alias_taken,
     set_default_account,
+)
+from ..services.account_fetch import (
+    account_perp_dexs as _service_account_perp_dexs,
+    fetch_balances_async as _service_fetch_balances_async,
+    fetch_portfolio_async as _service_fetch_portfolio_async,
+    fetch_positions_async as _service_fetch_positions_async,
 )
 from ..utils.output import out
 from ..utils.validators import normalize_private_key, validate_address
@@ -174,10 +179,7 @@ def account_remove(ctx: Any, alias: str, force: bool = False) -> None:
 
 
 def _account_perp_dexs(context: CLIContext) -> list[str]:
-    # Testnet uses main perp only to avoid rate-limiting on bulk per-dex account reads.
-    if context.config.testnet:
-        return [""]
-    return context.get_perp_dexs()
+    return _service_account_perp_dexs(context)
 
 
 def _fetch_positions(context: CLIContext, user: str) -> dict[str, Any]:
@@ -185,40 +187,7 @@ def _fetch_positions(context: CLIContext, user: str) -> dict[str, Any]:
 
 
 async def _fetch_positions_async(context: CLIContext, user: str) -> dict[str, Any]:
-    info = context.get_public_client()
-    states = await asyncio.gather(
-        *(asyncio.to_thread(info.user_state, user, dex) for dex in _account_perp_dexs(context))
-    )
-    positions: list[dict[str, Any]] = []
-    summaries: list[dict[str, Any]] = []
-
-    for state in states:
-        summaries.append(state["marginSummary"])
-        positions.extend(
-            [
-                {
-                    "coin": p["position"]["coin"],
-                    "size": p["position"]["szi"],
-                    "entryPx": p["position"].get("entryPx"),
-                    "positionValue": p["position"].get("positionValue"),
-                    "unrealizedPnl": p["position"].get("unrealizedPnl"),
-                    "leverage": f"{p['position']['leverage']['value']}x {p['position']['leverage']['type']}",
-                    "liquidationPx": p["position"].get("liquidationPx") or "-",
-                }
-                for p in state["assetPositions"]
-                if float(p["position"]["szi"]) != 0
-            ]
-        )
-
-    account_value = sum(float(s.get("accountValue", 0) or 0) for s in summaries)
-    margin_used = sum(float(s.get("totalMarginUsed", 0) or 0) for s in summaries)
-    return {
-        "positions": positions,
-        "marginSummary": {
-            "accountValue": f"{account_value:.8f}",
-            "totalMarginUsed": f"{margin_used:.8f}",
-        },
-    }
+    return await _service_fetch_positions_async(context, user)
 
 
 @cli_command
@@ -290,74 +259,11 @@ def _fetch_balances(context: CLIContext, user: str) -> dict[str, Any]:
 
 
 async def _fetch_balances_async(context: CLIContext, user: str) -> dict[str, Any]:
-    info = context.get_public_client()
-    perp_task = asyncio.to_thread(info.user_state, user)
-    spot_task = asyncio.to_thread(info.spot_user_state, user)
-    perp, spot = await asyncio.gather(perp_task, spot_task)
-    balances = []
-    for b in spot["balances"]:
-        if float(b["total"]) == 0:
-            continue
-        total = float(b["total"])
-        hold = float(b["hold"])
-        balances.append(
-            {
-                "token": b["coin"],
-                "total": b["total"],
-                "hold": b["hold"],
-                "available": f"{total - hold}",
-            }
-        )
-    return {"spotBalances": balances, "perpBalance": perp["marginSummary"]["accountValue"]}
+    return await _service_fetch_balances_async(context, user)
 
 
 async def _fetch_portfolio_async(context: CLIContext, user: str) -> dict[str, Any]:
-    info = context.get_public_client()
-    perp_tasks = [asyncio.to_thread(info.user_state, user, dex) for dex in _account_perp_dexs(context)]
-    spot_task = asyncio.to_thread(info.spot_user_state, user)
-    *perp_states, spot = await asyncio.gather(*perp_tasks, spot_task)
-
-    positions: list[dict[str, Any]] = []
-    for state in perp_states:
-        positions.extend(
-            [
-                {
-                    "coin": p["position"]["coin"],
-                    "size": p["position"]["szi"],
-                    "entryPx": p["position"].get("entryPx"),
-                    "positionValue": p["position"].get("positionValue"),
-                    "unrealizedPnl": p["position"].get("unrealizedPnl"),
-                    "leverage": f"{p['position']['leverage']['value']}x {p['position']['leverage']['type']}",
-                    "liquidationPx": p["position"].get("liquidationPx") or "-",
-                }
-                for p in state["assetPositions"]
-                if float(p["position"]["szi"]) != 0
-            ]
-        )
-
-    spot_balances = []
-    for b in spot["balances"]:
-        if float(b["total"]) == 0:
-            continue
-        total = float(b["total"])
-        hold = float(b["hold"])
-        spot_balances.append(
-            {
-                "token": b["coin"],
-                "total": b["total"],
-                "hold": b["hold"],
-                "available": f"{total - hold}",
-            }
-        )
-
-    account_value = sum(float(s["marginSummary"]["accountValue"]) for s in perp_states)
-    margin_used = sum(float(s["marginSummary"]["totalMarginUsed"]) for s in perp_states)
-    return {
-        "positions": positions,
-        "spotBalances": spot_balances,
-        "accountValue": f"{account_value:.8f}",
-        "totalMarginUsed": f"{margin_used:.8f}",
-    }
+    return await _service_fetch_portfolio_async(context, user)
 
 
 @cli_command
