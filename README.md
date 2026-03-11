@@ -74,30 +74,59 @@ Environment variable fallback (when DB account is not configured):
 
 ## Security Notes
 
-In this repository, API keys and private keys are read from the `HYPERLIQUID_PRIVATE_KEY`
-environment variable or stored in `~/.hl/hl.db`.
+Account data stored in `~/.hl/hl.db` is encrypted at rest for these fields:
 
-I considered encrypting this data, but concluded that it is difficult to do so
-effectively without hurting the user experience. A Unix-style approach like
-WireGuard, which relies on root privileges for secret key handling, does not fit
-well here: requiring `sudo` for every `hl` invocation is not practical, and using
-root privileges just to run `hl` is not a good tradeoff.
+- `user_address`
+- `api_wallet_public_key`
+- `api_wallet_private_key`
 
-Another possible approach would be to keep the secret key in memory, but that would
-effectively require turning this application into a daemon, which seems excessive.
-If the `hl` command must be able to decrypt the key at execution time, then that
-decryption step can usually be bypassed in practice anyway, so the actual security
-benefit is limited.
+The current implementation derives a 32-byte key as follows:
 
-Because of that, the practical security guidance I can give is:
+1. Resolve the command path used to run `hl`
+2. Hash that path with SHA-256
+3. Use the resulting digest as the ChaCha20 key
+
+Each stored value is encrypted independently with its own random nonce.
+
+This means:
+
+- the same installed command path can transparently decrypt the saved values
+- changing the executable path can make existing saved account data undecryptable
+- this is path-bound encryption, not password-based encryption
+
+Example:
+
+```bash
+$ which hl
+/home/haturatu/.local/bin/hl
+```
+
+If `hl` is installed at a user-local path like `/home/haturatu/.local/bin/hl`, then
+the encryption key is effectively tied to that installed command path. In normal usage,
+that often behaves like "the user who has this `hl` on their path can decrypt the DB".
+So in practice it can look close to per-user decryption when each user has their own
+home directory and their own local install path.
+
+Important limitation:
+
+- this mechanism does **not** prove OS user identity by itself
+- if another OS user can both read `~/.hl/hl.db` and execute the same `hl` binary
+  path, path-based derivation alone does not prevent that user from decrypting the data
+
+So this mechanism is mainly useful as a coupling between the saved DB contents and the
+specific installed command path. It helps prevent casual reuse of the DB from a different
+binary location, but it is not a substitute for filesystem permissions or disk encryption.
+
+Environment variable fallback still exists when DB account data is not configured:
+
+- `HYPERLIQUID_PRIVATE_KEY`
+- `HYPERLIQUID_WALLET_ADDRESS`
+
+Practical guidance:
 
 - Use wallets or API keys that would not be catastrophic if leaked
 - Restrict which OS user can run this tool
 - If you need stronger protection, use disk encryption as the higher-level control
-
-I also considered using `age` for encryption, but invoking it via `subprocess` does
-not seem like a fundamental improvement, even if making `age` a required dependency
-would be acceptable.
 
 ## Run for Development
 

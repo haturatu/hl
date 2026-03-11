@@ -1,6 +1,14 @@
+import base64
+import hashlib
 import sqlite3
 from dataclasses import dataclass
+from pathlib import Path
+import secrets
+import shutil
+import sys
 from typing import Optional
+
+from Crypto.Cipher import ChaCha20
 
 from .paths import DB_PATH, HL_DIR
 
@@ -20,11 +28,17 @@ class Account:
     updated_at: int
 
 
+_ENC_PREFIX = "enc_v1:"
+
+
 def _conn() -> sqlite3.Connection:
     HL_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     _migrate(conn)
+    # TODO: Remove this compatibility migration after all existing plaintext
+    # account rows have been rewritten to encrypted storage.
+    _migrate_encrypted_account_fields(conn)
     return conn
 
 
@@ -62,11 +76,11 @@ def _to_account(row: sqlite3.Row) -> Account:
         id=row["id"],
         alias=row["alias"],
         network=row["network"],
-        user_address=row["user_address"],
+        user_address=_decrypt_value(row["user_address"]),
         type=row["type"],
         source=row["source"],
-        api_wallet_private_key=row["api_wallet_private_key"],
-        api_wallet_public_key=row["api_wallet_public_key"],
+        api_wallet_private_key=_decrypt_optional_value(row["api_wallet_private_key"]),
+        api_wallet_public_key=_decrypt_optional_value(row["api_wallet_public_key"]),
         is_default=bool(row["is_default"]),
         created_at=row["created_at"],
         updated_at=row["updated_at"],
@@ -134,11 +148,11 @@ def create_account(
         (
             alias,
             network,
-            user_address,
+            _encrypt_value(user_address),
             account_type,
             source,
-            api_wallet_private_key,
-            api_wallet_public_key,
+            _encrypt_optional_value(api_wallet_private_key),
+            _encrypt_optional_value(api_wallet_public_key),
             1 if should_be_default else 0,
         ),
     )
@@ -181,3 +195,83 @@ def delete_account(alias: str, network: str) -> bool:
     conn.commit()
     conn.close()
     return True
+
+
+def _command_path_for_key() -> str:
+    argv0 = sys.argv[0]
+    resolved = shutil.which(argv0) if argv0 and "/" not in argv0 else argv0
+    if not resolved:
+        resolved = argv0
+    return str(Path(resolved or "hl").resolve())
+
+
+def _chacha20_key() -> bytes:
+    # Derive the encryption key from the current command path so only the same
+    # installed command path can transparently decrypt the stored account data.
+    return hashlib.sha256(_command_path_for_key().encode("utf-8")).digest()
+
+
+def _encrypt_value(value: str) -> str:
+    nonce = secrets.token_bytes(12)
+    cipher = ChaCha20.new(key=_chacha20_key(), nonce=nonce)
+    encrypted = cipher.encrypt(value.encode("utf-8"))
+    return f"{_ENC_PREFIX}{base64.urlsafe_b64encode(nonce).decode()}:{base64.urlsafe_b64encode(encrypted).decode()}"
+
+
+def _decrypt_value(value: str) -> str:
+    if not value.startswith(_ENC_PREFIX):
+        return value
+    payload = value[len(_ENC_PREFIX):]
+    nonce_b64, encrypted_b64 = payload.split(":", 1)
+    nonce = base64.urlsafe_b64decode(nonce_b64.encode())
+    encrypted = base64.urlsafe_b64decode(encrypted_b64.encode())
+    cipher = ChaCha20.new(key=_chacha20_key(), nonce=nonce)
+    return cipher.decrypt(encrypted).decode("utf-8")
+
+
+def _encrypt_optional_value(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    return _encrypt_value(value)
+
+
+def _decrypt_optional_value(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    return _decrypt_value(value)
+
+
+def _migrate_encrypted_account_fields(conn: sqlite3.Connection) -> None:
+    # TODO: Remove this whole function after all existing plaintext account rows
+    # have been migrated to encrypted storage.
+    rows = conn.execute(
+        """
+        SELECT id, user_address, api_wallet_private_key, api_wallet_public_key
+        FROM accounts
+        """
+    ).fetchall()
+    for row in rows:
+        user_address = row["user_address"]
+        api_wallet_private_key = row["api_wallet_private_key"]
+        api_wallet_public_key = row["api_wallet_public_key"]
+        if (
+            isinstance(user_address, str)
+            and user_address.startswith(_ENC_PREFIX)
+            and (api_wallet_private_key is None or str(api_wallet_private_key).startswith(_ENC_PREFIX))
+            and (api_wallet_public_key is None or str(api_wallet_public_key).startswith(_ENC_PREFIX))
+        ):
+            continue
+        conn.execute(
+            """
+            UPDATE accounts
+            SET user_address = ?, api_wallet_private_key = ?, api_wallet_public_key = ?
+            WHERE id = ?
+            """,
+            (
+                _encrypt_value(user_address),
+                _encrypt_optional_value(api_wallet_private_key),
+                _encrypt_optional_value(api_wallet_public_key),
+                row["id"],
+            ),
+        )
+    conn.commit()
