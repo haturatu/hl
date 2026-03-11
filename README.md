@@ -1,5 +1,13 @@
 # Hyperliquid CLI (Python)
 
+# Requirements
+
+- Python 3.10+
+- `hyperliquid-python-sdk` for API interactions
+- `rich` for pretty console output
+- `eth-account` for key management
+- Optional: `make` for installation and uninstallation scripts
+
 ## Installation
 
 Install from git and also set up Bash completion with `make install`:
