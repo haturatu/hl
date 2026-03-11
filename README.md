@@ -2,6 +2,14 @@
 
 ## Installation
 
+Install from git and also set up Bash completion with `make install`:
+
+```bash
+git clone https://github.com/haturatu/hl.git
+cd hl
+make install
+```
+
 Install from source for local development:
 
 ```bash
