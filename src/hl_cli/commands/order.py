@@ -10,6 +10,7 @@ from ..cli.runtime import cli_command, cli_context, confirm, finish_command, jso
 from ..cli.runtime import run_blocking
 from ..core.context import CLIContext
 from ..core.order_config import get_order_config, update_order_config
+from ..core.testnet_policy import uses_main_perp_only
 from ..utils.output import out, out_success
 from ..utils.validators import (
     normalize_side,
@@ -32,6 +33,11 @@ def _wallet_perp_dexs_for_coin(coin: str) -> Optional[list[str]]:
     if ":" not in coin:
         return None
     return [coin.split(":", 1)[0]]
+
+def _close_position_perp_dexs(context: CLIContext) -> list[str]:
+    if uses_main_perp_only(context.config.testnet):
+        return [""]
+    return context.get_perp_dexs()
 
 def _confirm(message: str, default: bool = False) -> bool:
     return confirm(message, default)
@@ -376,7 +382,7 @@ def _resolve_position_for_close(context: CLIContext, coin: str) -> tuple[str, fl
     with_prefix = ":" in target
     up = target.upper()
     matches: list[tuple[str, float]] = []
-    states = run_blocking(_fetch_all_perp_states(info, user, context.get_perp_dexs()))
+    states = run_blocking(_fetch_all_perp_states(info, user, _close_position_perp_dexs(context)))
     for state in states:
         for row in state.get("assetPositions", []):
             pos = row.get("position", {})
