@@ -9,6 +9,7 @@ from hyperliquid.utils.constants import MAINNET_API_URL, TESTNET_API_URL
 import requests
 
 from ..infra.db import Account, get_default_account
+from .testnet_policy import filter_safe_spot_universe, uses_safe_spot_meta_fallback
 
 
 @dataclass
@@ -128,21 +129,9 @@ def _load_safe_spot_meta(base_url: str) -> dict:
     response = requests.post(f"{base_url}/info", json={"type": "spotMeta"}, timeout=20)
     response.raise_for_status()
     spot_meta = response.json()
-    tokens = spot_meta.get("tokens", [])
-    max_idx = len(tokens) - 1
-
-    safe_universe = []
-    for pair in spot_meta.get("universe", []):
-        refs = pair.get("tokens")
-        if not isinstance(refs, list) or len(refs) < 2:
-            continue
-        if any(not isinstance(ref, int) or ref < 0 or ref > max_idx for ref in refs[:2]):
-            continue
-        safe_universe.append(pair)
-
     return {
         **spot_meta,
-        "universe": safe_universe,
+        "universe": filter_safe_spot_universe(spot_meta),
     }
 
 
@@ -151,6 +140,6 @@ def _build_info_client(base_url: str, **kwargs: object) -> Info:
         return Info(base_url, **kwargs)
     except IndexError:
         # Testnet-only defensive fallback for malformed spot metadata.
-        if "spot_meta" in kwargs:
+        if "spot_meta" in kwargs or not uses_safe_spot_meta_fallback(base_url):
             raise
         return Info(base_url, spot_meta=_load_safe_spot_meta(base_url), **kwargs)

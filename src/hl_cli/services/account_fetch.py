@@ -2,11 +2,11 @@ import asyncio
 from typing import Any
 
 from ..core.context import CLIContext
+from ..core.testnet_policy import uses_main_perp_only
 
 
 def account_perp_dexs(context: CLIContext) -> list[str]:
-    # Testnet uses main perp only to avoid rate-limiting on bulk per-dex account reads.
-    if context.config.testnet:
+    if uses_main_perp_only(context.config.testnet):
         return [""]
     return context.get_perp_dexs()
 

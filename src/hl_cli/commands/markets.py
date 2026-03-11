@@ -4,6 +4,7 @@ from typing import Any, Optional
 from ..cli.markets_tui import run_markets_tui
 from ..cli.runtime import cli_command, console, run_blocking
 from ..core.context import CLIContext
+from ..core.testnet_policy import includes_builder_perps
 from ..utils.output import out
 from .common import _ctx, _done, _format_price, _format_rate_pct, _format_usd, _json
 
@@ -203,7 +204,7 @@ async def _build_market_rows_async(
             )
 
         # Testnet uses main perp + spot only to avoid rate-limiting on bulk builder fetches.
-        if not context.config.testnet:
+        if includes_builder_perps(context.config.testnet):
             dexs = [dex for dex in context.get_perp_dexs() if dex]
             builder_results = await asyncio.gather(
                 *(asyncio.to_thread(_fetch_builder_market_data, info, dex) for dex in dexs)
