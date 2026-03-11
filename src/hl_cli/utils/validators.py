@@ -25,11 +25,15 @@ def validate_positive_integer(value: str, name: str) -> int:
 
 def normalize_side(value: str) -> str:
     lower = value.lower()
-    if lower in {"buy", "long"}:
-        return "buy"
-    if lower in {"sell", "short"}:
-        return "sell"
+    if lower in {"buy", "sell", "long", "short"}:
+        return lower
     raise ValueError('Side must be "buy", "sell", "long", or "short"')
+
+def side_is_buy(value: str) -> bool:
+    return normalize_side(value) in {"buy", "long"}
+
+def side_uses_spot(value: str) -> bool:
+    return normalize_side(value) in {"buy", "sell"}
 
 def normalize_tif(value: str) -> str:
     mapping = {"gtc": "Gtc", "ioc": "Ioc", "alo": "Alo"}

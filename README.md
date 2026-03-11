@@ -199,20 +199,28 @@ PYTHONPATH=src python -m unittest -v tests.test_json_patterns
 
 ## Order Features
 
+Order side semantics:
+
+- `buy` / `sell` are for spot markets
+- `long` / `short` are for perp markets
+- `close` is for closing an open perp position
+
 ### TWAP Orders
 
 `hyperliquid-python-sdk` does not provide a high-level TWAP method, so this CLI signs and submits the official
 `exchange` actions `twapOrder` / `twapCancel`.
 
+TWAP is perp-only, so use `long` / `short`.
+
 ```bash
 # 30-minute native TWAP
-hl order twap buy 1.0 BTC 30
+hl order twap long 1.0 BTC 30
 
 # Derive total TWAP size from USD margin (stake * leverage)
-hl order twap buy 0 BTC 30 --stake 5
+hl order twap long 0 BTC 30 --stake 5
 
 # Compatibility format: 5,10 is sent as total 50 minutes
-hl order twap sell 2.0 ETH 5,10 --randomize
+hl order twap short 2.0 ETH 5,10 --randomize
 
 # Cancel TWAP
 hl order twap-cancel BTC 12345
@@ -221,6 +229,12 @@ hl order twap-cancel BTC 12345
 ### Stake-Based Orders
 
 `--stake` is used by the CLI to derive order size.
+
+Mode-specific behavior:
+
+- `buy` / `sell` derive spot order size
+- `long` / `short` derive perp order size
+- `--leverage`, `--cross`, `--isolated`, and `--reduce-only` are only supported with `long` / `short`
 
 - If you pass `--stake 50 --leverage 20`, the CLI derives size from about `$1000`
   of notional (`50 * 20`).
@@ -244,17 +258,17 @@ So:
   shown later in `hl account positions`
 
 ```bash
-# No --leverage: CLI sizes the order from about $50 of BTC notional
-hl order market buy BTC --stake 50
+# Spot buy: CLI sizes the order from about $50 of spot notional
+hl order market buy @142 --stake 50
 
-# No --leverage: CLI sizes the order from about $50 of ETH notional
-hl order market buy ETH --stake 50
+# Spot sell: CLI sizes the order from about $50 of spot notional
+hl order market sell @142 --stake 50
 
-# With --leverage 20: CLI sizes the order from about $1,000 of BTC notional
-hl order limit buy BTC 65000 --stake 50 --leverage 20 --cross
+# Perp long with leverage 20: CLI sizes the order from about $1,000 of BTC notional
+hl order limit long BTC 65000 --stake 50 --leverage 20 --cross
 
-# With --leverage 20: CLI sizes the order from about $1,000 of BTC notional
-hl order market buy BTC --stake 50 --leverage 20 --isolated
+# Perp long with leverage 20: CLI sizes the order from about $1,000 of BTC notional
+hl order market long BTC --stake 50 --leverage 20 --isolated
 
 # Example:
 # BTC at 69,000
@@ -266,8 +280,8 @@ hl order market buy BTC --stake 50 --leverage 20 --isolated
 # - --stake 50 --leverage 20   => about 0.2475 ETH
 
 # Set leverage and margin mode at order time
-hl order limit buy BTC 65000 --stake 50 --leverage 20 --cross
-hl order market buy BTC --stake 50 --leverage 20 --isolated
+hl order limit long BTC 65000 --stake 50 --leverage 20 --cross
+hl order market long BTC --stake 50 --leverage 20 --isolated
 
 # Set leverage directly
 hl order set-leverage BTC 20 --cross

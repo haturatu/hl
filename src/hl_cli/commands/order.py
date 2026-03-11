@@ -15,6 +15,8 @@ from ..utils.output import out, out_success
 from ..utils.validators import (
     normalize_side,
     normalize_tif,
+    side_is_buy,
+    side_uses_spot,
     validate_positive_integer,
     validate_positive_number,
 )
@@ -222,7 +224,7 @@ def _normalize_size_for_coin(context: CLIContext, coin: str, raw_size: float) ->
         raise RuntimeError(f"size too small for {coin}; minimum unit is 1e-{sz_decimals}")
     return float(d)
 
-def _resolve_tradable_coin(context: CLIContext, coin: str) -> str:
+def _resolve_perp_coin(context: CLIContext, coin: str) -> str:
     info = context.get_public_client()
     target = coin.strip()
     if not target:
@@ -268,6 +270,21 @@ def _resolve_tradable_coin(context: CLIContext, coin: str) -> str:
         perp_candidates.sort(key=lambda x: (x[1], x[0]), reverse=True)
         return perp_candidates[0][0]
 
+    raise RuntimeError(f"Coin not found: {coin}")
+
+def _resolve_spot_coin(context: CLIContext, coin: str) -> str:
+    info = context.get_public_client()
+    target = coin.strip()
+    if not target:
+        raise RuntimeError("coin must not be empty")
+
+    mids = info.all_mids()
+    if target in mids and ("/" in target or target.startswith("@")):
+        return target
+    up = target.upper()
+    if up in mids and ("/" in up or up.startswith("@")):
+        return up
+
     spot_meta = info.spot_meta()
     tokens = spot_meta.get("tokens", [])
     universe = spot_meta.get("universe", [])
@@ -280,33 +297,62 @@ def _resolve_tradable_coin(context: CLIContext, coin: str) -> str:
         ),
         None,
     )
-    if token_index is not None:
-        preferred = next(
-            (
-                str(p.get("name"))
-                for p in universe
-                if isinstance(p.get("tokens"), list)
-                and len(p["tokens"]) >= 2
-                and int(p["tokens"][0]) == token_index
-                and int(p["tokens"][1]) == int(usdc_index)
-            ),
-            None,
-        )
-        if preferred and preferred in mids:
-            return preferred
-        fallback = next(
-            (
-                str(p.get("name"))
-                for p in universe
-                if isinstance(p.get("tokens"), list)
-                and token_index in [int(x) for x in p["tokens"]]
-            ),
-            None,
-        )
-        if fallback and fallback in mids:
-            return fallback
+    if token_index is None:
+        raise RuntimeError(f"Spot market not found: {coin}")
 
-    raise RuntimeError(f"Coin not found: {coin}")
+    preferred = next(
+        (
+            str(p.get("name"))
+            for p in universe
+            if isinstance(p.get("tokens"), list)
+            and len(p["tokens"]) >= 2
+            and int(p["tokens"][0]) == token_index
+            and int(p["tokens"][1]) == int(usdc_index)
+        ),
+        None,
+    )
+    if preferred and preferred in mids:
+        return preferred
+
+    fallback = next(
+        (
+            str(p.get("name"))
+            for p in universe
+            if isinstance(p.get("tokens"), list)
+            and token_index in [int(x) for x in p["tokens"]]
+            and str(p.get("name")) in mids
+        ),
+        None,
+    )
+    if fallback:
+        return fallback
+
+    raise RuntimeError(f"Spot market not found: {coin}")
+
+def _resolve_coin_for_side(context: CLIContext, side: str, coin: str) -> str:
+    if side_uses_spot(side):
+        return _resolve_spot_coin(context, coin)
+    return _resolve_perp_coin(context, coin)
+
+def _resolve_tradable_coin(context: CLIContext, coin: str) -> str:
+    try:
+        return _resolve_perp_coin(context, coin)
+    except RuntimeError:
+        return _resolve_spot_coin(context, coin)
+
+def _validate_side_mode_args(
+    *,
+    side: str,
+    leverage: Optional[int],
+    cross: bool,
+    isolated: bool,
+    reduce_only: bool = False,
+) -> None:
+    if side_uses_spot(side):
+        if leverage is not None or cross or isolated:
+            raise RuntimeError("--leverage/--cross/--isolated are only supported with long/short")
+        if reduce_only:
+            raise RuntimeError("--reduce-only is only supported with long/short")
 
 def _mids_for_coin(context: CLIContext, coin: str) -> dict[str, str]:
     info = context.get_public_client()
@@ -477,9 +523,16 @@ def order_limit(
     isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
-    resolved_coin = _resolve_tradable_coin(context, coin)
+    _validate_side_mode_args(
+        side=side,
+        leverage=leverage,
+        cross=cross,
+        isolated=isolated,
+        reduce_only=reduce_only,
+    )
+    resolved_coin = _resolve_coin_for_side(context, side, coin)
     client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
-    is_buy = normalize_side(side) == "buy"
+    is_buy = side_is_buy(side)
     limit_price = validate_positive_number(price, "price")
     if stake is not None:
         position_notional = _stake_to_position_notional(stake, leverage)
@@ -530,9 +583,16 @@ def order_market(
     isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
-    resolved_coin = _resolve_tradable_coin(context, coin)
+    _validate_side_mode_args(
+        side=side,
+        leverage=leverage,
+        cross=cross,
+        isolated=isolated,
+        reduce_only=reduce_only,
+    )
+    resolved_coin = _resolve_coin_for_side(context, side, coin)
     client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
-    is_buy = normalize_side(side) == "buy"
+    is_buy = side_is_buy(side)
     cfg = get_order_config()
     slippage_pct = (slippage if slippage is not None else float(cfg["slippage"])) / 100
     mids_cache: Optional[dict[str, str]] = None
@@ -696,8 +756,10 @@ def order_twap(
     isolated: bool = False,
 ) -> None:
     context = _ctx(ctx)
-    resolved_coin = _resolve_tradable_coin(context, coin)
-    is_buy = normalize_side(side) == "buy"
+    if side_uses_spot(side):
+        raise RuntimeError("TWAP is only supported with long/short")
+    resolved_coin = _resolve_coin_for_side(context, side, coin)
+    is_buy = side_is_buy(side)
     if stake is not None:
         mids = _mids_for_coin(context, resolved_coin)
         mid = float(mids[resolved_coin])

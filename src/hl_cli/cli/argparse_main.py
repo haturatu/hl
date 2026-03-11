@@ -215,7 +215,12 @@ def _build_parser() -> argparse.ArgumentParser:
         sub,
         "order",
         "Order management and trading",
-        ["hl order ls", "hl order limit buy 0.01 BTC 60000", "hl order limit buy BTC 65000 --stake 50", "hl order twap sell 1 BTC 30"],
+        [
+            "hl order ls",
+            "hl order limit buy 0.01 @142 88.5           # spot",
+            "hl order limit long 0.01 BTC 60000          # perp",
+            "hl order twap short 1 BTC 30                # perp",
+        ],
     )
     ord_sub = order.add_subparsers(dest="order_command")
     ord_ls = add_cmd_parser(ord_sub, "ls", "List open orders", ["hl order ls", "hl order ls --watch"])
@@ -225,14 +230,14 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_limit = add_cmd_parser(
         ord_sub,
         "limit",
-        "Place limit order",
+        "Place limit order (buy/sell = spot, long/short = perp)",
         [
-            "hl order limit buy 0.001 BTC 65000",
-            "hl order limit buy BTC 65000 --stake 50        # size is derived from about $50 notional when --leverage is omitted",
-            "hl order limit buy BTC 65000 --stake 50",
-            "hl order limit buy BTC 65000 --stake 50 --leverage 20 --cross  # about $1000 position notional",
-            "hl order limit sell 0.1 ETH 3500 --tif Gtc",
-            "hl order limit long 1 SOL 100 --reduce-only",
+            "hl order limit buy 0.01 @142 88.5             # spot",
+            "hl order limit sell 0.01 @142 95              # spot",
+            "hl order limit long 0.001 BTC 65000           # perp",
+            "hl order limit long BTC 65000 --stake 50 --leverage 20 --cross",
+            "hl order limit short 0.1 ETH 3500 --tif Gtc   # perp",
+            "hl order limit long 1 SOL 100 --reduce-only   # perp",
         ],
     )
     ord_limit.add_argument("side")
@@ -249,13 +254,13 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_market = add_cmd_parser(
         ord_sub,
         "market",
-        "Place market order",
+        "Place market order (buy/sell = spot, long/short/close = perp)",
         [
-            "hl order market buy 0.001 BTC",
-            "hl order market buy BTC --stake 50              # size is derived from about $50 notional when --leverage is omitted",
-            "hl order market buy BTC --stake 50 --leverage 20 --cross  # about $1000 position notional",
-            "hl order market sell 0.1 ETH --slippage 0.5",
-            "hl order market close ETH",
+            "hl order market buy @142 --stake 10             # spot",
+            "hl order market sell @142 --stake 10            # spot",
+            "hl order market long BTC --stake 50 --leverage 20 --cross   # perp",
+            "hl order market short ETH 0.1 --slippage 0.5    # perp",
+            "hl order market close ETH                       # perp",
             "hl order market close xyz:TSLA",
             "hl order market close ETH --ratio 0.5",
         ],
@@ -263,25 +268,25 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_market.add_argument("side")
     ord_market.add_argument("a", nargs="?")
     ord_market.add_argument("b", nargs="?")
-    ord_market.add_argument("--reduce-only", action="store_true")
+    ord_market.add_argument("--reduce-only", action="store_true", help="Perp only: reduce-only for long/short")
     ord_market.add_argument("--slippage", type=float)
-    ord_market.add_argument("--stake", type=float, help="USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only")
-    ord_market.add_argument("--leverage", type=int, help="Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation")
-    ord_market.add_argument("--cross", action="store_true", help="Use cross margin with --leverage")
-    ord_market.add_argument("--isolated", action="store_true", help="Use isolated margin with --leverage")
-    ord_market.add_argument("--ratio", type=float, default=1.0, help="Close ratio (0 < ratio <= 1) for market close")
+    ord_market.add_argument("--stake", type=float, help="USD used to derive order size. For buy/sell this is spot size; for long/short this is perp margin.")
+    ord_market.add_argument("--leverage", type=int, help="Perp only: optional leverage update before placing long/short")
+    ord_market.add_argument("--cross", action="store_true", help="Perp only: use cross margin with --leverage")
+    ord_market.add_argument("--isolated", action="store_true", help="Perp only: use isolated margin with --leverage")
+    ord_market.add_argument("--ratio", type=float, default=1.0, help="Perp close only: close ratio (0 < ratio <= 1)")
 
     ord_twap = add_cmd_parser(
         ord_sub,
         "twap",
-        "Place TWAP order",
+        "Place TWAP order (perp only: use long/short)",
         [
-            "hl order twap buy 1 BTC 30",
-            "hl order twap buy 0 BTC 30 --stake 5            # size is derived from about $5 total notional when --leverage is omitted",
-            "hl order twap buy 0 BTC 30 --stake 5 --leverage 20 --cross  # about $100 total notional",
-            "hl order twap sell 2 ETH 5,10 --randomize",
-            "hl order twap sell 1 BTC 30 --leverage 20 --isolated",
-            "hl order twap sell 1 BTC 30 --reduce-only",
+            "hl order twap long 1 BTC 30",
+            "hl order twap long 0 BTC 30 --stake 5",
+            "hl order twap long 0 BTC 30 --stake 5 --leverage 20 --cross",
+            "hl order twap short 2 ETH 5,10 --randomize",
+            "hl order twap short 1 BTC 30 --leverage 20 --isolated",
+            "hl order twap short 1 BTC 30 --reduce-only",
         ],
     )
     ord_twap.add_argument("side")
