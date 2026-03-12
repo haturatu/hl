@@ -20,6 +20,7 @@ from ..services.account_fetch import (
     fetch_portfolio_async as _service_fetch_portfolio_async,
     fetch_positions_async as _service_fetch_positions_async,
 )
+from ..types import BalancesPayload, OpenOrderRow, PortfolioPayload, PositionsPayload
 from ..utils.output import out
 from ..utils.validators import normalize_private_key, validate_address
 from ..utils.watch import watch_loop
@@ -175,10 +176,10 @@ def account_remove(ctx: Any, alias: str, force: bool = False) -> None:
 def _account_perp_dexs(context: CLIContext) -> list[str]:
     return _service_account_perp_dexs(context)
 
-def _fetch_positions(context: CLIContext, user: str) -> dict[str, Any]:
+def _fetch_positions(context: CLIContext, user: str) -> PositionsPayload:
     return run_blocking(_fetch_positions_async(context, user))
 
-async def _fetch_positions_async(context: CLIContext, user: str) -> dict[str, Any]:
+async def _fetch_positions_async(context: CLIContext, user: str) -> PositionsPayload:
     return await _service_fetch_positions_async(context, user)
 
 @cli_command
@@ -210,7 +211,7 @@ def account_positions(ctx: Any, user: Optional[str] = None, watch: bool = False)
     out(_fetch_positions(context, address), _json(ctx))
     _done(ctx)
 
-def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
+def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
     orders = context.get_public_client().open_orders(user)
     return [
         {
@@ -242,13 +243,13 @@ def account_orders(ctx: Any, user: Optional[str] = None, watch: bool = False) ->
     out(_fetch_orders(context, address), _json(ctx))
     _done(ctx)
 
-def _fetch_balances(context: CLIContext, user: str) -> dict[str, Any]:
+def _fetch_balances(context: CLIContext, user: str) -> BalancesPayload:
     return run_blocking(_fetch_balances_async(context, user))
 
-async def _fetch_balances_async(context: CLIContext, user: str) -> dict[str, Any]:
+async def _fetch_balances_async(context: CLIContext, user: str) -> BalancesPayload:
     return await _service_fetch_balances_async(context, user)
 
-async def _fetch_portfolio_async(context: CLIContext, user: str) -> dict[str, Any]:
+async def _fetch_portfolio_async(context: CLIContext, user: str) -> PortfolioPayload:
     return await _service_fetch_portfolio_async(context, user)
 
 @cli_command
@@ -274,7 +275,7 @@ def account_portfolio(ctx: Any, user: Optional[str] = None, watch: bool = False)
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
 
-    def fetch() -> dict[str, Any]:
+    def fetch() -> PortfolioPayload:
         return run_blocking(_fetch_portfolio_async(context, address))
 
     if watch:

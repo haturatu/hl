@@ -2,6 +2,8 @@ from typing import Any, Callable
 
 from rich.table import Table
 
+from ..types import MarketRow
+
 def market_table_columns(*, include_category: bool, show_perp_only_fields: bool) -> list[str]:
     columns = ["Coin", "Pair", "Price", "24h%", "Vol"]
     if include_category:
@@ -11,7 +13,7 @@ def market_table_columns(*, include_category: bool, show_perp_only_fields: bool)
     return columns
 
 def market_table_row_values(
-    row: dict[str, Any],
+    row: MarketRow,
     *,
     include_category: bool,
     show_perp_only_fields: bool,

@@ -5,6 +5,7 @@ from ..cli.markets_tui import run_markets_tui
 from ..cli.runtime import cli_command, console, run_blocking
 from ..core.context import CLIContext
 from ..core.testnet_policy import includes_builder_perps
+from ..types import MarketRow, MarketsPayload
 from ..utils.output import out
 from .common import _ctx, _done, _format_price, _format_rate_pct, _format_usd, _json
 
@@ -25,13 +26,13 @@ def _to_float(value: Any) -> float | None:
     except Exception:
         return None
 
-def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> dict[str, list[dict[str, Any]]]:
+def _sort_market_rows(rows: MarketsPayload, sort_by: str) -> MarketsPayload:
     sort_by = _normalize_market_sort(sort_by)
 
-    def numeric_value(row: dict[str, Any], key: str) -> float | None:
+    def numeric_value(row: MarketRow, key: str) -> float | None:
         return _to_float(row.get(key))
 
-    def sort_rows(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def sort_rows(items: list[MarketRow]) -> list[MarketRow]:
         if sort_by == "coin":
             return sorted(items, key=lambda row: str(row.get("coin", "")).lower())
 
@@ -44,7 +45,7 @@ def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> di
         }
         field = field_map[sort_by]
 
-        def key(row: dict[str, Any]) -> tuple[int, float]:
+        def key(row: MarketRow) -> tuple[int, float]:
             value = numeric_value(row, field)
             if value is None:
                 return (1, 0.0)
@@ -58,8 +59,8 @@ def _sort_market_rows(rows: dict[str, list[dict[str, Any]]], sort_by: str) -> di
     }
 
 def _filter_market_rows_by_category(
-    rows: dict[str, list[dict[str, Any]]], category: Optional[str]
-) -> dict[str, list[dict[str, Any]]]:
+    rows: MarketsPayload, category: Optional[str]
+) -> MarketsPayload:
     if category is None or category == "*":
         return rows
     needle = category.strip().lower()
@@ -71,12 +72,12 @@ def _filter_market_rows_by_category(
     }
 
 def _prepare_market_output(
-    rows: dict[str, list[dict[str, Any]]], include_category: bool
-) -> dict[str, list[dict[str, Any]]]:
+    rows: MarketsPayload, include_category: bool
+) -> MarketsPayload:
     if include_category:
         return rows
 
-    def strip_category(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def strip_category(items: list[MarketRow]) -> list[MarketRow]:
         return [{k: v for k, v in row.items() if k not in {"category", "marketType"}} for row in items]
 
     return {
@@ -112,7 +113,7 @@ def _watch_markets_prices(
         as_json=as_json,
     )
 
-def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) -> dict[str, list[dict[str, Any]]]:
+def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) -> MarketsPayload:
     return run_blocking(_build_market_rows_async(context, spot_only, perp_only))
 
 def _safe_token_name(tokens: list[dict[str, Any]], index: Any, default: str = "?") -> str:
@@ -122,7 +123,7 @@ def _safe_token_name(tokens: list[dict[str, Any]], index: Any, default: str = "?
 
 async def _build_market_rows_async(
     context: CLIContext, spot_only: bool, perp_only: bool
-) -> dict[str, list[dict[str, Any]]]:
+) -> MarketsPayload:
     info = context.get_public_client()
     spot_task = asyncio.to_thread(info.spot_meta_and_asset_ctxs)
     perp_categories_task = asyncio.to_thread(info.post, "/info", {"type": "perpCategories"})
@@ -133,8 +134,8 @@ async def _build_market_rows_async(
         if isinstance(coin, str) and isinstance(category, str)
     }
 
-    spot_rows: list[dict[str, Any]] = []
-    perp_rows: list[dict[str, Any]] = []
+    spot_rows: list[MarketRow] = []
+    perp_rows: list[MarketRow] = []
 
     if not perp_only:
         ctx_map = {c["coin"]: c for c in spot_ctxs}

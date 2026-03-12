@@ -4,6 +4,7 @@ from typing import Any, Iterable
 from rich.console import Console
 from rich.table import Table
 
+from ..types import BalancesPayload, MarketsPayload, OpenOrderRow, PortfolioPayload, PositionsPayload
 from .market_table import (
     build_market_table,
     market_table_columns,
@@ -99,7 +100,7 @@ def _render_known(data: Any) -> bool:
 
     return False
 
-def _print_positions_payload(data: dict[str, Any]) -> None:
+def _print_positions_payload(data: PositionsPayload) -> None:
     positions = data.get("positions", [])
     if positions:
         tbl = Table(title="Positions")
@@ -125,7 +126,7 @@ def _print_positions_payload(data: dict[str, Any]) -> None:
         console.print(f"- Account value: {_fmt_usd(ms.get('accountValue'))}")
         console.print(f"- Total margin used: {_fmt_usd(ms.get('totalMarginUsed'))}")
 
-def _print_balances_payload(data: dict[str, Any]) -> None:
+def _print_balances_payload(data: BalancesPayload) -> None:
     console.print("Balances")
     console.print(f"- Perp balance: {_fmt_usd(data.get('perpBalance'))}")
     balances = data.get("spotBalances", [])
@@ -200,7 +201,7 @@ def _print_exchange_response(resp: dict[str, Any]) -> None:
 def _print_open_orders_list(data: list[Any]) -> bool:
     if not all(isinstance(x, dict) for x in data):
         return False
-    rows = [x for x in data if {"oid", "coin", "side", "sz", "limitPx"}.issubset(x.keys())]
+    rows: list[OpenOrderRow] = [x for x in data if {"oid", "coin", "side", "sz", "limitPx"}.issubset(x.keys())]
     if len(rows) != len(data):
         return False
     if not rows:
@@ -253,14 +254,14 @@ def _print_account_record(data: dict[str, Any]) -> bool:
         console.print(f"API wallet: {data.get('api_wallet_public_key')}")
     return True
 
-def _print_portfolio_payload(data: dict[str, Any]) -> None:
+def _print_portfolio_payload(data: PortfolioPayload) -> None:
     console.print("Portfolio")
     console.print(f"- Account value: {_fmt_usd(data.get('accountValue'))}")
     console.print(f"- Margin used: {_fmt_usd(data.get('totalMarginUsed'))}")
     _print_positions_payload({"positions": data.get("positions", [])})
     _print_balances_payload({"spotBalances": data.get("spotBalances", []), "perpBalance": data.get("accountValue")})
 
-def _print_markets_payload(data: dict[str, Any]) -> None:
+def _print_markets_payload(data: MarketsPayload) -> None:
     perp = data.get("perpMarkets", [])
     spot = data.get("spotMarkets", [])
     show_perp_category = any("category" in r for r in perp)

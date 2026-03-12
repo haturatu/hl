@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
 
+from ..types import MarketKind, MarketRow, MarketsPayload
 from ..utils.market_table import (
     build_market_table,
     market_table_columns,
@@ -19,9 +20,7 @@ from ..utils.market_table import (
     market_table_widths,
 )
 
-MarketsRows = dict[str, list[dict[str, Any]]]
-
-def _market_row_dex(row: dict[str, Any]) -> str:
+def _market_row_dex(row: MarketRow) -> str:
     if row.get("marketType") == "spot":
         return ""
     coin = str(row.get("coin", ""))
@@ -29,7 +28,7 @@ def _market_row_dex(row: dict[str, Any]) -> str:
         return coin.split(":", 1)[0]
     return ""
 
-def _market_row_kind(row: dict[str, Any]) -> Literal["perp", "spot"]:
+def _market_row_kind(row: MarketRow) -> MarketKind:
     return "spot" if row.get("marketType") == "spot" else "perp"
 
 class MarketsTuiState:
@@ -42,7 +41,7 @@ class MarketsTuiState:
         self.search_query = ""
         self.search_buffer = ""
 
-    def rows(self, rows: MarketsRows) -> list[dict[str, Any]]:
+    def rows(self, rows: MarketsPayload) -> list[MarketRow]:
         merged = [*rows["perpMarkets"], *rows["spotMarkets"]]
         if self.scope == "all":
             return merged
@@ -95,7 +94,7 @@ def _read_key(timeout: float = 0.0) -> Optional[str]:
     third = sys.stdin.read(1)
     return first + second + third
 
-def _matches_query(row: dict[str, Any], query: str) -> bool:
+def _matches_query(row: MarketRow, query: str) -> bool:
     needle = query.strip().lower()
     if not needle:
         return False
@@ -106,7 +105,7 @@ def _matches_query(row: dict[str, Any], query: str) -> bool:
     ]
     return any(needle in value.lower() for value in haystacks)
 
-def _find_match(rows: list[dict[str, Any]], start: int, query: str, *, forward: bool) -> Optional[int]:
+def _find_match(rows: list[MarketRow], start: int, query: str, *, forward: bool) -> Optional[int]:
     if not rows or not query.strip():
         return None
     total = len(rows)
@@ -120,7 +119,7 @@ def _find_match(rows: list[dict[str, Any]], start: int, query: str, *, forward: 
 
 def _jump_to_match(
     state: MarketsTuiState,
-    rows: MarketsRows,
+    rows: MarketsPayload,
     *,
     forward: bool,
     wrap_from_current: bool,
@@ -138,7 +137,7 @@ def _jump_to_match(
     state.selected = match
     state.clamp(len(current_rows), window_size)
 
-def _handle_key(key: Optional[str], state: MarketsTuiState, rows: MarketsRows, window_size: int) -> bool:
+def _handle_key(key: Optional[str], state: MarketsTuiState, rows: MarketsPayload, window_size: int) -> bool:
     current_rows = state.rows(rows)
     total = len(current_rows)
     if state.mode == "search":
@@ -219,7 +218,7 @@ def _handle_key(key: Optional[str], state: MarketsTuiState, rows: MarketsRows, w
     return False
 
 def _render_table(
-    rows: MarketsRows,
+    rows: MarketsPayload,
     include_category: bool,
     *,
     console: Console,
@@ -274,11 +273,11 @@ def _render_table(
 def run_markets_tui(
     *,
     console: Console,
-    rows: MarketsRows,
+    rows: MarketsPayload,
     include_category: bool,
     next_mids: Callable[[str], dict[str, Any]],
-    sort_rows: Callable[[MarketsRows], MarketsRows],
-    prepare_output: Callable[[MarketsRows], MarketsRows],
+    sort_rows: Callable[[MarketsPayload], MarketsPayload],
+    prepare_output: Callable[[MarketsPayload], MarketsPayload],
     format_price: Callable[[Any], str],
     format_usd: Callable[[Any], str],
     format_rate_pct: Callable[[Any], str],
@@ -292,7 +291,7 @@ def run_markets_tui(
     if not dexes:
         return
 
-    def refresh_rows() -> MarketsRows:
+    def refresh_rows() -> MarketsPayload:
         return sort_rows(rows)
 
     if as_json:

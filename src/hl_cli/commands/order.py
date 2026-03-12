@@ -17,6 +17,7 @@ from ..infra.twap_registry import (
     mark_twap_cancelled,
     register_twap_order,
 )
+from ..types import OpenOrderRow
 from ..utils.output import out, out_success
 from ..utils.validators import (
     normalize_side,
@@ -478,7 +479,7 @@ async def _fetch_all_perp_states(info: Any, user: str, dexs: list[str]) -> list[
         *(asyncio.to_thread(info.user_state, user, dex) for dex in dexs)
     )
 
-def _fetch_orders(context: CLIContext, user: str) -> list[dict[str, Any]]:
+def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
     orders = context.get_public_client().open_orders(user)
     return [
         {
