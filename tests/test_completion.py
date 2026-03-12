@@ -25,6 +25,8 @@ class CompletionTests(unittest.TestCase):
         self.assertIn('"order")', result.stdout)
         self.assertIn('"order market")', result.stdout)
         self.assertIn("buy sell long short close", result.stdout)
+        self.assertIn("--json --testnet -h --help --reduce-only --slippage", result.stdout)
+        self.assertIn("--spot-only --perp-only --category --sort-by -w --watch", result.stdout)
 
 
 if __name__ == "__main__":

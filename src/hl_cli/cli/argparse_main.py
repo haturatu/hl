@@ -44,6 +44,49 @@ NESTED_SUBCOMMANDS: dict[str, list[str]] = {
     "order twap": ["long", "short"],
 }
 GLOBAL_OPTIONS = ["--json", "--testnet", "-h", "--help"]
+PATH_OPTIONS: dict[str, list[str]] = {
+    "": GLOBAL_OPTIONS,
+    "account positions": ["--user", "-w", "--watch"],
+    "account orders": ["--user", "-w", "--watch"],
+    "account balances": ["--user", "-w", "--watch"],
+    "account portfolio": ["--user", "-w", "--watch"],
+    "account remove": ["-f", "--force"],
+    "order ls": ["--user", "-w", "--watch"],
+    "order limit": [
+        "--tif",
+        "--reduce-only",
+        "--stake",
+        "--leverage",
+        "--cross",
+        "--isolated",
+    ],
+    "order market": [
+        "--reduce-only",
+        "--slippage",
+        "--stake",
+        "--leverage",
+        "--cross",
+        "--isolated",
+        "--ratio",
+    ],
+    "order twap": [
+        "--stake",
+        "--reduce-only",
+        "--randomize",
+        "--leverage",
+        "--cross",
+        "--isolated",
+    ],
+    "order tpsl": ["--tp", "--sl", "--ratio"],
+    "order cancel-all": ["-y", "--yes", "--coin"],
+    "order set-leverage": ["--cross", "--isolated"],
+    "order configure": ["--slippage"],
+    "asset price": ["-w", "--watch"],
+    "asset book": ["-w", "--watch"],
+    "asset leverage": ["--user", "-w", "--watch"],
+    "markets ls": ["--spot-only", "--perp-only", "--category", "--sort-by", "-w", "--watch"],
+    "markets search": ["--spot-only", "--perp-only", "--category", "--sort-by"],
+}
 
 
 def _ctx(json_output: bool, testnet: bool) -> SimpleNamespace:
@@ -62,13 +105,19 @@ def _exit_with_error(msg: str, code: int = 2) -> None:
 
 
 def _bash_completion_script() -> str:
-    top_level = " ".join(TOP_LEVEL_COMMANDS)
     global_options = " ".join(GLOBAL_OPTIONS)
     completion_paths = {"": TOP_LEVEL_COMMANDS, **SUBCOMMANDS, **NESTED_SUBCOMMANDS}
-    case_lines = "\n".join(
+    word_case_lines = "\n".join(
         [
             f'        "{name}") COMPREPLY=( $(compgen -W "{ " ".join(values) }" -- "$cur") ) ;;'
             for name, values in completion_paths.items()
+        ]
+    )
+    option_case_lines = "\n".join(
+        [
+            f'        "{name}") COMPREPLY=( $(compgen -W "{ " ".join(GLOBAL_OPTIONS + values) }" -- "$cur") ) ;;'
+            for name, values in PATH_OPTIONS.items()
+            if name
         ]
     )
     return dedent(
@@ -95,12 +144,16 @@ def _bash_completion_script() -> str:
             done
 
             if [[ "$cur" == -* ]]; then
-                COMPREPLY=( $(compgen -W "{global_options}" -- "$cur") )
+                case "$path" in
+        "") COMPREPLY=( $(compgen -W "{global_options}" -- "$cur") ) ;;
+{option_case_lines}
+                    *) COMPREPLY=( $(compgen -W "{global_options}" -- "$cur") ) ;;
+                esac
                 return 0
             fi
 
             case "$path" in
-{case_lines}
+{word_case_lines}
                 *)
                     COMPREPLY=()
                     ;;
