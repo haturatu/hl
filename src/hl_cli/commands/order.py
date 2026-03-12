@@ -1,8 +1,9 @@
 import asyncio
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
-from typing import Any, Optional
+from typing import Optional
 
+from hyperliquid.info import Info
 from hyperliquid.utils.constants import MAINNET_API_URL
 from hyperliquid.utils.signing import float_to_wire, get_timestamp_ms, sign_l1_action
 
@@ -12,18 +13,24 @@ from ..core.context import CLIContext
 from ..core.order_config import get_order_config, update_order_config
 from ..core.testnet_policy import uses_main_perp_only
 from ..infra.twap_registry import (
+    TwapRecord,
     find_twap_order,
     list_twap_orders,
     mark_twap_cancelled,
     register_twap_order,
 )
 from ..types import (
+    AllMids,
     ClearinghouseState,
     DisplayValue,
+    ExchangeEnvelope,
     ExchangeOrderStatus,
+    ExchangeSuccessEnvelope,
     ExchangeStatusFilled,
     ExchangeStatusResting,
-    ExchangeSuccessEnvelope,
+    JsonObject,
+    PerpDexInfo,
+    PerpMeta,
     OpenOrderRow,
     TableCell,
 )
@@ -79,7 +86,9 @@ def _extract_statuses(result: ExchangeSuccessEnvelope) -> list[ExchangeOrderStat
     except Exception:
         return []
 
-def _print_leverage_update(lev_result: Optional[dict[str, Any]], coin: str, leverage: Optional[int], is_cross: bool) -> None:
+def _print_leverage_update(
+    lev_result: ExchangeSuccessEnvelope | None, coin: str, leverage: Optional[int], is_cross: bool
+) -> None:
     if not lev_result:
         return
     if lev_result.get("status") == "ok":
@@ -187,7 +196,7 @@ def _update_leverage_with_fallback(
     leverage: int,
     is_cross: bool,
     emit_warning: bool = True,
-) -> dict[str, Any]:
+ ) -> ExchangeEnvelope:
     wallet = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     result = wallet.update_leverage(leverage, coin, is_cross=is_cross)
     if not _is_invalid_leverage_response(result):
@@ -209,7 +218,7 @@ def _maybe_update_leverage(
     cross: bool,
     isolated: bool,
     emit_warning: bool = True,
-) -> Optional[dict[str, Any]]:
+) -> ExchangeSuccessEnvelope | None:
     if cross and isolated:
         raise RuntimeError("Use only one of --cross or --isolated")
     if leverage is None:
@@ -370,7 +379,7 @@ def _validate_side_mode_args(
         if reduce_only:
             raise RuntimeError("--reduce-only is only supported with long/short")
 
-def _mids_for_coin(context: CLIContext, coin: str) -> dict[str, str]:
+def _mids_for_coin(context: CLIContext, coin: str) -> AllMids:
     info = context.get_public_client()
     if ":" in coin:
         dex = coin.split(":", 1)[0]
@@ -394,7 +403,7 @@ def _place_native_twap(
     minutes: int,
     reduce_only: bool,
     randomize: bool,
-) -> dict[str, Any]:
+) -> ExchangeSuccessEnvelope:
     exchange = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     asset = exchange.info.name_to_asset(coin)
     action = {
@@ -419,7 +428,7 @@ def _place_native_twap(
     )
     return exchange._post_action(action, signature, nonce)  # noqa: SLF001
 
-def _cancel_native_twap(*, context: CLIContext, coin: str, twap_id: int) -> dict[str, Any]:
+def _cancel_native_twap(*, context: CLIContext, coin: str, twap_id: int) -> ExchangeSuccessEnvelope:
     exchange = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     asset = exchange.info.name_to_asset(coin)
     action = {"type": "twapCancel", "a": asset, "t": twap_id}
@@ -472,18 +481,18 @@ def _resolve_position_for_close(context: CLIContext, coin: str) -> tuple[str, fl
     resolved_coin, szi = matches[0]
     return resolved_coin, abs(szi), (szi < 0)
 
-def _fetch_builder_resolution_data(info: Any, dex_name: str) -> tuple[dict[str, Any], dict[str, Any]]:
+def _fetch_builder_resolution_data(info: Info, dex_name: str) -> tuple[PerpMeta, AllMids]:
     return info.meta(dex=dex_name), info.all_mids(dex=dex_name)
 
 async def _fetch_all_builder_resolution_data(
-    info: Any,
+    info: Info,
     dex_names: list[str],
-) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+) -> list[tuple[PerpMeta, AllMids]]:
     return await asyncio.gather(
         *(asyncio.to_thread(_fetch_builder_resolution_data, info, dex_name) for dex_name in dex_names)
     )
 
-async def _fetch_all_perp_states(info: Any, user: str, dexs: list[str]) -> list[ClearinghouseState]:
+async def _fetch_all_perp_states(info: Info, user: str, dexs: list[str]) -> list[ClearinghouseState]:
     return await asyncio.gather(
         *(asyncio.to_thread(info.user_state, user, dex) for dex in dexs)
     )
@@ -517,7 +526,7 @@ def _extract_twap_id(response: ExchangeSuccessEnvelope) -> Optional[int]:
     except (KeyError, TypeError, ValueError):
         return None
 
-def _render_twap_orders(title: str, records: list[Any]) -> None:
+def _render_twap_orders(title: str, records: list[TwapRecord]) -> None:
     _render_table(
         title,
         ["TWAP ID", "Coin", "Side", "Total Size", "Minutes", "Submitted"],
@@ -758,7 +767,7 @@ def order_tpsl(
     client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
     protected_size = _normalize_size_for_coin(context, resolved_coin, position_size * ratio)
 
-    results: dict[str, Any] = {
+    results: JsonObject = {
         "coin": coin,
         "resolvedCoin": resolved_coin,
         "closeSide": "buy" if is_buy_to_close else "sell",

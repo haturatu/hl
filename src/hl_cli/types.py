@@ -242,6 +242,9 @@ class ExchangeErrorEnvelope(TypedDict):
     response: str
 
 
+ExchangeEnvelope: TypeAlias = ExchangeSuccessEnvelope | ExchangeErrorEnvelope
+
+
 class TwapCancelPayload(TypedDict):
     coin: str
     twapId: int

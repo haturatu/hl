@@ -1,13 +1,13 @@
 import asyncio
 import json
 from queue import Empty, Queue
-from typing import Any, Optional
+from typing import Optional
 
 from hyperliquid.info import Info
 from hyperliquid.utils.types import L2BookData
 
 from ..cli.runtime import CommandContext, cli_command, console, run_blocking
-from ..types import AllMids, ClearinghouseState, PerpMeta
+from ..types import AllMids, AssetLeveragePayload, ClearinghouseState, PerpMeta
 from ..utils.output import out
 from ..utils.validators import validate_address
 from ..utils.watch import watch_loop
@@ -89,7 +89,7 @@ def asset_leverage(ctx: CommandContext, coin: str, user: Optional[str] = None, w
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
 
-    def fetch() -> dict[str, Any]:
+    def fetch() -> AssetLeveragePayload:
         info = context.get_public_client()
         state, meta, mids = run_blocking(_fetch_asset_leverage_inputs_async(info, address))
         pos = next((p["position"] for p in state["assetPositions"] if p["position"]["coin"] == coin), None)
