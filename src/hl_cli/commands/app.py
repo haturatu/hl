@@ -19,7 +19,12 @@ from .account import (
     account_remove,
     account_set_default,
 )
-from .asset import _fetch_asset_leverage_inputs_async, asset_book, asset_leverage, asset_price
+from .asset import (
+    _fetch_asset_leverage_inputs_async,
+    asset_book,
+    asset_leverage,
+    asset_price,
+)
 from .common import (
     _confirm,
     _ctx,

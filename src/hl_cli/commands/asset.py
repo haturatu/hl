@@ -14,6 +14,7 @@ from ..utils.watch import watch_loop
 from .common import _ctx, _done, _format_price, _json, _render_table
 from .order import _mids_for_coin, _resolve_tradable_coin
 
+
 @cli_command
 def asset_price(ctx: CommandContext, coin: str, watch: bool = False) -> None:
     context = _ctx(ctx)
@@ -26,10 +27,15 @@ def asset_price(ctx: CommandContext, coin: str, watch: bool = False) -> None:
         return {"coin": coin, "price": mids[resolved_coin]}
 
     if watch:
-        watch_loop(fetch, lambda d: print(f"{d['coin']}: {_format_price(d['price'])}"), as_json=_json(ctx))
+        watch_loop(
+            fetch,
+            lambda d: print(f"{d['coin']}: {_format_price(d['price'])}"),
+            as_json=_json(ctx),
+        )
         return
     out(fetch(), _json(ctx))
     _done(ctx)
+
 
 @cli_command
 def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
@@ -41,14 +47,22 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
     def render_book(book: L2BookData) -> None:
         bids = book.get("levels", [[], []])[0][:10]
         asks = book.get("levels", [[], []])[1][:10]
-        _render_table("Asks", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in asks[::-1]])
-        _render_table("Bids", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in bids])
+        _render_table(
+            "Asks",
+            ["Price", "Size", "N"],
+            [[x["px"], x["sz"], x["n"]] for x in asks[::-1]],
+        )
+        _render_table(
+            "Bids", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in bids]
+        )
 
     if watch:
         stream_info = Info(context.base_url, skip_ws=False)
         updates: Queue[L2BookData] = Queue()
         subscription = {"type": "l2Book", "coin": coin}
-        subscription_id = stream_info.subscribe(subscription, lambda msg: updates.put(msg["data"]))
+        subscription_id = stream_info.subscribe(
+            subscription, lambda msg: updates.put(msg["data"])
+        )
 
         try:
             initial = fetch()
@@ -84,15 +98,27 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
     out(fetch(), _json(ctx))
     _done(ctx)
 
+
 @cli_command
-def asset_leverage(ctx: CommandContext, coin: str, user: Optional[str] = None, watch: bool = False) -> None:
+def asset_leverage(
+    ctx: CommandContext, coin: str, user: Optional[str] = None, watch: bool = False
+) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
 
     def fetch() -> AssetLeveragePayload:
         info = context.get_public_client()
-        state, meta, mids = run_blocking(_fetch_asset_leverage_inputs_async(info, address))
-        pos = next((p["position"] for p in state["assetPositions"] if p["position"]["coin"] == coin), None)
+        state, meta, mids = run_blocking(
+            _fetch_asset_leverage_inputs_async(info, address)
+        )
+        pos = next(
+            (
+                p["position"]
+                for p in state["assetPositions"]
+                if p["position"]["coin"] == coin
+            ),
+            None,
+        )
         market = next((m for m in meta["universe"] if m["name"] == coin), None)
         account_value = float(state["marginSummary"]["accountValue"])
         margin_used = float(state["marginSummary"]["totalMarginUsed"])
@@ -113,6 +139,7 @@ def asset_leverage(ctx: CommandContext, coin: str, user: Optional[str] = None, w
         return
     out(fetch(), _json(ctx))
     _done(ctx)
+
 
 async def _fetch_asset_leverage_inputs_async(
     info: Info, address: str

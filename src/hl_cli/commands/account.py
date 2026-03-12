@@ -34,6 +34,7 @@ from .common import (
     _render_table,
 )
 
+
 def _print_account_add_guide() -> None:
     console.print("\n[bold]Wallet Setup Guide[/bold]")
     console.print("1. To add an API wallet:")
@@ -50,6 +51,7 @@ def _print_account_add_guide() -> None:
     console.print(" - [bold]hl account ls[/bold]")
     console.print(" - [bold]hl account set-default <alias>[/bold]\n")
 
+
 @cli_command
 def account_add(ctx: CommandContext) -> None:
     context = _ctx(ctx)
@@ -63,7 +65,11 @@ def account_add(ctx: CommandContext) -> None:
     choice = input("Select setup method [1/2]: ").strip()
 
     if choice == "1":
-        api_url = "https://app.hyperliquid-testnet.xyz/API" if is_testnet else "https://app.hyperliquid.xyz/API"
+        api_url = (
+            "https://app.hyperliquid-testnet.xyz/API"
+            if is_testnet
+            else "https://app.hyperliquid.xyz/API"
+        )
         print(f"\nVisit {api_url} and generate an API wallet key.\n")
         api_key = normalize_private_key(input("Enter API wallet private key: ").strip())
 
@@ -71,7 +77,9 @@ def account_add(ctx: CommandContext) -> None:
         api_wallet_addr = EthAccount.from_key(api_key).address
         role = info.user_role(api_wallet_addr)
         if role.get("role") != "agent":
-            raise RuntimeError("This key is not registered as an API wallet (agent) on Hyperliquid")
+            raise RuntimeError(
+                "This key is not registered as an API wallet (agent) on Hyperliquid"
+            )
         user_address = role["data"]["user"]
 
         while True:
@@ -84,7 +92,9 @@ def account_add(ctx: CommandContext) -> None:
                 continue
             break
 
-        set_as_default = get_account_count(network) == 0 or _confirm("Set as default account?", True)
+        set_as_default = get_account_count(network) == 0 or _confirm(
+            "Set as default account?", True
+        )
         created = create_account(
             alias=alias,
             network=network,
@@ -108,7 +118,9 @@ def account_add(ctx: CommandContext) -> None:
                 print(f'Alias "{alias}" is already taken.')
                 continue
             break
-        set_as_default = get_account_count(network) == 0 or _confirm("Set as default account?", True)
+        set_as_default = get_account_count(network) == 0 or _confirm(
+            "Set as default account?", True
+        )
         created = create_account(
             alias=alias,
             network=network,
@@ -120,6 +132,7 @@ def account_add(ctx: CommandContext) -> None:
     else:
         raise RuntimeError("Invalid selection")
     _done(ctx)
+
 
 @cli_command
 def account_ls(ctx: CommandContext) -> None:
@@ -140,12 +153,17 @@ def account_ls(ctx: CommandContext) -> None:
                         a.alias,
                         _format_address(a.user_address),
                         a.type,
-                        _format_address(a.api_wallet_public_key) if a.api_wallet_public_key else "-",
+                        (
+                            _format_address(a.api_wallet_public_key)
+                            if a.api_wallet_public_key
+                            else "-"
+                        ),
                     ]
                     for a in accounts
                 ],
             )
     _done(ctx)
+
 
 @cli_command
 def account_set_default(ctx: CommandContext, alias: str) -> None:
@@ -157,6 +175,7 @@ def account_set_default(ctx: CommandContext, alias: str) -> None:
     out(updated.__dict__, _json(ctx))
     _done(ctx)
 
+
 @cli_command
 def account_remove(ctx: CommandContext, alias: str, force: bool = False) -> None:
     context = _ctx(ctx)
@@ -164,7 +183,9 @@ def account_remove(ctx: CommandContext, alias: str, force: bool = False) -> None
     existing = get_account_by_alias(alias, network)
     if not existing:
         raise RuntimeError(f'Account with alias "{alias}" not found')
-    if not force and not _confirm(f'Remove account "{alias}" ({existing.user_address})?', False):
+    if not force and not _confirm(
+        f'Remove account "{alias}" ({existing.user_address})?', False
+    ):
         print("Cancelled.")
         raise SystemExit(0)
     ok = delete_account(alias, network)
@@ -173,17 +194,23 @@ def account_remove(ctx: CommandContext, alias: str, force: bool = False) -> None
     out({"deleted": True, "alias": alias}, _json(ctx))
     _done(ctx)
 
+
 def _account_perp_dexs(context: CLIContext) -> list[str]:
     return _service_account_perp_dexs(context)
+
 
 def _fetch_positions(context: CLIContext, user: str) -> PositionsPayload:
     return run_blocking(_fetch_positions_async(context, user))
 
+
 async def _fetch_positions_async(context: CLIContext, user: str) -> PositionsPayload:
     return await _service_fetch_positions_async(context, user)
 
+
 @cli_command
-def account_positions(ctx: CommandContext, user: Optional[str] = None, watch: bool = False) -> None:
+def account_positions(
+    ctx: CommandContext, user: Optional[str] = None, watch: bool = False
+) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
     if watch:
@@ -211,6 +238,7 @@ def account_positions(ctx: CommandContext, user: Optional[str] = None, watch: bo
     out(_fetch_positions(context, address), _json(ctx))
     _done(ctx)
 
+
 def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
     orders = context.get_public_client().open_orders(user)
     return [
@@ -225,8 +253,11 @@ def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
         for o in orders
     ]
 
+
 @cli_command
-def account_orders(ctx: CommandContext, user: Optional[str] = None, watch: bool = False) -> None:
+def account_orders(
+    ctx: CommandContext, user: Optional[str] = None, watch: bool = False
+) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
     if watch:
@@ -235,7 +266,17 @@ def account_orders(ctx: CommandContext, user: Optional[str] = None, watch: bool 
             lambda rows: _render_table(
                 "Open Orders",
                 ["OID", "Coin", "Side", "Size", "Price", "Time"],
-                [[r["oid"], r["coin"], r["side"], r["sz"], r["limitPx"], r["timestamp"]] for r in rows],
+                [
+                    [
+                        r["oid"],
+                        r["coin"],
+                        r["side"],
+                        r["sz"],
+                        r["limitPx"],
+                        r["timestamp"],
+                    ]
+                    for r in rows
+                ],
             ),
             as_json=_json(ctx),
         )
@@ -243,17 +284,23 @@ def account_orders(ctx: CommandContext, user: Optional[str] = None, watch: bool 
     out(_fetch_orders(context, address), _json(ctx))
     _done(ctx)
 
+
 def _fetch_balances(context: CLIContext, user: str) -> BalancesPayload:
     return run_blocking(_fetch_balances_async(context, user))
+
 
 async def _fetch_balances_async(context: CLIContext, user: str) -> BalancesPayload:
     return await _service_fetch_balances_async(context, user)
 
+
 async def _fetch_portfolio_async(context: CLIContext, user: str) -> PortfolioPayload:
     return await _service_fetch_portfolio_async(context, user)
 
+
 @cli_command
-def account_balances(ctx: CommandContext, user: Optional[str] = None, watch: bool = False) -> None:
+def account_balances(
+    ctx: CommandContext, user: Optional[str] = None, watch: bool = False
+) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
     if watch:
@@ -262,7 +309,10 @@ def account_balances(ctx: CommandContext, user: Optional[str] = None, watch: boo
             lambda data: _render_table(
                 f"Balances (Perp USD: {data['perpBalance']})",
                 ["Token", "Total", "Hold", "Available"],
-                [[b["token"], b["total"], b["hold"], b["available"]] for b in data["spotBalances"]],
+                [
+                    [b["token"], b["total"], b["hold"], b["available"]]
+                    for b in data["spotBalances"]
+                ],
             ),
             as_json=_json(ctx),
         )
@@ -270,8 +320,11 @@ def account_balances(ctx: CommandContext, user: Optional[str] = None, watch: boo
     out(_fetch_balances(context, address), _json(ctx))
     _done(ctx)
 
+
 @cli_command
-def account_portfolio(ctx: CommandContext, user: Optional[str] = None, watch: bool = False) -> None:
+def account_portfolio(
+    ctx: CommandContext, user: Optional[str] = None, watch: bool = False
+) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
 
@@ -286,14 +339,24 @@ def account_portfolio(ctx: CommandContext, user: Optional[str] = None, watch: bo
                     f"Portfolio AccountValue={d['accountValue']} MarginUsed={d['totalMarginUsed']}",
                     ["Coin", "Size", "Entry", "Value", "PnL", "Leverage"],
                     [
-                        [p["coin"], p["size"], p["entryPx"], p["positionValue"], p["unrealizedPnl"], p["leverage"]]
+                        [
+                            p["coin"],
+                            p["size"],
+                            p["entryPx"],
+                            p["positionValue"],
+                            p["unrealizedPnl"],
+                            p["leverage"],
+                        ]
                         for p in d["positions"]
                     ],
                 ),
                 _render_table(
                     "Spot Balances",
                     ["Token", "Total", "Hold", "Available"],
-                    [[b["token"], b["total"], b["hold"], b.get("available", "-")] for b in d["spotBalances"]],
+                    [
+                        [b["token"], b["total"], b["hold"], b.get("available", "-")]
+                        for b in d["spotBalances"]
+                    ],
                 ),
             ),
             as_json=_json(ctx),

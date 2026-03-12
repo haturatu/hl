@@ -13,12 +13,16 @@ from .common import _ctx, _done, _format_price, _format_rate_pct, _format_usd, _
 
 MARKET_SORT_FIELDS = {"volume", "oi", "price", "change", "funding", "coin"}
 
+
 def _normalize_market_sort(sort_by: str) -> str:
     value = sort_by.strip().lower()
     if value not in MARKET_SORT_FIELDS:
         allowed = ", ".join(sorted(MARKET_SORT_FIELDS))
-        raise RuntimeError(f"invalid sort field: {sort_by} (expected one of: {allowed})")
+        raise RuntimeError(
+            f"invalid sort field: {sort_by} (expected one of: {allowed})"
+        )
     return value
+
 
 def _to_float(value: str | float | int | None) -> float | None:
     if value is None:
@@ -27,6 +31,7 @@ def _to_float(value: str | float | int | None) -> float | None:
         return float(value)
     except Exception:
         return None
+
 
 def _sort_market_rows(rows: MarketsPayload, sort_by: str) -> MarketsPayload:
     sort_by = _normalize_market_sort(sort_by)
@@ -60,6 +65,7 @@ def _sort_market_rows(rows: MarketsPayload, sort_by: str) -> MarketsPayload:
         "spotMarkets": sort_rows(rows["spotMarkets"]),
     }
 
+
 def _filter_market_rows_by_category(
     rows: MarketsPayload, category: Optional[str]
 ) -> MarketsPayload:
@@ -69,9 +75,14 @@ def _filter_market_rows_by_category(
     if not needle:
         return rows
     return {
-        "perpMarkets": [row for row in rows["perpMarkets"] if str(row.get("category", "")).lower() == needle],
+        "perpMarkets": [
+            row
+            for row in rows["perpMarkets"]
+            if str(row.get("category", "")).lower() == needle
+        ],
         "spotMarkets": [],
     }
+
 
 def _prepare_market_output(
     rows: MarketsPayload, include_category: bool
@@ -80,12 +91,16 @@ def _prepare_market_output(
         return rows
 
     def strip_category(items: list[MarketRow]) -> list[MarketRow]:
-        return [{k: v for k, v in row.items() if k not in {"category", "marketType"}} for row in items]
+        return [
+            {k: v for k, v in row.items() if k not in {"category", "marketType"}}
+            for row in items
+        ]
 
     return {
         "perpMarkets": strip_category(rows["perpMarkets"]),
         "spotMarkets": strip_category(rows["spotMarkets"]),
     }
+
 
 def _watch_markets_prices(
     context: CLIContext,
@@ -108,28 +123,41 @@ def _watch_markets_prices(
         include_category=include_category,
         next_mids=lambda dex: info.all_mids(dex=dex) if dex else info.all_mids(),
         sort_rows=lambda current: _sort_market_rows(current, sort_by),
-        prepare_output=lambda current: _prepare_market_output(current, include_category),
+        prepare_output=lambda current: _prepare_market_output(
+            current, include_category
+        ),
         format_price=_format_price,
         format_usd=_format_usd,
         format_rate_pct=_format_rate_pct,
         as_json=as_json,
     )
 
-def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) -> MarketsPayload:
+
+def _build_market_rows(
+    context: CLIContext, spot_only: bool, perp_only: bool
+) -> MarketsPayload:
     return run_blocking(_build_market_rows_async(context, spot_only, perp_only))
 
-def _safe_token_name(tokens: list[SpotTokenInfo], index: object, default: str = "?") -> str:
+
+def _safe_token_name(
+    tokens: list[SpotTokenInfo], index: object, default: str = "?"
+) -> str:
     if not isinstance(index, int) or index < 0 or index >= len(tokens):
         return default
     return str(tokens[index].get("name", default))
+
 
 async def _build_market_rows_async(
     context: CLIContext, spot_only: bool, perp_only: bool
 ) -> MarketsPayload:
     info = context.get_public_client()
     spot_task = asyncio.to_thread(info.spot_meta_and_asset_ctxs)
-    perp_categories_task = asyncio.to_thread(info.post, "/info", {"type": "perpCategories"})
-    (spot_meta, spot_ctxs), perp_categories_raw = await asyncio.gather(spot_task, perp_categories_task)
+    perp_categories_task = asyncio.to_thread(
+        info.post, "/info", {"type": "perpCategories"}
+    )
+    (spot_meta, spot_ctxs), perp_categories_raw = await asyncio.gather(
+        spot_task, perp_categories_task
+    )
     perp_categories = {
         str(coin): str(category)
         for coin, category in perp_categories_raw
@@ -175,7 +203,9 @@ async def _build_market_rows_async(
     if not spot_only:
         perp_meta, perp_ctxs = await asyncio.to_thread(info.meta_and_asset_ctxs)
         tokens = spot_meta.get("tokens", [])
-        collateral = _safe_token_name(tokens, perp_meta.get("collateralToken", 0), "USD")
+        collateral = _safe_token_name(
+            tokens, perp_meta.get("collateralToken", 0), "USD"
+        )
         for i, market in enumerate(perp_meta["universe"]):
             if market.get("isDelisted"):
                 continue
@@ -197,7 +227,9 @@ async def _build_market_rows_async(
                     "volumeUsd": ctx_row.get("dayNtlVlm", "?"),
                     "funding": ctx_row.get("funding"),
                     "openInterest": ctx_row.get("openInterest"),
-                    "openInterestUsd": (oi_raw * mark) if oi_raw is not None and mark > 0 else None,
+                    "openInterestUsd": (
+                        (oi_raw * mark) if oi_raw is not None and mark > 0 else None
+                    ),
                 }
             )
 
@@ -205,7 +237,10 @@ async def _build_market_rows_async(
         if includes_builder_perps(context.config.testnet):
             dexs = [dex for dex in context.get_perp_dexs() if dex]
             builder_results = await asyncio.gather(
-                *(asyncio.to_thread(_fetch_builder_market_data, info, dex) for dex in dexs)
+                *(
+                    asyncio.to_thread(_fetch_builder_market_data, info, dex)
+                    for dex in dexs
+                )
             )
             for meta, ctxs in builder_results:
                 dex = str(meta.get("dex", ""))
@@ -235,16 +270,24 @@ async def _build_market_rows_async(
                             "volumeUsd": ctx_row.get("dayNtlVlm", "?"),
                             "funding": ctx_row.get("funding"),
                             "openInterest": ctx_row.get("openInterest"),
-                            "openInterestUsd": (oi_raw * mark) if oi_raw is not None and mark > 0 else None,
+                            "openInterestUsd": (
+                                (oi_raw * mark)
+                                if oi_raw is not None and mark > 0
+                                else None
+                            ),
                         }
                     )
 
     return {"perpMarkets": perp_rows, "spotMarkets": spot_rows}
 
-def _fetch_builder_market_data(info: Info, dex: str) -> tuple[PerpMeta, list[PerpAssetCtx]]:
+
+def _fetch_builder_market_data(
+    info: Info, dex: str
+) -> tuple[PerpMeta, list[PerpAssetCtx]]:
     meta, ctxs = info.post("/info", {"type": "metaAndAssetCtxs", "dex": dex})
     meta["dex"] = dex
     return meta, ctxs
+
 
 @cli_command
 def markets_ls(
@@ -272,7 +315,9 @@ def markets_ls(
     out(
         _prepare_market_output(
             _sort_market_rows(
-                _filter_market_rows_by_category(_build_market_rows(context, spot_only, perp_only), category),
+                _filter_market_rows_by_category(
+                    _build_market_rows(context, spot_only, perp_only), category
+                ),
                 sort_by,
             ),
             include_category,
@@ -280,6 +325,7 @@ def markets_ls(
         _json(ctx),
     )
     _done(ctx)
+
 
 @cli_command
 def markets_search(
@@ -296,7 +342,9 @@ def markets_search(
         raise RuntimeError("query must not be empty")
     rows = _prepare_market_output(
         _sort_market_rows(
-            _filter_market_rows_by_category(_build_market_rows(_ctx(ctx), spot_only, perp_only), category),
+            _filter_market_rows_by_category(
+                _build_market_rows(_ctx(ctx), spot_only, perp_only), category
+            ),
             sort_by,
         ),
         include_category,

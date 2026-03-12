@@ -7,7 +7,15 @@ from hyperliquid.info import Info
 from hyperliquid.utils.constants import MAINNET_API_URL
 from hyperliquid.utils.signing import float_to_wire, get_timestamp_ms, sign_l1_action
 
-from ..cli.runtime import CommandContext, cli_command, cli_context, confirm, finish_command, json_output_enabled, render_table
+from ..cli.runtime import (
+    CommandContext,
+    cli_command,
+    cli_context,
+    confirm,
+    finish_command,
+    json_output_enabled,
+    render_table,
+)
 from ..cli.runtime import run_blocking
 from ..core.context import CLIContext
 from ..core.order_config import get_order_config, update_order_config
@@ -45,30 +53,38 @@ from ..utils.validators import (
 )
 from ..utils.watch import watch_loop
 
+
 def _ctx(ctx: CommandContext) -> CLIContext:
     return cli_context(ctx)
+
 
 def _json(ctx: CommandContext) -> bool:
     return json_output_enabled(ctx)
 
+
 def _done(ctx: CommandContext) -> None:
     finish_command(ctx)
+
 
 def _wallet_perp_dexs_for_coin(coin: str) -> Optional[list[str]]:
     if ":" not in coin:
         return None
     return [coin.split(":", 1)[0]]
 
+
 def _close_position_perp_dexs(context: CLIContext) -> list[str]:
     if uses_main_perp_only(context.config.testnet):
         return [""]
     return context.get_perp_dexs()
 
+
 def _confirm(message: str, default: bool = False) -> bool:
     return confirm(message, default)
 
+
 def _render_table(title: str, columns: list[str], rows: list[list[TableCell]]) -> None:
     render_table(title, columns, rows)
+
 
 def _format_usd(value: DisplayValue) -> str:
     try:
@@ -76,6 +92,7 @@ def _format_usd(value: DisplayValue) -> str:
         return f"${n:,.2f}"
     except Exception:
         return f"${value}" if value is not None else "-"
+
 
 def _extract_statuses(result: ExchangeSuccessEnvelope) -> list[ExchangeOrderStatus]:
     try:
@@ -86,16 +103,23 @@ def _extract_statuses(result: ExchangeSuccessEnvelope) -> list[ExchangeOrderStat
     except Exception:
         return []
 
+
 def _print_leverage_update(
-    lev_result: ExchangeSuccessEnvelope | None, coin: str, leverage: Optional[int], is_cross: bool
+    lev_result: ExchangeSuccessEnvelope | None,
+    coin: str,
+    leverage: Optional[int],
+    is_cross: bool,
 ) -> None:
     if not lev_result:
         return
     if lev_result.get("status") == "ok":
         if leverage is not None:
-            print(f"⚙️  Leverage set: {coin} {leverage}x ({'cross' if is_cross else 'isolated'})")
+            print(
+                f"⚙️  Leverage set: {coin} {leverage}x ({'cross' if is_cross else 'isolated'})"
+            )
     else:
         print(f"⚠️  Leverage update failed: {lev_result.get('response')}")
+
 
 def _print_order_feedback(
     *,
@@ -127,7 +151,9 @@ def _print_order_feedback(
         if stake is not None:
             print(f"Your stake (margin): {_format_usd(stake)}")
             if "minimum value" in first_error.lower():
-                print("\nTip: Increase --stake or --leverage so position value is at least $10.")
+                print(
+                    "\nTip: Increase --stake or --leverage so position value is at least $10."
+                )
         return
 
     if first_filled is not None:
@@ -148,6 +174,7 @@ def _print_order_feedback(
 
     print("ℹ️  Request completed.")
 
+
 def _parse_twap_interval(value: str) -> tuple[int, int]:
     parts = [x.strip() for x in value.split(",")]
     if len(parts) == 1:
@@ -161,7 +188,10 @@ def _parse_twap_interval(value: str) -> tuple[int, int]:
         if minutes <= 0 or orders <= 0:
             raise ValueError("minutes and orders must be positive integers")
         return minutes * orders, orders
-    raise ValueError("interval must be '<minutes>' or '<slice_minutes>,<orders>' (e.g. 30 or 5,10)")
+    raise ValueError(
+        "interval must be '<minutes>' or '<slice_minutes>,<orders>' (e.g. 30 or 5,10)"
+    )
+
 
 def _get_max_leverage_for_coin(context: CLIContext, coin: str) -> int:
     info = context.get_public_client()
@@ -182,12 +212,14 @@ def _get_max_leverage_for_coin(context: CLIContext, coin: str) -> int:
             return int(max_lev)
     raise RuntimeError(f"Could not resolve max leverage for {coin}")
 
+
 def _is_invalid_leverage_response(resp: object) -> bool:
     if not isinstance(resp, dict):
         return False
     if str(resp.get("status", "")).lower() != "err":
         return False
     return "invalid leverage value" in str(resp.get("response", "")).lower()
+
 
 def _update_leverage_with_fallback(
     *,
@@ -196,7 +228,7 @@ def _update_leverage_with_fallback(
     leverage: int,
     is_cross: bool,
     emit_warning: bool = True,
- ) -> ExchangeEnvelope:
+) -> ExchangeEnvelope:
     wallet = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     result = wallet.update_leverage(leverage, coin, is_cross=is_cross)
     if not _is_invalid_leverage_response(result):
@@ -209,6 +241,7 @@ def _update_leverage_with_fallback(
             f"Retrying with max leverage {max_lev}."
         )
     return wallet.update_leverage(max_lev, coin, is_cross=is_cross)
+
 
 def _maybe_update_leverage(
     *,
@@ -236,6 +269,7 @@ def _maybe_update_leverage(
         emit_warning=emit_warning,
     )
 
+
 def _normalize_size_for_coin(context: CLIContext, coin: str, raw_size: float) -> float:
     if raw_size <= 0:
         raise RuntimeError("size must be a positive number")
@@ -246,8 +280,11 @@ def _normalize_size_for_coin(context: CLIContext, coin: str, raw_size: float) ->
     q = Decimal(1).scaleb(-sz_decimals)
     d = Decimal(str(raw_size)).quantize(q, rounding=ROUND_DOWN)
     if d <= 0:
-        raise RuntimeError(f"size too small for {coin}; minimum unit is 1e-{sz_decimals}")
+        raise RuntimeError(
+            f"size too small for {coin}; minimum unit is 1e-{sz_decimals}"
+        )
     return float(d)
+
 
 def _resolve_perp_coin(context: CLIContext, coin: str) -> str:
     info = context.get_public_client()
@@ -278,7 +315,9 @@ def _resolve_perp_coin(context: CLIContext, coin: str) -> str:
         for dex_item in info.perp_dexs()
         if isinstance(dex_item, dict) and dex_item.get("name")
     ]
-    builder_market_data = run_blocking(_fetch_all_builder_resolution_data(info, dex_names))
+    builder_market_data = run_blocking(
+        _fetch_all_builder_resolution_data(info, dex_names)
+    )
     for meta, dex_mids in builder_market_data:
         for m in meta.get("universe", []):
             full_name = str(m.get("name", ""))
@@ -297,6 +336,7 @@ def _resolve_perp_coin(context: CLIContext, coin: str) -> str:
 
     raise RuntimeError(f"Coin not found: {coin}")
 
+
 def _resolve_spot_coin(context: CLIContext, coin: str) -> str:
     info = context.get_public_client()
     target = coin.strip()
@@ -313,12 +353,15 @@ def _resolve_spot_coin(context: CLIContext, coin: str) -> str:
     spot_meta = info.spot_meta()
     tokens = spot_meta.get("tokens", [])
     universe = spot_meta.get("universe", [])
-    usdc_index = next((t.get("index") for t in tokens if str(t.get("name", "")).upper() == "USDC"), 0)
+    usdc_index = next(
+        (t.get("index") for t in tokens if str(t.get("name", "")).upper() == "USDC"), 0
+    )
     token_index = next(
         (
             int(t.get("index"))
             for t in tokens
-            if str(t.get("name", "")).upper() == up or str(t.get("fullName", "")).upper() == up
+            if str(t.get("name", "")).upper() == up
+            or str(t.get("fullName", "")).upper() == up
         ),
         None,
     )
@@ -354,16 +397,19 @@ def _resolve_spot_coin(context: CLIContext, coin: str) -> str:
 
     raise RuntimeError(f"Spot market not found: {coin}")
 
+
 def _resolve_coin_for_side(context: CLIContext, side: str, coin: str) -> str:
     if side_uses_spot(side):
         return _resolve_spot_coin(context, coin)
     return _resolve_perp_coin(context, coin)
+
 
 def _resolve_tradable_coin(context: CLIContext, coin: str) -> str:
     try:
         return _resolve_perp_coin(context, coin)
     except RuntimeError:
         return _resolve_spot_coin(context, coin)
+
 
 def _validate_side_mode_args(
     *,
@@ -375,9 +421,12 @@ def _validate_side_mode_args(
 ) -> None:
     if side_uses_spot(side):
         if leverage is not None or cross or isolated:
-            raise RuntimeError("--leverage/--cross/--isolated are only supported with long/short")
+            raise RuntimeError(
+                "--leverage/--cross/--isolated are only supported with long/short"
+            )
         if reduce_only:
             raise RuntimeError("--reduce-only is only supported with long/short")
+
 
 def _mids_for_coin(context: CLIContext, coin: str) -> AllMids:
     info = context.get_public_client()
@@ -386,6 +435,7 @@ def _mids_for_coin(context: CLIContext, coin: str) -> AllMids:
         return info.all_mids(dex=dex)
     return info.all_mids()
 
+
 def _stake_to_position_notional(stake: float, leverage: Optional[int]) -> float:
     if stake <= 0:
         raise RuntimeError("stake must be a positive number")
@@ -393,6 +443,7 @@ def _stake_to_position_notional(stake: float, leverage: Optional[int]) -> float:
     if lev <= 0:
         raise RuntimeError("leverage must be a positive integer when used with --stake")
     return stake * float(lev)
+
 
 def _place_native_twap(
     *,
@@ -428,7 +479,10 @@ def _place_native_twap(
     )
     return exchange._post_action(action, signature, nonce)  # noqa: SLF001
 
-def _cancel_native_twap(*, context: CLIContext, coin: str, twap_id: int) -> ExchangeSuccessEnvelope:
+
+def _cancel_native_twap(
+    *, context: CLIContext, coin: str, twap_id: int
+) -> ExchangeSuccessEnvelope:
     exchange = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     asset = exchange.info.name_to_asset(coin)
     action = {"type": "twapCancel", "a": asset, "t": twap_id}
@@ -443,7 +497,10 @@ def _cancel_native_twap(*, context: CLIContext, coin: str, twap_id: int) -> Exch
     )
     return exchange._post_action(action, signature, nonce)  # noqa: SLF001
 
-def _resolve_position_for_close(context: CLIContext, coin: str) -> tuple[str, float, bool]:
+
+def _resolve_position_for_close(
+    context: CLIContext, coin: str
+) -> tuple[str, float, bool]:
     user = context.get_wallet_address()
     info = context.get_public_client()
     target = coin.strip()
@@ -453,7 +510,9 @@ def _resolve_position_for_close(context: CLIContext, coin: str) -> tuple[str, fl
     with_prefix = ":" in target
     up = target.upper()
     matches: list[tuple[str, float]] = []
-    states = run_blocking(_fetch_all_perp_states(info, user, _close_position_perp_dexs(context)))
+    states = run_blocking(
+        _fetch_all_perp_states(info, user, _close_position_perp_dexs(context))
+    )
     for state in states:
         for row in state.get("assetPositions", []):
             pos = row.get("position", {})
@@ -481,21 +540,32 @@ def _resolve_position_for_close(context: CLIContext, coin: str) -> tuple[str, fl
     resolved_coin, szi = matches[0]
     return resolved_coin, abs(szi), (szi < 0)
 
-def _fetch_builder_resolution_data(info: Info, dex_name: str) -> tuple[PerpMeta, AllMids]:
+
+def _fetch_builder_resolution_data(
+    info: Info, dex_name: str
+) -> tuple[PerpMeta, AllMids]:
     return info.meta(dex=dex_name), info.all_mids(dex=dex_name)
+
 
 async def _fetch_all_builder_resolution_data(
     info: Info,
     dex_names: list[str],
 ) -> list[tuple[PerpMeta, AllMids]]:
     return await asyncio.gather(
-        *(asyncio.to_thread(_fetch_builder_resolution_data, info, dex_name) for dex_name in dex_names)
+        *(
+            asyncio.to_thread(_fetch_builder_resolution_data, info, dex_name)
+            for dex_name in dex_names
+        )
     )
 
-async def _fetch_all_perp_states(info: Info, user: str, dexs: list[str]) -> list[ClearinghouseState]:
+
+async def _fetch_all_perp_states(
+    info: Info, user: str, dexs: list[str]
+) -> list[ClearinghouseState]:
     return await asyncio.gather(
         *(asyncio.to_thread(info.user_state, user, dex) for dex in dexs)
     )
+
 
 def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
     orders = context.get_public_client().open_orders(user)
@@ -511,8 +581,10 @@ def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
         for o in orders
     ]
 
+
 def _network_name(context: CLIContext) -> str:
     return "testnet" if context.config.testnet else "mainnet"
+
 
 def _extract_twap_id(response: ExchangeSuccessEnvelope) -> Optional[int]:
     status = response.get("response", {}).get("data", {}).get("status", {})
@@ -525,6 +597,7 @@ def _extract_twap_id(response: ExchangeSuccessEnvelope) -> Optional[int]:
         return int(running["twapId"])
     except (KeyError, TypeError, ValueError):
         return None
+
 
 def _render_twap_orders(title: str, records: list[TwapRecord]) -> None:
     _render_table(
@@ -543,6 +616,7 @@ def _render_twap_orders(title: str, records: list[TwapRecord]) -> None:
         ],
     )
 
+
 @cli_command
 def order_ls(
     ctx: CommandContext,
@@ -558,7 +632,17 @@ def order_ls(
             lambda rows: _render_table(
                 "Open Orders",
                 ["OID", "Coin", "Side", "Size", "Price", "Time"],
-                [[r["oid"], r["coin"], r["side"], r["sz"], r["limitPx"], r["timestamp"]] for r in rows],
+                [
+                    [
+                        r["oid"],
+                        r["coin"],
+                        r["side"],
+                        r["sz"],
+                        r["limitPx"],
+                        r["timestamp"],
+                    ]
+                    for r in rows
+                ],
             ),
             as_json=_json(ctx),
         )
@@ -566,7 +650,13 @@ def order_ls(
     orders = _fetch_orders(context, address)
     if _json(ctx):
         if tracked_twaps:
-            out({"openOrders": orders, "trackedTwaps": [record.__dict__ for record in tracked_twaps]}, True)
+            out(
+                {
+                    "openOrders": orders,
+                    "trackedTwaps": [record.__dict__ for record in tracked_twaps],
+                },
+                True,
+            )
         else:
             out(orders, True)
     else:
@@ -574,6 +664,7 @@ def order_ls(
             _render_twap_orders("Tracked TWAP Orders", tracked_twaps)
         out(orders, False)
     _done(ctx)
+
 
 @cli_command
 def order_limit(
@@ -598,7 +689,9 @@ def order_limit(
         reduce_only=reduce_only,
     )
     resolved_coin = _resolve_coin_for_side(context, side, coin)
-    client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
+    client = context.get_wallet_client(
+        perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin)
+    )
     is_buy = side_is_buy(side)
     limit_price = validate_positive_number(price, "price")
     if stake is not None:
@@ -624,7 +717,14 @@ def order_limit(
         reduce_only=reduce_only,
     )
     if _json(ctx):
-        out({"leverageUpdate": lev_result, "order": result} if lev_result is not None else result, True)
+        out(
+            (
+                {"leverageUpdate": lev_result, "order": result}
+                if lev_result is not None
+                else result
+            ),
+            True,
+        )
     else:
         _print_leverage_update(lev_result, coin, leverage, cross or not isolated)
         _print_order_feedback(
@@ -635,6 +735,7 @@ def order_limit(
             stake=stake,
         )
     _done(ctx)
+
 
 @cli_command
 def order_market(
@@ -658,7 +759,9 @@ def order_market(
         reduce_only=reduce_only,
     )
     resolved_coin = _resolve_coin_for_side(context, side, coin)
-    client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
+    client = context.get_wallet_client(
+        perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin)
+    )
     is_buy = side_is_buy(side)
     cfg = get_order_config()
     slippage_pct = (slippage if slippage is not None else float(cfg["slippage"])) / 100
@@ -681,7 +784,11 @@ def order_market(
     )
 
     if reduce_only:
-        mids = mids_cache if mids_cache is not None else _mids_for_coin(context, resolved_coin)
+        mids = (
+            mids_cache
+            if mids_cache is not None
+            else _mids_for_coin(context, resolved_coin)
+        )
         mid = float(mids[resolved_coin])
         price = mid * (1 + slippage_pct) if is_buy else mid * (1 - slippage_pct)
         result = client.order(
@@ -701,7 +808,14 @@ def order_market(
         )
 
     if _json(ctx):
-        out({"leverageUpdate": lev_result, "order": result} if lev_result is not None else result, True)
+        out(
+            (
+                {"leverageUpdate": lev_result, "order": result}
+                if lev_result is not None
+                else result
+            ),
+            True,
+        )
     else:
         _print_leverage_update(lev_result, coin, leverage, cross or not isolated)
         _print_order_feedback(
@@ -712,6 +826,7 @@ def order_market(
             stake=stake,
         )
     _done(ctx)
+
 
 @cli_command
 def order_market_close(
@@ -724,7 +839,9 @@ def order_market_close(
         raise RuntimeError("ratio must be > 0 and <= 1")
     context = _ctx(ctx)
     resolved_coin, order_size, is_buy = _resolve_position_for_close(context, coin)
-    client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
+    client = context.get_wallet_client(
+        perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin)
+    )
     close_size = order_size * ratio
     cfg = get_order_config()
     slippage_pct = (slippage if slippage is not None else float(cfg["slippage"])) / 100
@@ -745,6 +862,7 @@ def order_market_close(
         )
     _done(ctx)
 
+
 @cli_command
 def order_tpsl(
     ctx: CommandContext,
@@ -763,9 +881,15 @@ def order_tpsl(
         raise RuntimeError("ratio must be > 0 and <= 1")
 
     context = _ctx(ctx)
-    resolved_coin, position_size, is_buy_to_close = _resolve_position_for_close(context, coin)
-    client = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin))
-    protected_size = _normalize_size_for_coin(context, resolved_coin, position_size * ratio)
+    resolved_coin, position_size, is_buy_to_close = _resolve_position_for_close(
+        context, coin
+    )
+    client = context.get_wallet_client(
+        perp_dexs=_wallet_perp_dexs_for_coin(resolved_coin)
+    )
+    protected_size = _normalize_size_for_coin(
+        context, resolved_coin, position_size * ratio
+    )
 
     results: JsonObject = {
         "coin": coin,
@@ -807,6 +931,7 @@ def order_tpsl(
         if sl is not None:
             print(f"SL trigger: {sl}")
     _done(ctx)
+
 
 @cli_command
 def order_twap(
@@ -905,8 +1030,11 @@ def order_twap(
                 print("Manage it with 'hl order ls' or 'hl order twap-cancel'.")
     _done(ctx)
 
+
 @cli_command
-def order_twap_cancel(ctx: CommandContext, coin: Optional[str] = None, twap_id: Optional[str] = None) -> None:
+def order_twap_cancel(
+    ctx: CommandContext, coin: Optional[str] = None, twap_id: Optional[str] = None
+) -> None:
     context = _ctx(ctx)
     address = context.get_wallet_address()
     if coin is not None and twap_id is not None:
@@ -915,7 +1043,11 @@ def order_twap_cancel(ctx: CommandContext, coin: Optional[str] = None, twap_id: 
     else:
         records = list_twap_orders(network=_network_name(context), user=address)
         if coin is not None:
-            records = [record for record in records if coin in {record.coin, record.resolved_coin}]
+            records = [
+                record
+                for record in records
+                if coin in {record.coin, record.resolved_coin}
+            ]
         if not records:
             raise RuntimeError("No tracked active TWAP orders found")
         if twap_id is not None:
@@ -945,7 +1077,9 @@ def order_twap_cancel(ctx: CommandContext, coin: Optional[str] = None, twap_id: 
             if record is None:
                 raise RuntimeError(f"Tracked TWAP {twap_num} not found")
             resolved_coin = record.resolved_coin
-    response = _cancel_native_twap(context=context, coin=resolved_coin, twap_id=twap_num)
+    response = _cancel_native_twap(
+        context=context, coin=resolved_coin, twap_id=twap_num
+    )
     status = response.get("response", {}).get("data", {}).get("status", {})
     if not (isinstance(status, dict) and status.get("error")):
         mark_twap_cancelled(
@@ -954,8 +1088,18 @@ def order_twap_cancel(ctx: CommandContext, coin: Optional[str] = None, twap_id: 
             twap_id=twap_num,
             coin=resolved_coin,
         )
-    out({"twapCancel": {"coin": resolved_coin, "twapId": twap_num, "response": response}}, _json(ctx))
+    out(
+        {
+            "twapCancel": {
+                "coin": resolved_coin,
+                "twapId": twap_num,
+                "response": response,
+            }
+        },
+        _json(ctx),
+    )
     _done(ctx)
+
 
 @cli_command
 def order_cancel(ctx: CommandContext, oid: Optional[str] = None) -> None:
@@ -987,7 +1131,10 @@ def order_cancel(ctx: CommandContext, oid: Optional[str] = None) -> None:
             _render_table(
                 "Open Orders",
                 ["OID", "Coin", "Side", "Size", "Price"],
-                [[o["oid"], o["coin"], o["side"], o["sz"], o["limitPx"]] for o in orders],
+                [
+                    [o["oid"], o["coin"], o["side"], o["sz"], o["limitPx"]]
+                    for o in orders
+                ],
             )
             oid = input("Select OID to cancel: ").strip()
 
@@ -999,6 +1146,7 @@ def order_cancel(ctx: CommandContext, oid: Optional[str] = None) -> None:
     result = exchange.cancel(target["coin"], order_id)
     out(result, _json(ctx))
     _done(ctx)
+
 
 @cli_command
 def order_cancel_all(
@@ -1028,14 +1176,20 @@ def order_cancel_all(
         return
     if not yes and not _confirm(f"Cancel {len(orders)} orders?", False):
         if _json(ctx):
-            out({"cancelled": 0, "reason": "user_cancelled", "message": "Cancelled"}, True)
+            out(
+                {"cancelled": 0, "reason": "user_cancelled", "message": "Cancelled"},
+                True,
+            )
         else:
             out_success("Cancelled")
         _done(ctx)
         return
-    result = exchange.bulk_cancel([{"coin": o["coin"], "oid": int(o["oid"])} for o in orders])
+    result = exchange.bulk_cancel(
+        [{"coin": o["coin"], "oid": int(o["oid"])} for o in orders]
+    )
     out(result, _json(ctx))
     _done(ctx)
+
 
 @cli_command
 def order_set_leverage(
@@ -1069,6 +1223,7 @@ def order_set_leverage(
             print("❌ Leverage update failed")
             print(f"\nReason: {result.get('response')}")
     _done(ctx)
+
 
 @cli_command
 def order_configure(ctx: CommandContext, slippage: Optional[float] = None) -> None:

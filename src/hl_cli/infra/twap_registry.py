@@ -52,7 +52,9 @@ def _load_all() -> list[TwapRecord]:
 def _save_all(records: list[TwapRecord]) -> None:
     HL_DIR.mkdir(parents=True, exist_ok=True)
     TWAP_REGISTRY_PATH.write_text(
-        json.dumps([asdict(record) for record in records], ensure_ascii=False, indent=2),
+        json.dumps(
+            [asdict(record) for record in records], ensure_ascii=False, indent=2
+        ),
         encoding="utf-8",
     )
 
@@ -99,7 +101,9 @@ def register_twap_order(
     _save_all(records)
 
 
-def list_twap_orders(*, network: str, user: str, active_only: bool = True) -> list[TwapRecord]:
+def list_twap_orders(
+    *, network: str, user: str, active_only: bool = True
+) -> list[TwapRecord]:
     records = [
         record
         for record in _load_all()
@@ -127,7 +131,9 @@ def find_twap_order(
     return None
 
 
-def mark_twap_cancelled(*, network: str, user: str, twap_id: int, coin: Optional[str] = None) -> None:
+def mark_twap_cancelled(
+    *, network: str, user: str, twap_id: int, coin: Optional[str] = None
+) -> None:
     records = _load_all()
     updated = False
     for record in records:

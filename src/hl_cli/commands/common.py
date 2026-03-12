@@ -1,24 +1,38 @@
-from ..cli.runtime import CommandContext, cli_context, confirm, finish_command, json_output_enabled, render_table
+from ..cli.runtime import (
+    CommandContext,
+    cli_context,
+    confirm,
+    finish_command,
+    json_output_enabled,
+    render_table,
+)
 from ..core.context import CLIContext
 from ..types import DisplayValue, TableCell
+
 
 def _ctx(ctx: CommandContext) -> CLIContext:
     return cli_context(ctx)
 
+
 def _json(ctx: CommandContext) -> bool:
     return json_output_enabled(ctx)
+
 
 def _done(ctx: CommandContext) -> None:
     finish_command(ctx)
 
+
 def _confirm(message: str, default: bool = False) -> bool:
     return confirm(message, default)
+
 
 def _format_address(addr: str) -> str:
     return f"{addr[:6]}...{addr[-4:]}"
 
+
 def _render_table(title: str, columns: list[str], rows: list[list[TableCell]]) -> None:
     render_table(title, columns, rows)
+
 
 def _format_usd(value: DisplayValue) -> str:
     try:
@@ -26,6 +40,7 @@ def _format_usd(value: DisplayValue) -> str:
         return f"${n:,.2f}"
     except Exception:
         return f"${value}" if value is not None else "-"
+
 
 def _format_price(value: DisplayValue) -> str:
     try:
@@ -49,6 +64,7 @@ def _format_price(value: DisplayValue) -> str:
         s = s.rstrip("0").rstrip(".")
     return f"${s}"
 
+
 def _format_rate_pct(value: DisplayValue) -> str:
     try:
         n = float(value)  # type: ignore[arg-type]
@@ -69,6 +85,7 @@ def _format_rate_pct(value: DisplayValue) -> str:
         digits = digits.rstrip("0").rstrip(".")
         s = f"{sign}{digits}"
     return f"{s}%"
+
 
 def _network_name(context: CLIContext) -> str:
     return "testnet" if context.config.testnet else "mainnet"

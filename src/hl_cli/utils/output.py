@@ -33,6 +33,7 @@ from .market_table import (
 
 console = Console()
 
+
 def out(data: JsonValue, as_json: bool = False) -> None:
     if as_json:
         print(json.dumps(data, ensure_ascii=False, indent=2))
@@ -43,6 +44,7 @@ def out(data: JsonValue, as_json: bool = False) -> None:
         console.print(data)
         return
     console.print_json(json.dumps(data, ensure_ascii=False))
+
 
 def _render_known(data: JsonValue) -> bool:
     if isinstance(data, list):
@@ -85,7 +87,12 @@ def _render_known(data: JsonValue) -> bool:
         console.print(f"- Price: {_fmt_price(data.get('price'))}")
         return True
 
-    if "coin" in data and "markPx" in data and "maxLeverage" in data and "margin" in data:
+    if (
+        "coin" in data
+        and "markPx" in data
+        and "maxLeverage" in data
+        and "margin" in data
+    ):
         _print_asset_leverage_payload(cast(AssetLeveragePayload, data))
         return True
 
@@ -120,11 +127,20 @@ def _render_known(data: JsonValue) -> bool:
 
     return False
 
+
 def _print_positions_payload(data: PositionsPayload) -> None:
     positions = data.get("positions", [])
     if positions:
         tbl = Table(title="Positions")
-        for c in ["coin", "size", "entryPx", "positionValue", "unrealizedPnl", "leverage", "liquidationPx"]:
+        for c in [
+            "coin",
+            "size",
+            "entryPx",
+            "positionValue",
+            "unrealizedPnl",
+            "leverage",
+            "liquidationPx",
+        ]:
             tbl.add_column(c)
         for p in positions:
             tbl.add_row(
@@ -146,6 +162,7 @@ def _print_positions_payload(data: PositionsPayload) -> None:
         console.print(f"- Account value: {_fmt_usd(ms.get('accountValue'))}")
         console.print(f"- Total margin used: {_fmt_usd(ms.get('totalMarginUsed'))}")
 
+
 def _print_balances_payload(data: BalancesPayload) -> None:
     console.print("Balances")
     console.print(f"- Perp balance: {_fmt_usd(data.get('perpBalance'))}")
@@ -161,6 +178,7 @@ def _print_balances_payload(data: BalancesPayload) -> None:
     for b in balances:
         tbl.add_row(*[str(b.get(c, "")) for c in cols])
     console.print(tbl)
+
 
 def _iter_statuses(statuses: Iterable[ExchangeOrderStatus]) -> None:
     for s in statuses:
@@ -187,6 +205,7 @@ def _iter_statuses(statuses: Iterable[ExchangeOrderStatus]) -> None:
             console.print(f"Order ID: {r.get('oid')}")
             continue
         console.print(json.dumps(s, ensure_ascii=False))
+
 
 def _print_exchange_response(resp: ExchangeResponse) -> None:
     rtype = resp.get("type")
@@ -217,13 +236,19 @@ def _print_exchange_response(resp: ExchangeResponse) -> None:
         console.print(f"{rtype}: ok")
         return
 
-    console.print_json(json.dumps({"status": "ok", "response": resp}, ensure_ascii=False))
+    console.print_json(
+        json.dumps({"status": "ok", "response": resp}, ensure_ascii=False)
+    )
+
 
 def _print_open_orders_list(data: list[JsonValue]) -> bool:
     if not all(isinstance(x, dict) for x in data):
         return False
     rows: list[OpenOrderRow] = [
-        cast(OpenOrderRow, x) for x in data if isinstance(x, dict) and {"oid", "coin", "side", "sz", "limitPx"}.issubset(x.keys())
+        cast(OpenOrderRow, x)
+        for x in data
+        if isinstance(x, dict)
+        and {"oid", "coin", "side", "sz", "limitPx"}.issubset(x.keys())
     ]
     if len(rows) != len(data):
         return False
@@ -245,18 +270,27 @@ def _print_open_orders_list(data: list[JsonValue]) -> bool:
     console.print(tbl)
     return True
 
+
 def _print_accounts_list(data: list[JsonValue]) -> bool:
     if not all(isinstance(x, dict) for x in data):
         return False
     rows: list[AccountRecord] = [
         cast(AccountRecord, x)
         for x in data
-        if isinstance(x, dict) and {"alias", "user_address", "type", "is_default"}.issubset(x.keys())
+        if isinstance(x, dict)
+        and {"alias", "user_address", "type", "is_default"}.issubset(x.keys())
     ]
     if len(rows) != len(data):
         return False
     tbl = Table(title="Accounts")
-    for c in ["alias", "user_address", "type", "source", "api_wallet_public_key", "is_default"]:
+    for c in [
+        "alias",
+        "user_address",
+        "type",
+        "source",
+        "api_wallet_public_key",
+        "is_default",
+    ]:
         tbl.add_column(c)
     for r in rows:
         tbl.add_row(
@@ -270,6 +304,7 @@ def _print_accounts_list(data: list[JsonValue]) -> bool:
     console.print(tbl)
     return True
 
+
 def _print_account_record(data: JsonObject) -> bool:
     if not {"alias", "user_address", "type"}.issubset(data.keys()):
         return False
@@ -282,12 +317,19 @@ def _print_account_record(data: JsonObject) -> bool:
         console.print(f"API wallet: {account.get('api_wallet_public_key')}")
     return True
 
+
 def _print_portfolio_payload(data: PortfolioPayload) -> None:
     console.print("Portfolio")
     console.print(f"- Account value: {_fmt_usd(data.get('accountValue'))}")
     console.print(f"- Margin used: {_fmt_usd(data.get('totalMarginUsed'))}")
     _print_positions_payload({"positions": data.get("positions", [])})
-    _print_balances_payload({"spotBalances": data.get("spotBalances", []), "perpBalance": data.get("accountValue")})
+    _print_balances_payload(
+        {
+            "spotBalances": data.get("spotBalances", []),
+            "perpBalance": data.get("accountValue"),
+        }
+    )
+
 
 def _print_markets_payload(data: MarketsPayload) -> None:
     perp = data.get("perpMarkets", [])
@@ -342,6 +384,7 @@ def _print_markets_payload(data: MarketsPayload) -> None:
         )
         console.print(tbl)
 
+
 def _print_asset_leverage_payload(data: AssetLeveragePayload) -> None:
     console.print("Asset Leverage")
     console.print(f"- Asset: {data.get('coin')}")
@@ -362,6 +405,7 @@ def _print_asset_leverage_payload(data: AssetLeveragePayload) -> None:
     else:
         console.print("Position: none")
 
+
 def _print_book_payload(data: L2BookData) -> None:
     levels = data.get("levels", [[], []])
     bids = levels[0][:10] if len(levels) > 0 else []
@@ -371,15 +415,20 @@ def _print_book_payload(data: L2BookData) -> None:
         for c in ["px", "sz", "n"]:
             tbl.add_column(c)
         for x in asks[::-1]:
-            tbl.add_row(_fmt_usd(x.get("px")), str(x.get("sz", "")), str(x.get("n", "")))
+            tbl.add_row(
+                _fmt_usd(x.get("px")), str(x.get("sz", "")), str(x.get("n", ""))
+            )
         console.print(tbl)
     if bids:
         tbl = Table(title=f"Bids ({data.get('coin', '-')})")
         for c in ["px", "sz", "n"]:
             tbl.add_column(c)
         for x in bids:
-            tbl.add_row(_fmt_usd(x.get("px")), str(x.get("sz", "")), str(x.get("n", "")))
+            tbl.add_row(
+                _fmt_usd(x.get("px")), str(x.get("sz", "")), str(x.get("n", ""))
+            )
         console.print(tbl)
+
 
 def _print_twap_cancel_payload(data: TwapCancelPayload) -> None:
     coin = data.get("coin")
@@ -396,12 +445,14 @@ def _print_twap_cancel_payload(data: TwapCancelPayload) -> None:
     console.print(f"Asset: {coin}")
     console.print(f"TWAP ID: {twap_id}")
 
+
 def _print_cancel_noop(data: JsonObject) -> bool:
     if "cancelled" in data and "reason" in data:
         payload = cast(CancelNoopPayload, data)
         console.print(payload.get("message", "No-op"))
         return True
     return False
+
 
 def _print_flat_dict(data: JsonObject) -> bool:
     if not data:
@@ -412,6 +463,7 @@ def _print_flat_dict(data: JsonObject) -> bool:
         console.print(f"{k}: {v}")
     return True
 
+
 def _fmt_usd(value: DisplayValue) -> str:
     if value is None:
         return "-"
@@ -420,6 +472,7 @@ def _fmt_usd(value: DisplayValue) -> str:
     except (TypeError, ValueError):
         return str(value)
     return f"${n:,.2f}"
+
 
 def _fmt_price(value: DisplayValue) -> str:
     if value is None:
@@ -445,6 +498,7 @@ def _fmt_price(value: DisplayValue) -> str:
         s = s.rstrip("0").rstrip(".")
     return f"${s}"
 
+
 def _fmt_pct(value: DisplayValue) -> str:
     if value is None:
         return "-"
@@ -453,6 +507,7 @@ def _fmt_pct(value: DisplayValue) -> str:
     except (TypeError, ValueError):
         return str(value)
     return f"{n:+.2f}%"
+
 
 def _fmt_rate_pct(value: DisplayValue) -> str:
     if value is None:
@@ -477,8 +532,10 @@ def _fmt_rate_pct(value: DisplayValue) -> str:
         s = f"{sign}{digits}"
     return f"{s}%"
 
+
 def out_error(message: str) -> None:
     console.print(f"[red]Error:[/red] {message}")
+
 
 def out_success(message: str) -> None:
     console.print(f"[green]{message}[/green]")

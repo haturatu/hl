@@ -20,6 +20,7 @@ from ..utils.market_table import (
     market_table_widths,
 )
 
+
 def _market_row_dex(row: MarketRow) -> str:
     if row.get("marketType") == "spot":
         return ""
@@ -28,8 +29,10 @@ def _market_row_dex(row: MarketRow) -> str:
         return coin.split(":", 1)[0]
     return ""
 
+
 def _market_row_kind(row: MarketRow) -> MarketKind:
     return "spot" if row.get("marketType") == "spot" else "perp"
+
 
 class MarketsTuiState:
     def __init__(self) -> None:
@@ -60,6 +63,7 @@ class MarketsTuiState:
             self.scroll = self.selected - window_size + 1
         self.scroll = max(0, min(self.scroll, max_scroll))
 
+
 @contextlib.contextmanager
 def _raw_tty_mode() -> Iterator[bool]:
     if not sys.stdin.isatty():
@@ -72,6 +76,7 @@ def _raw_tty_mode() -> Iterator[bool]:
         yield True
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
 
 def _read_key(timeout: float = 0.0) -> Optional[str]:
     if not sys.stdin.isatty():
@@ -94,6 +99,7 @@ def _read_key(timeout: float = 0.0) -> Optional[str]:
     third = sys.stdin.read(1)
     return first + second + third
 
+
 def _matches_query(row: MarketRow, query: str) -> bool:
     needle = query.strip().lower()
     if not needle:
@@ -105,7 +111,10 @@ def _matches_query(row: MarketRow, query: str) -> bool:
     ]
     return any(needle in value.lower() for value in haystacks)
 
-def _find_match(rows: list[MarketRow], start: int, query: str, *, forward: bool) -> Optional[int]:
+
+def _find_match(
+    rows: list[MarketRow], start: int, query: str, *, forward: bool
+) -> Optional[int]:
     if not rows or not query.strip():
         return None
     total = len(rows)
@@ -116,6 +125,7 @@ def _find_match(rows: list[MarketRow], start: int, query: str, *, forward: bool)
         if _matches_query(rows[index], query):
             return index
     return None
+
 
 def _jump_to_match(
     state: MarketsTuiState,
@@ -137,7 +147,10 @@ def _jump_to_match(
     state.selected = match
     state.clamp(len(current_rows), window_size)
 
-def _handle_key(key: Optional[str], state: MarketsTuiState, rows: MarketsPayload, window_size: int) -> bool:
+
+def _handle_key(
+    key: Optional[str], state: MarketsTuiState, rows: MarketsPayload, window_size: int
+) -> bool:
     current_rows = state.rows(rows)
     total = len(current_rows)
     if state.mode == "search":
@@ -217,6 +230,7 @@ def _handle_key(key: Optional[str], state: MarketsTuiState, rows: MarketsPayload
     state.clamp(len(state.rows(rows)), window_size)
     return False
 
+
 def _render_table(
     rows: MarketsPayload,
     include_category: bool,
@@ -270,6 +284,7 @@ def _render_table(
         )
     return Panel(table, subtitle=help_text)
 
+
 def run_markets_tui(
     *,
     console: Console,
@@ -287,7 +302,10 @@ def run_markets_tui(
         print(json.dumps(prepare_output(rows), ensure_ascii=False))
 
     row_map = {row["coin"]: row for row in [*rows["perpMarkets"], *rows["spotMarkets"]]}
-    dexes = sorted({_market_row_dex(row) for row in row_map.values()}, key=lambda value: (value != "", value))
+    dexes = sorted(
+        {_market_row_dex(row) for row in row_map.values()},
+        key=lambda value: (value != "", value),
+    )
     if not dexes:
         return
 
@@ -344,7 +362,9 @@ def run_markets_tui(
                 format_usd=format_usd,
                 format_rate_pct=format_rate_pct,
             )
-            with Live(initial, console=console, refresh_per_second=8, screen=True) as live:
+            with Live(
+                initial, console=console, refresh_per_second=8, screen=True
+            ) as live:
                 for dex in cycle(dexes):
                     if _handle_key(_read_key(0.0), state, rows, 24):
                         return

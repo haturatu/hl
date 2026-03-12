@@ -4,13 +4,17 @@ from rich.table import Table
 
 from ..types import DisplayValue, MarketRow
 
-def market_table_columns(*, include_category: bool, show_perp_only_fields: bool) -> list[str]:
+
+def market_table_columns(
+    *, include_category: bool, show_perp_only_fields: bool
+) -> list[str]:
     columns = ["Coin", "Pair", "Price", "24h%", "Vol"]
     if include_category:
         columns.insert(1, "Category")
     if show_perp_only_fields:
         columns.extend(["Funding", "OI"])
     return columns
+
 
 def market_table_row_values(
     row: MarketRow,
@@ -39,12 +43,16 @@ def market_table_row_values(
         )
     return values
 
-def market_table_widths(columns: list[str], rendered_rows: list[list[str]]) -> list[int]:
+
+def market_table_widths(
+    columns: list[str], rendered_rows: list[list[str]]
+) -> list[int]:
     widths = [len(column) for column in columns]
     for row in rendered_rows:
         for idx, value in enumerate(row):
             widths[idx] = max(widths[idx], len(value))
     return widths
+
 
 def build_market_table(
     *,
@@ -56,8 +64,16 @@ def build_market_table(
 ) -> Table:
     table = Table(title=title)
     for idx, column in enumerate(columns):
-        justify = "right" if column in {"Price", "24h%", "Vol", "Funding", "OI"} else "left"
-        table.add_column(column, width=widths[idx], no_wrap=True, overflow="ellipsis", justify=justify)
+        justify = (
+            "right" if column in {"Price", "24h%", "Vol", "Funding", "OI"} else "left"
+        )
+        table.add_column(
+            column,
+            width=widths[idx],
+            no_wrap=True,
+            overflow="ellipsis",
+            justify=justify,
+        )
     for idx, row in enumerate(rendered_rows):
         style = "bold reverse" if idx == highlighted_index else ""
         table.add_row(*row, style=style)

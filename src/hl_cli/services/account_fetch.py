@@ -13,19 +13,28 @@ from ..types import (
     SpotClearinghouseState,
 )
 
+
 def account_perp_dexs(context: CLIContext) -> list[str]:
     if uses_main_perp_only(context.config.testnet):
         return [""]
     return context.get_perp_dexs()
 
-async def _fetch_perp_states(context: CLIContext, user: str) -> list[ClearinghouseState]:
+
+async def _fetch_perp_states(
+    context: CLIContext, user: str
+) -> list[ClearinghouseState]:
     info = context.get_public_client()
     return await asyncio.gather(
-        *(asyncio.to_thread(info.user_state, user, dex) for dex in account_perp_dexs(context))
+        *(
+            asyncio.to_thread(info.user_state, user, dex)
+            for dex in account_perp_dexs(context)
+        )
     )
+
 
 async def _fetch_spot_state(context: CLIContext, user: str) -> SpotClearinghouseState:
     return await asyncio.to_thread(context.get_public_client().spot_user_state, user)
+
 
 def _position_rows_from_states(states: list[ClearinghouseState]) -> list[PositionRow]:
     positions: list[PositionRow] = []
@@ -47,6 +56,7 @@ def _position_rows_from_states(states: list[ClearinghouseState]) -> list[Positio
         )
     return positions
 
+
 def _spot_balance_rows(spot_state: SpotClearinghouseState) -> list[SpotBalanceRow]:
     balances: list[SpotBalanceRow] = []
     for balance in spot_state["balances"]:
@@ -64,13 +74,21 @@ def _spot_balance_rows(spot_state: SpotClearinghouseState) -> list[SpotBalanceRo
         )
     return balances
 
+
 def _margin_summary(perp_states: list[ClearinghouseState]) -> MarginSummary:
-    account_value = sum(float(state["marginSummary"].get("accountValue", 0) or 0) for state in perp_states)
-    margin_used = sum(float(state["marginSummary"].get("totalMarginUsed", 0) or 0) for state in perp_states)
+    account_value = sum(
+        float(state["marginSummary"].get("accountValue", 0) or 0)
+        for state in perp_states
+    )
+    margin_used = sum(
+        float(state["marginSummary"].get("totalMarginUsed", 0) or 0)
+        for state in perp_states
+    )
     return {
         "accountValue": f"{account_value:.8f}",
         "totalMarginUsed": f"{margin_used:.8f}",
     }
+
 
 async def fetch_positions_async(context: CLIContext, user: str) -> PositionsPayload:
     perp_states = await _fetch_perp_states(context, user)
@@ -78,6 +96,7 @@ async def fetch_positions_async(context: CLIContext, user: str) -> PositionsPayl
         "positions": _position_rows_from_states(perp_states),
         "marginSummary": _margin_summary(perp_states),
     }
+
 
 async def fetch_balances_async(context: CLIContext, user: str) -> BalancesPayload:
     info = context.get_public_client()
@@ -88,6 +107,7 @@ async def fetch_balances_async(context: CLIContext, user: str) -> BalancesPayloa
         "spotBalances": _spot_balance_rows(spot_state),
         "perpBalance": perp_state["marginSummary"]["accountValue"],
     }
+
 
 async def fetch_portfolio_async(context: CLIContext, user: str) -> PortfolioPayload:
     perp_task = _fetch_perp_states(context, user)

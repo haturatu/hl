@@ -11,14 +11,35 @@ from ..commands import app as legacy
 
 TOP_LEVEL_COMMANDS = ["account", "order", "asset", "markets", "referral", "completion"]
 SUBCOMMANDS: dict[str, list[str]] = {
-    "account": ["add", "ls", "set-default", "remove", "positions", "orders", "balances", "portfolio"],
-    "order": ["ls", "limit", "market", "tpsl", "twap", "twap-cancel", "cancel", "cancel-all", "set-leverage", "configure"],
+    "account": [
+        "add",
+        "ls",
+        "set-default",
+        "remove",
+        "positions",
+        "orders",
+        "balances",
+        "portfolio",
+    ],
+    "order": [
+        "ls",
+        "limit",
+        "market",
+        "tpsl",
+        "twap",
+        "twap-cancel",
+        "cancel",
+        "cancel-all",
+        "set-leverage",
+        "configure",
+    ],
     "asset": ["price", "book", "leverage"],
     "markets": ["ls", "search"],
     "referral": ["set", "status"],
     "completion": ["bash"],
 }
 GLOBAL_OPTIONS = ["--json", "--testnet", "-h", "--help"]
+
 
 def _ctx(json_output: bool, testnet: bool) -> SimpleNamespace:
     return SimpleNamespace(
@@ -29,15 +50,20 @@ def _ctx(json_output: bool, testnet: bool) -> SimpleNamespace:
         }
     )
 
+
 def _exit_with_error(msg: str, code: int = 2) -> None:
     print(msg, file=sys.stderr)
     raise SystemExit(code)
+
 
 def _bash_completion_script() -> str:
     top_level = " ".join(TOP_LEVEL_COMMANDS)
     global_options = " ".join(GLOBAL_OPTIONS)
     case_lines = "\n".join(
-        [f'        {name}) COMPREPLY=( $(compgen -W "{ " ".join(values) }" -- "$cur") ) ;;' for name, values in SUBCOMMANDS.items()]
+        [
+            f'        {name}) COMPREPLY=( $(compgen -W "{ " ".join(values) }" -- "$cur") ) ;;'
+            for name, values in SUBCOMMANDS.items()
+        ]
     )
     return dedent(
         f"""\
@@ -81,10 +107,12 @@ def _bash_completion_script() -> str:
         """
     )
 
+
 def _print_completion(shell: str) -> None:
     if shell != "bash":
         _exit_with_error(f"Unsupported shell: {shell}")
     print(_bash_completion_script(), end="")
+
 
 def _parse_limit_shape(args: argparse.Namespace) -> tuple[str, str, str]:
     # Normal mode: hl order limit <side> <size> <coin> <price>
@@ -98,7 +126,9 @@ def _parse_limit_shape(args: argparse.Namespace) -> tuple[str, str, str]:
 
     if stake is not None:
         if c is not None:
-            _exit_with_error("When --stake is used, syntax is: hl order limit <side> <coin> <price> --stake <usd>")
+            _exit_with_error(
+                "When --stake is used, syntax is: hl order limit <side> <coin> <price> --stake <usd>"
+            )
         try:
             px = float(b)
         except ValueError as exc:
@@ -111,8 +141,11 @@ def _parse_limit_shape(args: argparse.Namespace) -> tuple[str, str, str]:
         return derived_size, a, b
 
     if c is None:
-        _exit_with_error("Missing price. Syntax: hl order limit <side> <size> <coin> <price>")
+        _exit_with_error(
+            "Missing price. Syntax: hl order limit <side> <size> <coin> <price>"
+        )
     return a, b, c
+
 
 def _parse_market_shape(args: argparse.Namespace) -> tuple[str, str]:
     # Normal mode: hl order market <side> <size> <coin>
@@ -125,7 +158,9 @@ def _parse_market_shape(args: argparse.Namespace) -> tuple[str, str]:
 
     if stake is not None:
         if b is not None:
-            _exit_with_error("When --stake is used, syntax is: hl order market <side> <coin> --stake <usd>")
+            _exit_with_error(
+                "When --stake is used, syntax is: hl order market <side> <coin> --stake <usd>"
+            )
         if float(stake) <= 0:
             _exit_with_error("stake must be positive")
         return "0", a
@@ -133,6 +168,7 @@ def _parse_market_shape(args: argparse.Namespace) -> tuple[str, str]:
     if b is None:
         _exit_with_error("Missing coin. Syntax: hl order market <side> <size> <coin>")
     return a, b
+
 
 def _build_parser() -> argparse.ArgumentParser:
     epilog = (
@@ -184,10 +220,19 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     acc_sub = account.add_subparsers(dest="account_command")
     add_cmd_parser(acc_sub, "add", "Add account", ["hl account add"])
-    add_cmd_parser(acc_sub, "ls", "List accounts", ["hl account ls", "hl --json account ls"])
-    acc_set = add_cmd_parser(acc_sub, "set-default", "Set default account", ["hl account set-default main"])
+    add_cmd_parser(
+        acc_sub, "ls", "List accounts", ["hl account ls", "hl --json account ls"]
+    )
+    acc_set = add_cmd_parser(
+        acc_sub, "set-default", "Set default account", ["hl account set-default main"]
+    )
     acc_set.add_argument("alias")
-    acc_rm = add_cmd_parser(acc_sub, "remove", "Remove account", ["hl account remove main", "hl account remove main --force"])
+    acc_rm = add_cmd_parser(
+        acc_sub,
+        "remove",
+        "Remove account",
+        ["hl account remove main", "hl account remove main --force"],
+    )
     acc_rm.add_argument("alias")
     acc_rm.add_argument("-f", "--force", action="store_true")
 
@@ -223,7 +268,9 @@ def _build_parser() -> argparse.ArgumentParser:
         ],
     )
     ord_sub = order.add_subparsers(dest="order_command")
-    ord_ls = add_cmd_parser(ord_sub, "ls", "List open orders", ["hl order ls", "hl order ls --watch"])
+    ord_ls = add_cmd_parser(
+        ord_sub, "ls", "List open orders", ["hl order ls", "hl order ls --watch"]
+    )
     ord_ls.add_argument("--user")
     ord_ls.add_argument("-w", "--watch", action="store_true")
 
@@ -246,10 +293,22 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_limit.add_argument("c", nargs="?")
     ord_limit.add_argument("--tif", default="Gtc")
     ord_limit.add_argument("--reduce-only", action="store_true")
-    ord_limit.add_argument("--stake", type=float, help="USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only")
-    ord_limit.add_argument("--leverage", type=int, help="Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation")
-    ord_limit.add_argument("--cross", action="store_true", help="Use cross margin with --leverage")
-    ord_limit.add_argument("--isolated", action="store_true", help="Use isolated margin with --leverage")
+    ord_limit.add_argument(
+        "--stake",
+        type=float,
+        help="USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only",
+    )
+    ord_limit.add_argument(
+        "--leverage",
+        type=int,
+        help="Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation",
+    )
+    ord_limit.add_argument(
+        "--cross", action="store_true", help="Use cross margin with --leverage"
+    )
+    ord_limit.add_argument(
+        "--isolated", action="store_true", help="Use isolated margin with --leverage"
+    )
 
     ord_market = add_cmd_parser(
         ord_sub,
@@ -268,13 +327,38 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_market.add_argument("side")
     ord_market.add_argument("a", nargs="?")
     ord_market.add_argument("b", nargs="?")
-    ord_market.add_argument("--reduce-only", action="store_true", help="Perp only: reduce-only for long/short")
+    ord_market.add_argument(
+        "--reduce-only",
+        action="store_true",
+        help="Perp only: reduce-only for long/short",
+    )
     ord_market.add_argument("--slippage", type=float)
-    ord_market.add_argument("--stake", type=float, help="USD used to derive order size. For buy/sell this is spot size; for long/short this is perp margin.")
-    ord_market.add_argument("--leverage", type=int, help="Perp only: optional leverage update before placing long/short")
-    ord_market.add_argument("--cross", action="store_true", help="Perp only: use cross margin with --leverage")
-    ord_market.add_argument("--isolated", action="store_true", help="Perp only: use isolated margin with --leverage")
-    ord_market.add_argument("--ratio", type=float, default=1.0, help="Perp close only: close ratio (0 < ratio <= 1)")
+    ord_market.add_argument(
+        "--stake",
+        type=float,
+        help="USD used to derive order size. For buy/sell this is spot size; for long/short this is perp margin.",
+    )
+    ord_market.add_argument(
+        "--leverage",
+        type=int,
+        help="Perp only: optional leverage update before placing long/short",
+    )
+    ord_market.add_argument(
+        "--cross",
+        action="store_true",
+        help="Perp only: use cross margin with --leverage",
+    )
+    ord_market.add_argument(
+        "--isolated",
+        action="store_true",
+        help="Perp only: use isolated margin with --leverage",
+    )
+    ord_market.add_argument(
+        "--ratio",
+        type=float,
+        default=1.0,
+        help="Perp close only: close ratio (0 < ratio <= 1)",
+    )
 
     ord_twap = add_cmd_parser(
         ord_sub,
@@ -293,12 +377,24 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_twap.add_argument("size")
     ord_twap.add_argument("coin")
     ord_twap.add_argument("interval")
-    ord_twap.add_argument("--stake", type=float, help="USD margin used to derive total TWAP size. With --leverage, size uses stake x leverage; without it, size uses stake only")
+    ord_twap.add_argument(
+        "--stake",
+        type=float,
+        help="USD margin used to derive total TWAP size. With --leverage, size uses stake x leverage; without it, size uses stake only",
+    )
     ord_twap.add_argument("--reduce-only", action="store_true")
     ord_twap.add_argument("--randomize", action="store_true")
-    ord_twap.add_argument("--leverage", type=int, help="Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation")
-    ord_twap.add_argument("--cross", action="store_true", help="Use cross margin with --leverage")
-    ord_twap.add_argument("--isolated", action="store_true", help="Use isolated margin with --leverage")
+    ord_twap.add_argument(
+        "--leverage",
+        type=int,
+        help="Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation",
+    )
+    ord_twap.add_argument(
+        "--cross", action="store_true", help="Use cross margin with --leverage"
+    )
+    ord_twap.add_argument(
+        "--isolated", action="store_true", help="Use isolated margin with --leverage"
+    )
 
     ord_tpsl = add_cmd_parser(
         ord_sub,
@@ -313,7 +409,12 @@ def _build_parser() -> argparse.ArgumentParser:
     ord_tpsl.add_argument("coin")
     ord_tpsl.add_argument("--tp", type=float, help="Take-profit trigger price")
     ord_tpsl.add_argument("--sl", type=float, help="Stop-loss trigger price")
-    ord_tpsl.add_argument("--ratio", type=float, default=1.0, help="Position ratio to protect (0 < ratio <= 1)")
+    ord_tpsl.add_argument(
+        "--ratio",
+        type=float,
+        default=1.0,
+        help="Position ratio to protect (0 < ratio <= 1)",
+    )
 
     ord_twap_cancel = add_cmd_parser(
         ord_sub,
@@ -345,7 +446,10 @@ def _build_parser() -> argparse.ArgumentParser:
         ord_sub,
         "set-leverage",
         "Set leverage",
-        ["hl order set-leverage BTC 10 --cross", "hl order set-leverage ETH 5 --isolated"],
+        [
+            "hl order set-leverage BTC 10 --cross",
+            "hl order set-leverage ETH 5 --isolated",
+        ],
     )
     ord_lev.add_argument("coin")
     ord_lev.add_argument("leverage")
@@ -368,11 +472,21 @@ def _build_parser() -> argparse.ArgumentParser:
         ["hl asset price BTC", "hl asset book ETH --watch", "hl asset leverage BTC"],
     )
     as_sub = asset.add_subparsers(dest="asset_command")
-    as_price = add_cmd_parser(as_sub, "price", "Get price", ["hl asset price BTC", "hl asset price BTC --watch"])
+    as_price = add_cmd_parser(
+        as_sub,
+        "price",
+        "Get price",
+        ["hl asset price BTC", "hl asset price BTC --watch"],
+    )
     as_price.add_argument("coin")
     as_price.add_argument("-w", "--watch", action="store_true")
 
-    as_book = add_cmd_parser(as_sub, "book", "Get orderbook", ["hl asset book BTC", "hl asset book ETH --watch"])
+    as_book = add_cmd_parser(
+        as_sub,
+        "book",
+        "Get orderbook",
+        ["hl asset book BTC", "hl asset book ETH --watch"],
+    )
     as_book.add_argument("coin")
     as_book.add_argument("-w", "--watch", action="store_true")
 
@@ -402,7 +516,11 @@ def _build_parser() -> argparse.ArgumentParser:
         mk_sub,
         "ls",
         "List markets",
-        ["hl markets ls", "hl markets ls --spot-only", "hl markets ls --perp-only --watch"],
+        [
+            "hl markets ls",
+            "hl markets ls --spot-only",
+            "hl markets ls --perp-only --watch",
+        ],
     )
     mk_ls.add_argument("--spot-only", action="store_true")
     mk_ls.add_argument("--perp-only", action="store_true")
@@ -422,7 +540,11 @@ def _build_parser() -> argparse.ArgumentParser:
         mk_sub,
         "search",
         "Search markets by partial symbol/name",
-        ["hl markets search ORCL", "hl markets search xyz", "hl markets search TSLA --perp-only"],
+        [
+            "hl markets search ORCL",
+            "hl markets search xyz",
+            "hl markets search TSLA --perp-only",
+        ],
     )
     mk_search.add_argument("query")
     mk_search.add_argument("--spot-only", action="store_true")
@@ -447,7 +569,9 @@ def _build_parser() -> argparse.ArgumentParser:
         ["hl referral set MYCODE", "hl referral status"],
     )
     rf_sub = referral.add_subparsers(dest="referral_command")
-    rf_set = add_cmd_parser(rf_sub, "set", "Set referral code", ["hl referral set MYCODE"])
+    rf_set = add_cmd_parser(
+        rf_sub, "set", "Set referral code", ["hl referral set MYCODE"]
+    )
     rf_set.add_argument("code")
     add_cmd_parser(rf_sub, "status", "Get referral status", ["hl referral status"])
 
@@ -458,9 +582,15 @@ def _build_parser() -> argparse.ArgumentParser:
         ['eval "$(hl completion bash)"'],
     )
     completion_sub = completion.add_subparsers(dest="completion_command")
-    add_cmd_parser(completion_sub, "bash", "Print bash completion script", ['eval "$(hl completion bash)"'])
+    add_cmd_parser(
+        completion_sub,
+        "bash",
+        "Print bash completion script",
+        ['eval "$(hl completion bash)"'],
+    )
 
     return p
+
 
 async def _call(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> None:
     try:
@@ -472,6 +602,7 @@ async def _call(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> None:
         raise
     except BaseException as exc:  # noqa: BLE001
         _exit_with_error(str(exc), 1)
+
 
 async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     ctx = _ctx(args.json, args.testnet)
@@ -535,11 +666,21 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
                 if args.stake is not None:
                     _exit_with_error("--stake cannot be used with market close")
                 if args.leverage is not None or args.cross or args.isolated:
-                    _exit_with_error("--leverage/--cross/--isolated cannot be used with market close")
-                await _call(legacy.order_market_close, ctx, args.a, slippage=args.slippage, ratio=args.ratio)
+                    _exit_with_error(
+                        "--leverage/--cross/--isolated cannot be used with market close"
+                    )
+                await _call(
+                    legacy.order_market_close,
+                    ctx,
+                    args.a,
+                    slippage=args.slippage,
+                    ratio=args.ratio,
+                )
             else:
                 if args.ratio != 1.0:
-                    _exit_with_error("--ratio is only supported with: hl order market close <coin>")
+                    _exit_with_error(
+                        "--ratio is only supported with: hl order market close <coin>"
+                    )
                 size, coin = _parse_market_shape(args)
                 await _call(
                     legacy.order_market,
@@ -608,7 +749,9 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
         elif sc == "book":
             await _call(legacy.asset_book, ctx, args.coin, watch=args.watch)
         elif sc == "leverage":
-            await _call(legacy.asset_leverage, ctx, args.coin, user=args.user, watch=args.watch)
+            await _call(
+                legacy.asset_leverage, ctx, args.coin, user=args.user, watch=args.watch
+            )
         else:
             _exit_with_error(f"Unknown asset subcommand: {sc}")
         return
@@ -662,10 +805,12 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
 
     _exit_with_error(f"Unknown command: {cmd}")
 
+
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
     asyncio.run(dispatch(args, parser))
+
 
 if __name__ == "__main__":
     main()

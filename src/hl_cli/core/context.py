@@ -12,12 +12,14 @@ from ..infra.db import Account, get_default_account
 from ..types import PerpDexInfo, SpotMeta
 from .testnet_policy import filter_safe_spot_universe, uses_safe_spot_meta_fallback
 
+
 @dataclass
 class Config:
     private_key: Optional[str]
     wallet_address: Optional[str]
     testnet: bool
     account: Optional[Account]
+
 
 class CLIContext:
     def __init__(self, config: Config):
@@ -78,7 +80,9 @@ class CLIContext:
         try:
             temp = _build_info_client(self.base_url, skip_ws=True)
             raw: list[PerpDexInfo | None] = temp.perp_dexs()
-            names = [str(x.get("name")) for x in raw if isinstance(x, dict) and x.get("name")]
+            names = [
+                str(x.get("name")) for x in raw if isinstance(x, dict) and x.get("name")
+            ]
             self._perp_dexs = ["", *names] if names else [""]
         except Exception:
             self._perp_dexs = [""]
@@ -90,6 +94,7 @@ class CLIContext:
         if self.config.private_key:
             return EthAccount.from_key(self.config.private_key).address
         raise RuntimeError("No account configured. Run 'hl account add'.")
+
 
 def load_config(testnet: bool) -> Config:
     network = "testnet" if testnet else "mainnet"
@@ -120,6 +125,7 @@ def load_config(testnet: bool) -> Config:
         account=None,
     )
 
+
 def _load_safe_spot_meta(base_url: str) -> SpotMeta:
     # Testnet currently returns some spot pairs with invalid token indexes.
     # Filter those out before constructing the SDK client.
@@ -130,6 +136,7 @@ def _load_safe_spot_meta(base_url: str) -> SpotMeta:
         **spot_meta,
         "universe": filter_safe_spot_universe(spot_meta),
     }
+
 
 def _build_info_client(base_url: str, **kwargs: object) -> Info:
     try:

@@ -200,7 +200,9 @@ class ExchangeStatusWithRunning(TypedDict):
     running: ExchangeStatusRunning
 
 
-ExchangeStatusValue: TypeAlias = str | ExchangeStatusWithError | ExchangeStatusWithRunning
+ExchangeStatusValue: TypeAlias = (
+    str | ExchangeStatusWithError | ExchangeStatusWithRunning
+)
 
 
 class ExchangeOrderStatusError(TypedDict):
@@ -215,7 +217,12 @@ class ExchangeOrderStatusResting(TypedDict):
     resting: ExchangeStatusResting
 
 
-ExchangeOrderStatus: TypeAlias = ExchangeOrderStatusError | ExchangeOrderStatusFilled | ExchangeOrderStatusResting | str
+ExchangeOrderStatus: TypeAlias = (
+    ExchangeOrderStatusError
+    | ExchangeOrderStatusFilled
+    | ExchangeOrderStatusResting
+    | str
+)
 
 
 class ExchangeOrderResponseData(TypedDict):
@@ -228,7 +235,9 @@ class ExchangeStatusResponseData(TypedDict, total=False):
 
 
 class ExchangeResponse(TypedDict):
-    type: Literal["order", "cancel", "batchModify", "twapOrder", "twapCancel", "default"]
+    type: Literal[
+        "order", "cancel", "batchModify", "twapOrder", "twapCancel", "default"
+    ]
     data: ExchangeOrderResponseData | ExchangeStatusResponseData
 
 
