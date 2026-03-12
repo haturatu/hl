@@ -96,6 +96,39 @@ make uninstall
 
 ## CLI Basics
 
+```bash
+$ hl --help
+usage: hl [-h] [--json] [--testnet] {account,order,asset,markets,referral,completion} ...
+
+CLI for Hyperliquid DEX
+
+positional arguments:
+  {account,order,asset,markets,referral,completion}
+    account             Account management and information
+    order               Order management and trading
+    asset               Asset-specific information
+    markets             Market information
+    referral            Referral management
+    completion          Print shell completion script
+
+options:
+  -h, --help            show this help message and exit
+  --json                Output in JSON format
+  --testnet             Use testnet
+
+Command tree:
+  account add|ls|set-default|remove|positions|orders|balances|portfolio
+  order ls|limit|market|tpsl|twap|twap-cancel|cancel|cancel-all|set-leverage|configure
+  asset price|book|leverage
+  markets ls
+  referral set|status
+Examples:
+  hl account add
+  hl order twap buy 1 BTC 30 --randomize
+  hl order twap-cancel BTC 12345
+  hl account positions --watch
+```
+
 ### Global Options
 
 - `--json` Output JSON
