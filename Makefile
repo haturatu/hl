@@ -16,6 +16,7 @@ help:
 install:
 	$(PIP) install .
 	$(MAKE) completion
+	hash -r
 
 completion:
 	touch "$(BASHRC)"
@@ -25,6 +26,7 @@ uninstall:
 	-$(PIP) uninstall -y $(PACKAGE_NAME)
 	touch "$(BASHRC)"
 	sed -i '\|^eval "$$(hl completion bash)" # hl-cli-completion$$|d' "$(BASHRC)"
+	hash -r
 
 test:
 	PYTHONPATH=src $(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
