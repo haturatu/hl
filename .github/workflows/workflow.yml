@@ -90,7 +90,7 @@ jobs:
           path: dist/*
 
   release:
-    if: "github.event_name == 'push' && github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'update: v')"
+    if: "github.event_name == 'push' && github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'release: v')"
     runs-on: ubuntu-latest
     needs: build
     permissions:
@@ -114,11 +114,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          TAG="${COMMIT_MESSAGE#update: }"
+          TAG="${COMMIT_MESSAGE#release: }"
           case "$TAG" in
             v[0-9]*.[0-9]*.[0-9]*) ;;
             *)
-              echo "Commit message must be like: update: v0.1.7"
+              echo "Commit message must be like: release: v0.1.7"
               exit 1
               ;;
           esac
