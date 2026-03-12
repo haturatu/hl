@@ -1,16 +1,23 @@
 import json
-from typing import Any, Iterable, cast
+from typing import Iterable, cast
 
+from hyperliquid.utils.types import L2BookData
 from rich.console import Console
 from rich.table import Table
 
 from ..types import (
+    AccountRecord,
+    AssetLeveragePayload,
     BalancesPayload,
+    CancelNoopPayload,
     DisplayValue,
     ExchangeOrderStatus,
+    ExchangeErrorEnvelope,
     ExchangeResponse,
     ExchangeStatusWithError,
     ExchangeSuccessEnvelope,
+    JsonObject,
+    JsonValue,
     MarketsPayload,
     OpenOrderRow,
     PortfolioPayload,
@@ -26,7 +33,7 @@ from .market_table import (
 
 console = Console()
 
-def out(data: Any, as_json: bool = False) -> None:
+def out(data: JsonValue, as_json: bool = False) -> None:
     if as_json:
         print(json.dumps(data, ensure_ascii=False, indent=2))
         return
@@ -37,7 +44,7 @@ def out(data: Any, as_json: bool = False) -> None:
         return
     console.print_json(json.dumps(data, ensure_ascii=False))
 
-def _render_known(data: Any) -> bool:
+def _render_known(data: JsonValue) -> bool:
     if isinstance(data, list):
         if _print_open_orders_list(data):
             return True
@@ -49,7 +56,7 @@ def _render_known(data: Any) -> bool:
         return False
 
     if "perpMarkets" in data and "spotMarkets" in data:
-        _print_markets_payload(data)
+        _print_markets_payload(cast(MarketsPayload, data))
         return True
 
     if (
@@ -58,18 +65,18 @@ def _render_known(data: Any) -> bool:
         and "accountValue" in data
         and "totalMarginUsed" in data
     ):
-        _print_portfolio_payload(data)
+        _print_portfolio_payload(cast(PortfolioPayload, data))
         return True
 
     if "positions" in data and isinstance(data.get("positions"), list):
-        _print_positions_payload(data)
+        _print_positions_payload(cast(PositionsPayload, data))
         return True
 
     if _print_account_record(data):
         return True
 
     if "spotBalances" in data and "perpBalance" in data:
-        _print_balances_payload(data)
+        _print_balances_payload(cast(BalancesPayload, data))
         return True
 
     if "coin" in data and "price" in data and len(data.keys()) <= 3:
@@ -79,11 +86,11 @@ def _render_known(data: Any) -> bool:
         return True
 
     if "coin" in data and "markPx" in data and "maxLeverage" in data and "margin" in data:
-        _print_asset_leverage_payload(data)
+        _print_asset_leverage_payload(cast(AssetLeveragePayload, data))
         return True
 
     if "levels" in data and isinstance(data.get("levels"), list):
-        _print_book_payload(data)
+        _print_book_payload(cast(L2BookData, data))
         return True
 
     if "slippage" in data and len(data.keys()) == 1:
@@ -92,19 +99,20 @@ def _render_known(data: Any) -> bool:
         return True
 
     if "twapCancel" in data and isinstance(data["twapCancel"], dict):
-        _print_twap_cancel_payload(data["twapCancel"])
+        _print_twap_cancel_payload(cast(TwapCancelPayload, data["twapCancel"]))
         return True
 
     if data.get("status") == "ok" and isinstance(data.get("response"), dict):
-        _print_exchange_response(data["response"])
+        _print_exchange_response(cast(ExchangeResponse, data["response"]))
         return True
 
     if _print_cancel_noop(data):
         return True
 
     if data.get("status") == "err":
+        err = cast(ExchangeErrorEnvelope, data)
         console.print("[red]❌ Request failed[/red]")
-        console.print(f"Reason: {data.get('response')}")
+        console.print(f"Reason: {err.get('response')}")
         return True
 
     if _print_flat_dict(data):
@@ -211,10 +219,12 @@ def _print_exchange_response(resp: ExchangeResponse) -> None:
 
     console.print_json(json.dumps({"status": "ok", "response": resp}, ensure_ascii=False))
 
-def _print_open_orders_list(data: list[Any]) -> bool:
+def _print_open_orders_list(data: list[JsonValue]) -> bool:
     if not all(isinstance(x, dict) for x in data):
         return False
-    rows: list[OpenOrderRow] = [x for x in data if {"oid", "coin", "side", "sz", "limitPx"}.issubset(x.keys())]
+    rows: list[OpenOrderRow] = [
+        cast(OpenOrderRow, x) for x in data if isinstance(x, dict) and {"oid", "coin", "side", "sz", "limitPx"}.issubset(x.keys())
+    ]
     if len(rows) != len(data):
         return False
     if not rows:
@@ -235,10 +245,14 @@ def _print_open_orders_list(data: list[Any]) -> bool:
     console.print(tbl)
     return True
 
-def _print_accounts_list(data: list[Any]) -> bool:
+def _print_accounts_list(data: list[JsonValue]) -> bool:
     if not all(isinstance(x, dict) for x in data):
         return False
-    rows = [x for x in data if {"alias", "user_address", "type", "is_default"}.issubset(x.keys())]
+    rows: list[AccountRecord] = [
+        cast(AccountRecord, x)
+        for x in data
+        if isinstance(x, dict) and {"alias", "user_address", "type", "is_default"}.issubset(x.keys())
+    ]
     if len(rows) != len(data):
         return False
     tbl = Table(title="Accounts")
@@ -256,15 +270,16 @@ def _print_accounts_list(data: list[Any]) -> bool:
     console.print(tbl)
     return True
 
-def _print_account_record(data: dict[str, Any]) -> bool:
+def _print_account_record(data: JsonObject) -> bool:
     if not {"alias", "user_address", "type"}.issubset(data.keys()):
         return False
+    account = cast(AccountRecord, data)
     console.print("[green]✅ Account saved[/green]")
-    console.print(f"Alias: {data.get('alias')}")
-    console.print(f"Address: {data.get('user_address')}")
-    console.print(f"Type: {data.get('type')}")
-    if data.get("api_wallet_public_key"):
-        console.print(f"API wallet: {data.get('api_wallet_public_key')}")
+    console.print(f"Alias: {account.get('alias')}")
+    console.print(f"Address: {account.get('user_address')}")
+    console.print(f"Type: {account.get('type')}")
+    if account.get("api_wallet_public_key"):
+        console.print(f"API wallet: {account.get('api_wallet_public_key')}")
     return True
 
 def _print_portfolio_payload(data: PortfolioPayload) -> None:
@@ -327,7 +342,7 @@ def _print_markets_payload(data: MarketsPayload) -> None:
         )
         console.print(tbl)
 
-def _print_asset_leverage_payload(data: dict[str, Any]) -> None:
+def _print_asset_leverage_payload(data: AssetLeveragePayload) -> None:
     console.print("Asset Leverage")
     console.print(f"- Asset: {data.get('coin')}")
     console.print(f"- Mark price: {_fmt_usd(data.get('markPx'))}")
@@ -347,7 +362,7 @@ def _print_asset_leverage_payload(data: dict[str, Any]) -> None:
     else:
         console.print("Position: none")
 
-def _print_book_payload(data: dict[str, Any]) -> None:
+def _print_book_payload(data: L2BookData) -> None:
     levels = data.get("levels", [[], []])
     bids = levels[0][:10] if len(levels) > 0 else []
     asks = levels[1][:10] if len(levels) > 1 else []
@@ -381,13 +396,14 @@ def _print_twap_cancel_payload(data: TwapCancelPayload) -> None:
     console.print(f"Asset: {coin}")
     console.print(f"TWAP ID: {twap_id}")
 
-def _print_cancel_noop(data: dict[str, Any]) -> bool:
+def _print_cancel_noop(data: JsonObject) -> bool:
     if "cancelled" in data and "reason" in data:
-        console.print(data.get("message", "No-op"))
+        payload = cast(CancelNoopPayload, data)
+        console.print(payload.get("message", "No-op"))
         return True
     return False
 
-def _print_flat_dict(data: dict[str, Any]) -> bool:
+def _print_flat_dict(data: JsonObject) -> bool:
     if not data:
         return False
     if any(isinstance(v, (dict, list, tuple, set)) for v in data.values()):

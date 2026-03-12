@@ -11,6 +11,9 @@ UnixMillis: TypeAlias = int
 MarketKind: TypeAlias = Literal["perp", "spot"]
 PerpDexName: TypeAlias = str
 AllMids: TypeAlias = dict[str, NumericString]
+JsonPrimitive: TypeAlias = str | int | float | bool | None
+JsonValue: TypeAlias = JsonPrimitive | list["JsonValue"] | dict[str, "JsonValue"]
+JsonObject: TypeAlias = dict[str, JsonValue]
 
 
 class RawMarginSummary(TypedDict):
@@ -243,6 +246,35 @@ class TwapCancelPayload(TypedDict):
     coin: str
     twapId: int
     response: ExchangeSuccessEnvelope
+
+
+class AccountRecord(TypedDict, total=False):
+    alias: str
+    user_address: str
+    type: str
+    source: str
+    api_wallet_public_key: str | None
+    is_default: bool
+
+
+class MarginBreakdown(TypedDict):
+    accountValue: NumericString
+    totalMarginUsed: NumericString
+    availableMargin: NumericString
+
+
+class AssetLeveragePayload(TypedDict):
+    coin: str
+    markPx: NumericString | None
+    maxLeverage: int
+    position: RawPosition | None
+    margin: MarginBreakdown
+
+
+class CancelNoopPayload(TypedDict, total=False):
+    cancelled: bool
+    reason: str
+    message: str
 
 
 class MarketRowBase(TypedDict):
