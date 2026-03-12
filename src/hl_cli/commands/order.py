@@ -6,7 +6,7 @@ from typing import Any, Optional
 from hyperliquid.utils.constants import MAINNET_API_URL
 from hyperliquid.utils.signing import float_to_wire, get_timestamp_ms, sign_l1_action
 
-from ..cli.runtime import cli_command, cli_context, confirm, finish_command, json_output_enabled, render_table
+from ..cli.runtime import CommandContext, cli_command, cli_context, confirm, finish_command, json_output_enabled, render_table
 from ..cli.runtime import run_blocking
 from ..core.context import CLIContext
 from ..core.order_config import get_order_config, update_order_config
@@ -17,7 +17,16 @@ from ..infra.twap_registry import (
     mark_twap_cancelled,
     register_twap_order,
 )
-from ..types import OpenOrderRow
+from ..types import (
+    ClearinghouseState,
+    DisplayValue,
+    ExchangeOrderStatus,
+    ExchangeStatusFilled,
+    ExchangeStatusResting,
+    ExchangeSuccessEnvelope,
+    OpenOrderRow,
+    TableCell,
+)
 from ..utils.output import out, out_success
 from ..utils.validators import (
     normalize_side,
@@ -29,13 +38,13 @@ from ..utils.validators import (
 )
 from ..utils.watch import watch_loop
 
-def _ctx(ctx: Any) -> CLIContext:
+def _ctx(ctx: CommandContext) -> CLIContext:
     return cli_context(ctx)
 
-def _json(ctx: Any) -> bool:
+def _json(ctx: CommandContext) -> bool:
     return json_output_enabled(ctx)
 
-def _done(ctx: Any) -> None:
+def _done(ctx: CommandContext) -> None:
     finish_command(ctx)
 
 def _wallet_perp_dexs_for_coin(coin: str) -> Optional[list[str]]:
@@ -51,17 +60,17 @@ def _close_position_perp_dexs(context: CLIContext) -> list[str]:
 def _confirm(message: str, default: bool = False) -> bool:
     return confirm(message, default)
 
-def _render_table(title: str, columns: list[str], rows: list[list[Any]]) -> None:
+def _render_table(title: str, columns: list[str], rows: list[list[TableCell]]) -> None:
     render_table(title, columns, rows)
 
-def _format_usd(value: str | float | int | None) -> str:
+def _format_usd(value: DisplayValue) -> str:
     try:
         n = float(value)  # type: ignore[arg-type]
         return f"${n:,.2f}"
     except Exception:
         return f"${value}" if value is not None else "-"
 
-def _extract_statuses(result: dict[str, Any]) -> list[dict[str, Any] | str]:
+def _extract_statuses(result: ExchangeSuccessEnvelope) -> list[ExchangeOrderStatus]:
     try:
         statuses = result.get("response", {}).get("data", {}).get("statuses", [])
         if isinstance(statuses, list):
@@ -81,7 +90,7 @@ def _print_leverage_update(lev_result: Optional[dict[str, Any]], coin: str, leve
 
 def _print_order_feedback(
     *,
-    result: dict[str, Any],
+    result: ExchangeSuccessEnvelope,
     coin: str,
     side: str,
     order_kind: str,
@@ -93,8 +102,8 @@ def _print_order_feedback(
         return
 
     first_error = None
-    first_filled = None
-    first_resting = None
+    first_filled: ExchangeStatusFilled | None = None
+    first_resting: ExchangeStatusResting | None = None
     for s in statuses:
         if isinstance(s, dict) and "error" in s and first_error is None:
             first_error = str(s["error"])
@@ -164,7 +173,7 @@ def _get_max_leverage_for_coin(context: CLIContext, coin: str) -> int:
             return int(max_lev)
     raise RuntimeError(f"Could not resolve max leverage for {coin}")
 
-def _is_invalid_leverage_response(resp: Any) -> bool:
+def _is_invalid_leverage_response(resp: object) -> bool:
     if not isinstance(resp, dict):
         return False
     if str(resp.get("status", "")).lower() != "err":
@@ -474,7 +483,7 @@ async def _fetch_all_builder_resolution_data(
         *(asyncio.to_thread(_fetch_builder_resolution_data, info, dex_name) for dex_name in dex_names)
     )
 
-async def _fetch_all_perp_states(info: Any, user: str, dexs: list[str]) -> list[dict[str, Any]]:
+async def _fetch_all_perp_states(info: Any, user: str, dexs: list[str]) -> list[ClearinghouseState]:
     return await asyncio.gather(
         *(asyncio.to_thread(info.user_state, user, dex) for dex in dexs)
     )
@@ -496,7 +505,7 @@ def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
 def _network_name(context: CLIContext) -> str:
     return "testnet" if context.config.testnet else "mainnet"
 
-def _extract_twap_id(response: dict[str, Any]) -> Optional[int]:
+def _extract_twap_id(response: ExchangeSuccessEnvelope) -> Optional[int]:
     status = response.get("response", {}).get("data", {}).get("status", {})
     if not isinstance(status, dict):
         return None
@@ -527,7 +536,7 @@ def _render_twap_orders(title: str, records: list[Any]) -> None:
 
 @cli_command
 def order_ls(
-    ctx: Any,
+    ctx: CommandContext,
     user: Optional[str] = None,
     watch: bool = False,
 ) -> None:
@@ -559,7 +568,7 @@ def order_ls(
 
 @cli_command
 def order_limit(
-    ctx: Any,
+    ctx: CommandContext,
     side: str,
     size: str,
     coin: str,
@@ -620,7 +629,7 @@ def order_limit(
 
 @cli_command
 def order_market(
-    ctx: Any,
+    ctx: CommandContext,
     side: str,
     size: str,
     coin: str,
@@ -697,7 +706,7 @@ def order_market(
 
 @cli_command
 def order_market_close(
-    ctx: Any,
+    ctx: CommandContext,
     coin: str,
     slippage: Optional[float] = None,
     ratio: float = 1.0,
@@ -729,7 +738,7 @@ def order_market_close(
 
 @cli_command
 def order_tpsl(
-    ctx: Any,
+    ctx: CommandContext,
     coin: str,
     tp: Optional[float] = None,
     sl: Optional[float] = None,
@@ -792,7 +801,7 @@ def order_tpsl(
 
 @cli_command
 def order_twap(
-    ctx: Any,
+    ctx: CommandContext,
     side: str,
     size: str,
     coin: str,
@@ -888,7 +897,7 @@ def order_twap(
     _done(ctx)
 
 @cli_command
-def order_twap_cancel(ctx: Any, coin: Optional[str] = None, twap_id: Optional[str] = None) -> None:
+def order_twap_cancel(ctx: CommandContext, coin: Optional[str] = None, twap_id: Optional[str] = None) -> None:
     context = _ctx(ctx)
     address = context.get_wallet_address()
     if coin is not None and twap_id is not None:
@@ -940,7 +949,7 @@ def order_twap_cancel(ctx: Any, coin: Optional[str] = None, twap_id: Optional[st
     _done(ctx)
 
 @cli_command
-def order_cancel(ctx: Any, oid: Optional[str] = None) -> None:
+def order_cancel(ctx: CommandContext, oid: Optional[str] = None) -> None:
     context = _ctx(ctx)
     user = context.get_wallet_address()
     exchange = context.get_wallet_client()
@@ -984,7 +993,7 @@ def order_cancel(ctx: Any, oid: Optional[str] = None) -> None:
 
 @cli_command
 def order_cancel_all(
-    ctx: Any,
+    ctx: CommandContext,
     yes: bool = False,
     coin: Optional[str] = None,
 ) -> None:
@@ -1021,7 +1030,7 @@ def order_cancel_all(
 
 @cli_command
 def order_set_leverage(
-    ctx: Any,
+    ctx: CommandContext,
     coin: str,
     leverage: str,
     cross: bool = False,
@@ -1053,7 +1062,7 @@ def order_set_leverage(
     _done(ctx)
 
 @cli_command
-def order_configure(ctx: Any, slippage: Optional[float] = None) -> None:
+def order_configure(ctx: CommandContext, slippage: Optional[float] = None) -> None:
     if slippage is None:
         out(get_order_config(), _json(ctx))
     else:

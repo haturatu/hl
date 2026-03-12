@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 
 from eth_account import Account as EthAccount
 
-from ..cli.runtime import cli_command, console, run_blocking
+from ..cli.runtime import CommandContext, cli_command, console, run_blocking
 from ..core.context import CLIContext
 from ..infra.db import (
     create_account,
@@ -51,7 +51,7 @@ def _print_account_add_guide() -> None:
     console.print(" - [bold]hl account set-default <alias>[/bold]\n")
 
 @cli_command
-def account_add(ctx: Any) -> None:
+def account_add(ctx: CommandContext) -> None:
     context = _ctx(ctx)
     is_testnet = context.config.testnet
     network = _network_name(context)
@@ -122,7 +122,7 @@ def account_add(ctx: Any) -> None:
     _done(ctx)
 
 @cli_command
-def account_ls(ctx: Any) -> None:
+def account_ls(ctx: CommandContext) -> None:
     context = _ctx(ctx)
     accounts = get_all_accounts(_network_name(context))
     if _json(ctx):
@@ -148,7 +148,7 @@ def account_ls(ctx: Any) -> None:
     _done(ctx)
 
 @cli_command
-def account_set_default(ctx: Any, alias: str) -> None:
+def account_set_default(ctx: CommandContext, alias: str) -> None:
     context = _ctx(ctx)
     network = _network_name(context)
     if not get_account_by_alias(alias, network):
@@ -158,7 +158,7 @@ def account_set_default(ctx: Any, alias: str) -> None:
     _done(ctx)
 
 @cli_command
-def account_remove(ctx: Any, alias: str, force: bool = False) -> None:
+def account_remove(ctx: CommandContext, alias: str, force: bool = False) -> None:
     context = _ctx(ctx)
     network = _network_name(context)
     existing = get_account_by_alias(alias, network)
@@ -183,7 +183,7 @@ async def _fetch_positions_async(context: CLIContext, user: str) -> PositionsPay
     return await _service_fetch_positions_async(context, user)
 
 @cli_command
-def account_positions(ctx: Any, user: Optional[str] = None, watch: bool = False) -> None:
+def account_positions(ctx: CommandContext, user: Optional[str] = None, watch: bool = False) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
     if watch:
@@ -226,7 +226,7 @@ def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
     ]
 
 @cli_command
-def account_orders(ctx: Any, user: Optional[str] = None, watch: bool = False) -> None:
+def account_orders(ctx: CommandContext, user: Optional[str] = None, watch: bool = False) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
     if watch:
@@ -253,7 +253,7 @@ async def _fetch_portfolio_async(context: CLIContext, user: str) -> PortfolioPay
     return await _service_fetch_portfolio_async(context, user)
 
 @cli_command
-def account_balances(ctx: Any, user: Optional[str] = None, watch: bool = False) -> None:
+def account_balances(ctx: CommandContext, user: Optional[str] = None, watch: bool = False) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
     if watch:
@@ -271,7 +271,7 @@ def account_balances(ctx: Any, user: Optional[str] = None, watch: bool = False) 
     _done(ctx)
 
 @cli_command
-def account_portfolio(ctx: Any, user: Optional[str] = None, watch: bool = False) -> None:
+def account_portfolio(ctx: CommandContext, user: Optional[str] = None, watch: bool = False) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
 

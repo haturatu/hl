@@ -4,6 +4,8 @@ from hyperliquid.utils.types import SpotAssetCtx, SpotMeta, SpotTokenInfo
 
 NumericString: TypeAlias = str
 DisplayNumericString: TypeAlias = NumericString | Literal["?"]
+DisplayValue: TypeAlias = str | float | int | None
+TableCell: TypeAlias = str | float | int | bool | None
 IsoTimestamp: TypeAlias = str
 UnixMillis: TypeAlias = int
 MarketKind: TypeAlias = Literal["perp", "spot"]
@@ -167,6 +169,80 @@ class OpenOrderRow(TypedDict):
     sz: NumericString
     limitPx: NumericString
     timestamp: IsoTimestamp
+
+
+class ExchangeStatusError(TypedDict):
+    error: str
+
+
+class ExchangeStatusResting(TypedDict):
+    oid: int
+
+
+class ExchangeStatusFilled(TypedDict):
+    totalSz: NumericString
+    avgPx: NumericString
+    oid: int
+
+
+class ExchangeStatusRunning(TypedDict):
+    twapId: int | NumericString
+
+
+class ExchangeStatusWithError(TypedDict):
+    error: str
+
+
+class ExchangeStatusWithRunning(TypedDict):
+    running: ExchangeStatusRunning
+
+
+ExchangeStatusValue: TypeAlias = str | ExchangeStatusWithError | ExchangeStatusWithRunning
+
+
+class ExchangeOrderStatusError(TypedDict):
+    error: str
+
+
+class ExchangeOrderStatusFilled(TypedDict):
+    filled: ExchangeStatusFilled
+
+
+class ExchangeOrderStatusResting(TypedDict):
+    resting: ExchangeStatusResting
+
+
+ExchangeOrderStatus: TypeAlias = ExchangeOrderStatusError | ExchangeOrderStatusFilled | ExchangeOrderStatusResting | str
+
+
+class ExchangeOrderResponseData(TypedDict):
+    statuses: list[ExchangeOrderStatus]
+
+
+class ExchangeStatusResponseData(TypedDict, total=False):
+    statuses: list[ExchangeOrderStatus]
+    status: ExchangeStatusValue
+
+
+class ExchangeResponse(TypedDict):
+    type: Literal["order", "cancel", "batchModify", "twapOrder", "twapCancel", "default"]
+    data: ExchangeOrderResponseData | ExchangeStatusResponseData
+
+
+class ExchangeSuccessEnvelope(TypedDict):
+    status: Literal["ok"]
+    response: ExchangeResponse
+
+
+class ExchangeErrorEnvelope(TypedDict):
+    status: Literal["err"]
+    response: str
+
+
+class TwapCancelPayload(TypedDict):
+    coin: str
+    twapId: int
+    response: ExchangeSuccessEnvelope
 
 
 class MarketRowBase(TypedDict):

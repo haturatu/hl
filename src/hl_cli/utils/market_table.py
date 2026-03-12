@@ -1,8 +1,8 @@
-from typing import Any, Callable
+from typing import Callable
 
 from rich.table import Table
 
-from ..types import MarketRow
+from ..types import DisplayValue, MarketRow
 
 def market_table_columns(*, include_category: bool, show_perp_only_fields: bool) -> list[str]:
     columns = ["Coin", "Pair", "Price", "24h%", "Vol"]
@@ -17,9 +17,9 @@ def market_table_row_values(
     *,
     include_category: bool,
     show_perp_only_fields: bool,
-    format_price: Callable[[Any], str],
-    format_usd: Callable[[Any], str],
-    format_rate_pct: Callable[[Any], str],
+    format_price: Callable[[DisplayValue], str],
+    format_usd: Callable[[DisplayValue], str],
+    format_rate_pct: Callable[[DisplayValue], str],
 ) -> list[str]:
     values = [
         str(row.get("coin", "")),

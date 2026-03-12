@@ -3,25 +3,36 @@ from concurrent.futures import Future
 from functools import wraps
 import threading
 import time
-from typing import Any, Awaitable, Callable, ParamSpec, TypeVar
+from typing import Awaitable, Callable, ParamSpec, Protocol, TypeVar, TypedDict
 
 from rich.console import Console
 from rich.table import Table
 
 from ..core.context import CLIContext
+from ..types import TableCell
 from ..utils.output import out_error
 
 console = Console()
 P = ParamSpec("P")
 R = TypeVar("R")
 
-def cli_context(ctx: Any) -> CLIContext:
+class RuntimeObj(TypedDict):
+    context: CLIContext
+    json: bool
+    start: float
+
+
+class CommandContext(Protocol):
+    obj: RuntimeObj
+
+
+def cli_context(ctx: CommandContext) -> CLIContext:
     return ctx.obj["context"]
 
-def json_output_enabled(ctx: Any) -> bool:
+def json_output_enabled(ctx: CommandContext) -> bool:
     return bool(ctx.obj["json"])
 
-def finish_command(ctx: Any) -> None:
+def finish_command(ctx: CommandContext) -> None:
     if not json_output_enabled(ctx):
         elapsed = time.perf_counter() - float(ctx.obj["start"])
         print(f"\nExecution time: {elapsed:.2f}s")
@@ -33,7 +44,7 @@ def confirm(message: str, default: bool = False) -> bool:
         return default
     return answer in {"y", "yes"}
 
-def render_table(title: str, columns: list[str], rows: list[list[Any]]) -> None:
+def render_table(title: str, columns: list[str], rows: list[list[TableCell]]) -> None:
     table = Table(title=title)
     for c in columns:
         table.add_column(c)

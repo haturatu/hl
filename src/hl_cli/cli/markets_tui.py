@@ -6,13 +6,13 @@ import termios
 import time
 import tty
 from itertools import cycle
-from typing import Any, Callable, Literal, Optional
+from typing import Callable, Iterator, Literal, Optional
 
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
 
-from ..types import AllMids, MarketKind, MarketRow, MarketsPayload
+from ..types import AllMids, DisplayValue, MarketKind, MarketRow, MarketsPayload
 from ..utils.market_table import (
     build_market_table,
     market_table_columns,
@@ -61,7 +61,7 @@ class MarketsTuiState:
         self.scroll = max(0, min(self.scroll, max_scroll))
 
 @contextlib.contextmanager
-def _raw_tty_mode() -> Any:
+def _raw_tty_mode() -> Iterator[bool]:
     if not sys.stdin.isatty():
         yield False
         return
@@ -224,9 +224,9 @@ def _render_table(
     console: Console,
     state: MarketsTuiState,
     widths_by_scope: dict[str, list[int]],
-    format_price: Callable[[Any], str],
-    format_usd: Callable[[Any], str],
-    format_rate_pct: Callable[[Any], str],
+    format_price: Callable[[DisplayValue], str],
+    format_usd: Callable[[DisplayValue], str],
+    format_rate_pct: Callable[[DisplayValue], str],
 ) -> Panel:
     current_rows = state.rows(rows)
     # Leave room for the panel border, title/subtitle, and terminal prompt line.
@@ -278,9 +278,9 @@ def run_markets_tui(
     next_mids: Callable[[str], AllMids],
     sort_rows: Callable[[MarketsPayload], MarketsPayload],
     prepare_output: Callable[[MarketsPayload], MarketsPayload],
-    format_price: Callable[[Any], str],
-    format_usd: Callable[[Any], str],
-    format_rate_pct: Callable[[Any], str],
+    format_price: Callable[[DisplayValue], str],
+    format_usd: Callable[[DisplayValue], str],
+    format_rate_pct: Callable[[DisplayValue], str],
     as_json: bool,
 ) -> None:
     if as_json:

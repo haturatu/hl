@@ -4,8 +4,10 @@ from queue import Empty, Queue
 from typing import Any, Optional
 
 from hyperliquid.info import Info
+from hyperliquid.utils.types import L2BookData
 
-from ..cli.runtime import cli_command, console, run_blocking
+from ..cli.runtime import CommandContext, cli_command, console, run_blocking
+from ..types import AllMids, ClearinghouseState, PerpMeta
 from ..utils.output import out
 from ..utils.validators import validate_address
 from ..utils.watch import watch_loop
@@ -13,7 +15,7 @@ from .common import _ctx, _done, _format_price, _json, _render_table
 from .order import _mids_for_coin, _resolve_tradable_coin
 
 @cli_command
-def asset_price(ctx: Any, coin: str, watch: bool = False) -> None:
+def asset_price(ctx: CommandContext, coin: str, watch: bool = False) -> None:
     context = _ctx(ctx)
 
     def fetch() -> dict[str, str]:
@@ -30,13 +32,13 @@ def asset_price(ctx: Any, coin: str, watch: bool = False) -> None:
     _done(ctx)
 
 @cli_command
-def asset_book(ctx: Any, coin: str, watch: bool = False) -> None:
+def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
     context = _ctx(ctx)
 
-    def fetch() -> dict[str, Any]:
+    def fetch() -> L2BookData:
         return context.get_public_client().l2_snapshot(coin)
 
-    def render_book(book: dict[str, Any]) -> None:
+    def render_book(book: L2BookData) -> None:
         bids = book.get("levels", [[], []])[0][:10]
         asks = book.get("levels", [[], []])[1][:10]
         _render_table("Asks", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in asks[::-1]])
@@ -44,7 +46,7 @@ def asset_book(ctx: Any, coin: str, watch: bool = False) -> None:
 
     if watch:
         stream_info = Info(context.base_url, skip_ws=False)
-        updates: Queue[dict[str, Any]] = Queue()
+        updates: Queue[L2BookData] = Queue()
         subscription = {"type": "l2Book", "coin": coin}
         subscription_id = stream_info.subscribe(subscription, lambda msg: updates.put(msg["data"]))
 
@@ -83,7 +85,7 @@ def asset_book(ctx: Any, coin: str, watch: bool = False) -> None:
     _done(ctx)
 
 @cli_command
-def asset_leverage(ctx: Any, coin: str, user: Optional[str] = None, watch: bool = False) -> None:
+def asset_leverage(ctx: CommandContext, coin: str, user: Optional[str] = None, watch: bool = False) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
 
@@ -113,8 +115,8 @@ def asset_leverage(ctx: Any, coin: str, user: Optional[str] = None, watch: bool 
     _done(ctx)
 
 async def _fetch_asset_leverage_inputs_async(
-    info: Any, address: str
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    info: Info, address: str
+) -> tuple[ClearinghouseState, PerpMeta, AllMids]:
     state_task = asyncio.to_thread(info.user_state, address)
     meta_task = asyncio.to_thread(info.meta)
     mids_task = asyncio.to_thread(info.all_mids)

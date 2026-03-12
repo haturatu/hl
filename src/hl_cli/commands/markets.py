@@ -4,7 +4,7 @@ from typing import Any, Optional
 from hyperliquid.info import Info
 
 from ..cli.markets_tui import run_markets_tui
-from ..cli.runtime import cli_command, console, run_blocking
+from ..cli.runtime import CommandContext, cli_command, console, run_blocking
 from ..core.context import CLIContext
 from ..core.testnet_policy import includes_builder_perps
 from ..types import MarketRow, MarketsPayload, PerpAssetCtx, PerpMeta, SpotTokenInfo
@@ -248,7 +248,7 @@ def _fetch_builder_market_data(info: Info, dex: str) -> tuple[PerpMeta, list[Per
 
 @cli_command
 def markets_ls(
-    ctx: Any,
+    ctx: CommandContext,
     spot_only: bool = False,
     perp_only: bool = False,
     category: Optional[str] = None,
@@ -283,7 +283,7 @@ def markets_ls(
 
 @cli_command
 def markets_search(
-    ctx: Any,
+    ctx: CommandContext,
     query: str,
     spot_only: bool = False,
     perp_only: bool = False,

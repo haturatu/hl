@@ -1,10 +1,22 @@
 import json
-from typing import Any, Iterable
+from typing import Any, Iterable, cast
 
 from rich.console import Console
 from rich.table import Table
 
-from ..types import BalancesPayload, MarketsPayload, OpenOrderRow, PortfolioPayload, PositionsPayload
+from ..types import (
+    BalancesPayload,
+    DisplayValue,
+    ExchangeOrderStatus,
+    ExchangeResponse,
+    ExchangeStatusWithError,
+    ExchangeSuccessEnvelope,
+    MarketsPayload,
+    OpenOrderRow,
+    PortfolioPayload,
+    PositionsPayload,
+    TwapCancelPayload,
+)
 from .market_table import (
     build_market_table,
     market_table_columns,
@@ -142,7 +154,7 @@ def _print_balances_payload(data: BalancesPayload) -> None:
         tbl.add_row(*[str(b.get(c, "")) for c in cols])
     console.print(tbl)
 
-def _iter_statuses(statuses: Iterable[Any]) -> None:
+def _iter_statuses(statuses: Iterable[ExchangeOrderStatus]) -> None:
     for s in statuses:
         if isinstance(s, str):
             console.print(s)
@@ -168,7 +180,7 @@ def _iter_statuses(statuses: Iterable[Any]) -> None:
             continue
         console.print(json.dumps(s, ensure_ascii=False))
 
-def _print_exchange_response(resp: dict[str, Any]) -> None:
+def _print_exchange_response(resp: ExchangeResponse) -> None:
     rtype = resp.get("type")
     data = resp.get("data")
 
@@ -189,7 +201,8 @@ def _print_exchange_response(resp: dict[str, Any]) -> None:
         if isinstance(data, dict) and "status" in data:
             s = data.get("status")
             if isinstance(s, dict) and "error" in s:
-                console.print(f"[red]Error:[/red] {s['error']}")
+                err = cast(ExchangeStatusWithError, s)
+                console.print(f"[red]Error:[/red] {err['error']}")
             else:
                 console.print(f"{rtype}: {s}")
             return
@@ -353,10 +366,10 @@ def _print_book_payload(data: dict[str, Any]) -> None:
             tbl.add_row(_fmt_usd(x.get("px")), str(x.get("sz", "")), str(x.get("n", "")))
         console.print(tbl)
 
-def _print_twap_cancel_payload(data: dict[str, Any]) -> None:
+def _print_twap_cancel_payload(data: TwapCancelPayload) -> None:
     coin = data.get("coin")
     twap_id = data.get("twapId")
-    response = data.get("response") or {}
+    response: ExchangeSuccessEnvelope = data["response"]
     status = response.get("response", {}).get("data", {}).get("status", {})
     if isinstance(status, dict) and status.get("error"):
         console.print("[red]❌ TWAP cancel rejected[/red]")
@@ -383,7 +396,7 @@ def _print_flat_dict(data: dict[str, Any]) -> bool:
         console.print(f"{k}: {v}")
     return True
 
-def _fmt_usd(value: Any) -> str:
+def _fmt_usd(value: DisplayValue) -> str:
     if value is None:
         return "-"
     try:
@@ -392,7 +405,7 @@ def _fmt_usd(value: Any) -> str:
         return str(value)
     return f"${n:,.2f}"
 
-def _fmt_price(value: Any) -> str:
+def _fmt_price(value: DisplayValue) -> str:
     if value is None:
         return "-"
     try:
@@ -416,7 +429,7 @@ def _fmt_price(value: Any) -> str:
         s = s.rstrip("0").rstrip(".")
     return f"${s}"
 
-def _fmt_pct(value: Any) -> str:
+def _fmt_pct(value: DisplayValue) -> str:
     if value is None:
         return "-"
     try:
@@ -425,7 +438,7 @@ def _fmt_pct(value: Any) -> str:
         return str(value)
     return f"{n:+.2f}%"
 
-def _fmt_rate_pct(value: Any) -> str:
+def _fmt_rate_pct(value: DisplayValue) -> str:
     if value is None:
         return "-"
     try:
