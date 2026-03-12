@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Optional
+from typing import Optional
 
 from hyperliquid.info import Info
 

@@ -37,14 +37,12 @@ from ..types import (
     ExchangeStatusFilled,
     ExchangeStatusResting,
     JsonObject,
-    PerpDexInfo,
     PerpMeta,
     OpenOrderRow,
     TableCell,
 )
 from ..utils.output import out, out_success
 from ..utils.validators import (
-    normalize_side,
     normalize_tif,
     side_is_buy,
     side_uses_spot,

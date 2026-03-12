@@ -4,7 +4,7 @@ import sys
 import time
 from textwrap import dedent
 from types import SimpleNamespace
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from ..core.context import CLIContext, load_config
 from ..commands import app as legacy
