@@ -107,6 +107,7 @@ def _exit_with_error(msg: str, code: int = 2) -> None:
 def _bash_completion_script() -> str:
     global_options = " ".join(GLOBAL_OPTIONS)
     completion_paths = {"": TOP_LEVEL_COMMANDS, **SUBCOMMANDS, **NESTED_SUBCOMMANDS}
+    known_paths = " ".join(sorted(path for path in completion_paths if path))
     word_case_lines = "\n".join(
         [
             f'        "{name}") COMPREPLY=( $(compgen -W "{ " ".join(values) }" -- "$cur") ) ;;'
@@ -124,7 +125,7 @@ def _bash_completion_script() -> str:
         f"""\
         # bash completion for hl
         _hl_completion() {{
-            local cur prev path i word
+            local cur prev path candidate i word
             COMPREPLY=()
             cur="${{COMP_WORDS[COMP_CWORD]}}"
             prev="${{COMP_WORDS[COMP_CWORD-1]}}"
@@ -135,10 +136,15 @@ def _bash_completion_script() -> str:
                 case "$word" in
                     -*) ;;
                     *)
+                        candidate="$word"
                         if [[ -n "$path" ]]; then
-                            path+=" "
+                            candidate="$path $word"
                         fi
-                        path+="$word"
+                        case " {known_paths} " in
+                            *" $candidate "*)
+                                path="$candidate"
+                                ;;
+                        esac
                         ;;
                 esac
             done
