@@ -44,6 +44,8 @@ NESTED_SUBCOMMANDS: dict[str, list[str]] = {
     "order twap": ["long", "short"],
 }
 GLOBAL_OPTIONS = ["--json", "--testnet", "-h", "--help"]
+ROOT_ONLY_OPTIONS = ["--json", "--testnet"]
+HELP_OPTIONS = ["-h", "--help"]
 PATH_OPTIONS: dict[str, list[str]] = {
     "": GLOBAL_OPTIONS,
     "account positions": ["--user", "-w", "--watch"],
@@ -116,7 +118,7 @@ def _bash_completion_script() -> str:
     )
     option_case_lines = "\n".join(
         [
-            f'        "{name}") COMPREPLY=( $(compgen -W "{ " ".join(GLOBAL_OPTIONS + values) }" -- "$cur") ) ;;'
+            f'        "{name}") COMPREPLY=( $(compgen -W "{ " ".join(HELP_OPTIONS + values) }" -- "$cur") ) ;;'
             for name, values in PATH_OPTIONS.items()
             if name
         ]
@@ -153,7 +155,7 @@ def _bash_completion_script() -> str:
                 case "$path" in
         "") COMPREPLY=( $(compgen -W "{global_options}" -- "$cur") ) ;;
 {option_case_lines}
-                    *) COMPREPLY=( $(compgen -W "{global_options}" -- "$cur") ) ;;
+                    *) COMPREPLY=( $(compgen -W "{ " ".join(HELP_OPTIONS) }" -- "$cur") ) ;;
                 esac
                 return 0
             fi
