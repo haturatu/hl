@@ -14,7 +14,7 @@ help:
 		'make test       Run test suite'
 
 install:
-	$(PIP) install .
+	$(PIP) install --user .
 	$(MAKE) completion
 	hash -r
 
