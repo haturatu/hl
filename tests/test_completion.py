@@ -24,6 +24,7 @@ class CompletionTests(unittest.TestCase):
         self.assertIn("complete -F _hl_completion hl", result.stdout)
         self.assertIn('"order")', result.stdout)
         self.assertIn('"order market")', result.stdout)
+        self.assertIn('case " account asset completion markets order order limit order market order twap referral " in', result.stdout)
         self.assertIn("buy sell long short close", result.stdout)
         self.assertIn("--json --testnet -h --help --reduce-only --slippage", result.stdout)
         self.assertIn("--spot-only --perp-only --category --sort-by -w --watch", result.stdout)
