@@ -1,25 +1,33 @@
 import asyncio
-from typing import Any
 
 from ..core.context import CLIContext
 from ..core.testnet_policy import uses_main_perp_only
-from ..types import BalancesPayload, MarginSummary, PortfolioPayload, PositionRow, PositionsPayload, SpotBalanceRow
+from ..types import (
+    BalancesPayload,
+    ClearinghouseState,
+    MarginSummary,
+    PortfolioPayload,
+    PositionRow,
+    PositionsPayload,
+    SpotBalanceRow,
+    SpotClearinghouseState,
+)
 
 def account_perp_dexs(context: CLIContext) -> list[str]:
     if uses_main_perp_only(context.config.testnet):
         return [""]
     return context.get_perp_dexs()
 
-async def _fetch_perp_states(context: CLIContext, user: str) -> list[dict[str, Any]]:
+async def _fetch_perp_states(context: CLIContext, user: str) -> list[ClearinghouseState]:
     info = context.get_public_client()
     return await asyncio.gather(
         *(asyncio.to_thread(info.user_state, user, dex) for dex in account_perp_dexs(context))
     )
 
-async def _fetch_spot_state(context: CLIContext, user: str) -> dict[str, Any]:
+async def _fetch_spot_state(context: CLIContext, user: str) -> SpotClearinghouseState:
     return await asyncio.to_thread(context.get_public_client().spot_user_state, user)
 
-def _position_rows_from_states(states: list[dict[str, Any]]) -> list[PositionRow]:
+def _position_rows_from_states(states: list[ClearinghouseState]) -> list[PositionRow]:
     positions: list[PositionRow] = []
     for state in states:
         positions.extend(
@@ -39,7 +47,7 @@ def _position_rows_from_states(states: list[dict[str, Any]]) -> list[PositionRow
         )
     return positions
 
-def _spot_balance_rows(spot_state: dict[str, Any]) -> list[SpotBalanceRow]:
+def _spot_balance_rows(spot_state: SpotClearinghouseState) -> list[SpotBalanceRow]:
     balances: list[SpotBalanceRow] = []
     for balance in spot_state["balances"]:
         if float(balance["total"]) == 0:
@@ -56,7 +64,7 @@ def _spot_balance_rows(spot_state: dict[str, Any]) -> list[SpotBalanceRow]:
         )
     return balances
 
-def _margin_summary(perp_states: list[dict[str, Any]]) -> MarginSummary:
+def _margin_summary(perp_states: list[ClearinghouseState]) -> MarginSummary:
     account_value = sum(float(state["marginSummary"].get("accountValue", 0) or 0) for state in perp_states)
     margin_used = sum(float(state["marginSummary"].get("totalMarginUsed", 0) or 0) for state in perp_states)
     return {

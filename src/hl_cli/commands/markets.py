@@ -1,11 +1,13 @@
 import asyncio
 from typing import Any, Optional
 
+from hyperliquid.info import Info
+
 from ..cli.markets_tui import run_markets_tui
 from ..cli.runtime import cli_command, console, run_blocking
 from ..core.context import CLIContext
 from ..core.testnet_policy import includes_builder_perps
-from ..types import MarketRow, MarketsPayload
+from ..types import MarketRow, MarketsPayload, PerpAssetCtx, PerpMeta, SpotTokenInfo
 from ..utils.output import out
 from .common import _ctx, _done, _format_price, _format_rate_pct, _format_usd, _json
 
@@ -18,7 +20,7 @@ def _normalize_market_sort(sort_by: str) -> str:
         raise RuntimeError(f"invalid sort field: {sort_by} (expected one of: {allowed})")
     return value
 
-def _to_float(value: Any) -> float | None:
+def _to_float(value: str | float | int | None) -> float | None:
     if value is None:
         return None
     try:
@@ -116,7 +118,7 @@ def _watch_markets_prices(
 def _build_market_rows(context: CLIContext, spot_only: bool, perp_only: bool) -> MarketsPayload:
     return run_blocking(_build_market_rows_async(context, spot_only, perp_only))
 
-def _safe_token_name(tokens: list[dict[str, Any]], index: Any, default: str = "?") -> str:
+def _safe_token_name(tokens: list[SpotTokenInfo], index: object, default: str = "?") -> str:
     if not isinstance(index, int) or index < 0 or index >= len(tokens):
         return default
     return str(tokens[index].get("name", default))
@@ -149,7 +151,9 @@ async def _build_market_rows_async(
             # Testnet can return spot pairs whose token indexes do not exist.
             if base == "?" or quote == "?":
                 continue
-            ctx_row = ctx_map.get(pair["name"], {})
+            ctx_row = ctx_map.get(pair["name"])
+            if ctx_row is None:
+                continue
             prev = float(ctx_row.get("prevDayPx", 0) or 0)
             mark = float(ctx_row.get("markPx", 0) or 0)
             chg = ((mark - prev) / prev * 100) if prev else None
@@ -175,7 +179,9 @@ async def _build_market_rows_async(
         for i, market in enumerate(perp_meta["universe"]):
             if market.get("isDelisted"):
                 continue
-            ctx_row = perp_ctxs[i] if i < len(perp_ctxs) else {}
+            if i >= len(perp_ctxs):
+                continue
+            ctx_row = perp_ctxs[i]
             prev = float(ctx_row.get("prevDayPx", 0) or 0)
             mark = float(ctx_row.get("markPx", 0) or 0)
             oi_raw = _to_float(ctx_row.get("openInterest"))
@@ -211,7 +217,9 @@ async def _build_market_rows_async(
                     coin = str(market.get("name"))
                     if not coin or market.get("isDelisted"):
                         continue
-                    ctx_row = ctxs[i] if i < len(ctxs) else {}
+                    if i >= len(ctxs):
+                        continue
+                    ctx_row = ctxs[i]
                     prev = float(ctx_row.get("prevDayPx", 0) or 0)
                     mark = float(ctx_row.get("markPx", 0) or 0)
                     oi_raw = _to_float(ctx_row.get("openInterest"))
@@ -233,7 +241,7 @@ async def _build_market_rows_async(
 
     return {"perpMarkets": perp_rows, "spotMarkets": spot_rows}
 
-def _fetch_builder_market_data(info: Any, dex: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def _fetch_builder_market_data(info: Info, dex: str) -> tuple[PerpMeta, list[PerpAssetCtx]]:
     meta, ctxs = info.post("/info", {"type": "metaAndAssetCtxs", "dex": dex})
     meta["dex"] = dex
     return meta, ctxs

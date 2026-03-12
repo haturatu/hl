@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
 
-from ..types import MarketKind, MarketRow, MarketsPayload
+from ..types import AllMids, MarketKind, MarketRow, MarketsPayload
 from ..utils.market_table import (
     build_market_table,
     market_table_columns,
@@ -275,7 +275,7 @@ def run_markets_tui(
     console: Console,
     rows: MarketsPayload,
     include_category: bool,
-    next_mids: Callable[[str], dict[str, Any]],
+    next_mids: Callable[[str], AllMids],
     sort_rows: Callable[[MarketsPayload], MarketsPayload],
     prepare_output: Callable[[MarketsPayload], MarketsPayload],
     format_price: Callable[[Any], str],

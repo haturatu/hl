@@ -9,6 +9,7 @@ from hyperliquid.utils.constants import MAINNET_API_URL, TESTNET_API_URL
 import requests
 
 from ..infra.db import Account, get_default_account
+from ..types import PerpDexInfo, SpotMeta
 from .testnet_policy import filter_safe_spot_universe, uses_safe_spot_meta_fallback
 
 @dataclass
@@ -76,7 +77,7 @@ class CLIContext:
             return self._perp_dexs
         try:
             temp = _build_info_client(self.base_url, skip_ws=True)
-            raw = temp.perp_dexs()
+            raw: list[PerpDexInfo | None] = temp.perp_dexs()
             names = [str(x.get("name")) for x in raw if isinstance(x, dict) and x.get("name")]
             self._perp_dexs = ["", *names] if names else [""]
         except Exception:
@@ -119,7 +120,7 @@ def load_config(testnet: bool) -> Config:
         account=None,
     )
 
-def _load_safe_spot_meta(base_url: str) -> dict:
+def _load_safe_spot_meta(base_url: str) -> SpotMeta:
     # Testnet currently returns some spot pairs with invalid token indexes.
     # Filter those out before constructing the SDK client.
     response = requests.post(f"{base_url}/info", json={"type": "spotMeta"}, timeout=20)
