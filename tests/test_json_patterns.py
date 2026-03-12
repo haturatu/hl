@@ -10,8 +10,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
 from hl_cli.cli import argparse_main
 
+
 async def _call_stub(fn, *_args, **_kwargs):
     print(json.dumps({"ok": fn.__name__}))
+
 
 class JsonPatternTests(unittest.TestCase):
     def _run(self, argv):
@@ -34,18 +36,36 @@ class JsonPatternTests(unittest.TestCase):
             (["--json", "account", "balances"], "account_balances"),
             (["--json", "account", "portfolio"], "account_portfolio"),
             (["--json", "order", "ls"], "order_ls"),
-            (["--json", "order", "limit", "buy", "0.01", "BTC", "65000"], "order_limit"),
-            (["--json", "order", "limit", "buy", "BTC", "65000", "--stake", "50"], "order_limit"),
+            (
+                ["--json", "order", "limit", "buy", "0.01", "BTC", "65000"],
+                "order_limit",
+            ),
+            (
+                ["--json", "order", "limit", "buy", "BTC", "65000", "--stake", "50"],
+                "order_limit",
+            ),
             (["--json", "order", "market", "buy", "0.01", "BTC"], "order_market"),
-            (["--json", "order", "market", "buy", "BTC", "--stake", "50"], "order_market"),
+            (
+                ["--json", "order", "market", "buy", "BTC", "--stake", "50"],
+                "order_market",
+            ),
             (["--json", "order", "market", "close", "ETH"], "order_market_close"),
-            (["--json", "order", "market", "close", "ETH", "--ratio", "0.5"], "order_market_close"),
+            (
+                ["--json", "order", "market", "close", "ETH", "--ratio", "0.5"],
+                "order_market_close",
+            ),
             (["--json", "order", "twap", "buy", "1", "BTC", "30"], "order_twap"),
             (["--json", "order", "twap-cancel", "BTC", "12345"], "order_twap_cancel"),
             (["--json", "order", "cancel", "123"], "order_cancel"),
             (["--json", "order", "cancel-all", "--yes"], "order_cancel_all"),
-            (["--json", "order", "set-leverage", "BTC", "10", "--cross"], "order_set_leverage"),
-            (["--json", "order", "tpsl", "ETH", "--tp", "1900", "--sl", "1800"], "order_tpsl"),
+            (
+                ["--json", "order", "set-leverage", "BTC", "10", "--cross"],
+                "order_set_leverage",
+            ),
+            (
+                ["--json", "order", "tpsl", "ETH", "--tp", "1900", "--sl", "1800"],
+                "order_tpsl",
+            ),
             (["--json", "order", "configure", "--slippage", "0.8"], "order_configure"),
             (["--json", "asset", "price", "BTC"], "asset_price"),
             (["--json", "asset", "book", "BTC"], "asset_book"),
@@ -54,7 +74,10 @@ class JsonPatternTests(unittest.TestCase):
             (["--json", "markets", "ls", "--category"], "markets_ls"),
             (["--json", "markets", "ls", "--category", "stocks"], "markets_ls"),
             (["--json", "markets", "search", "ORCL"], "markets_search"),
-            (["--json", "markets", "search", "ORCL", "--category", "stocks"], "markets_search"),
+            (
+                ["--json", "markets", "search", "ORCL", "--category", "stocks"],
+                "markets_search",
+            ),
             (["--json", "referral", "set", "MYCODE"], "referral_set"),
             (["--json", "referral", "status"], "referral_status"),
         ]
@@ -63,6 +86,7 @@ class JsonPatternTests(unittest.TestCase):
             with self.subTest(argv=argv):
                 payload = self._run(argv)
                 self.assertEqual(payload.get("ok"), expected)
+
 
 if __name__ == "__main__":
     unittest.main()

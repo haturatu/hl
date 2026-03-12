@@ -51,13 +51,19 @@ class OrderTestnetRoutingTests(unittest.TestCase):
 
     def test_close_position_perp_dexs_uses_main_perp_only_on_testnet(self):
         self.assertEqual(_close_position_perp_dexs(_FakeContext(True)), [""])
-        self.assertEqual(_close_position_perp_dexs(_FakeContext(False)), ["", "flx", "test"])
+        self.assertEqual(
+            _close_position_perp_dexs(_FakeContext(False)), ["", "flx", "test"]
+        )
 
     def test_buy_sell_resolve_spot_and_long_short_resolve_perp(self):
         context = _FakeContext(False)
         with (
-            patch("hl_cli.commands.order._resolve_spot_coin", return_value="BTC/USDC") as resolve_spot,
-            patch("hl_cli.commands.order._resolve_perp_coin", return_value="BTC") as resolve_perp,
+            patch(
+                "hl_cli.commands.order._resolve_spot_coin", return_value="BTC/USDC"
+            ) as resolve_spot,
+            patch(
+                "hl_cli.commands.order._resolve_perp_coin", return_value="BTC"
+            ) as resolve_perp,
         ):
             self.assertEqual(_resolve_coin_for_side(context, "buy", "BTC"), "BTC/USDC")
             self.assertEqual(_resolve_coin_for_side(context, "sell", "BTC"), "BTC/USDC")
@@ -68,11 +74,17 @@ class OrderTestnetRoutingTests(unittest.TestCase):
 
     def test_spot_sides_reject_perp_only_flags(self):
         with self.assertRaisesRegex(RuntimeError, "only supported with long/short"):
-            _validate_side_mode_args(side="buy", leverage=5, cross=False, isolated=False)
+            _validate_side_mode_args(
+                side="buy", leverage=5, cross=False, isolated=False
+            )
         with self.assertRaisesRegex(RuntimeError, "only supported with long/short"):
-            _validate_side_mode_args(side="sell", leverage=None, cross=True, isolated=False)
+            _validate_side_mode_args(
+                side="sell", leverage=None, cross=True, isolated=False
+            )
         with self.assertRaisesRegex(RuntimeError, "only supported with long/short"):
-            _validate_side_mode_args(side="buy", leverage=None, cross=False, isolated=False, reduce_only=True)
+            _validate_side_mode_args(
+                side="buy", leverage=None, cross=False, isolated=False, reduce_only=True
+            )
 
     def test_resolve_spot_coin_accepts_index_symbol(self):
         context = _FakeContext(False)
@@ -92,6 +104,7 @@ class OrderTestnetRoutingTests(unittest.TestCase):
             }
         }
         self.assertEqual(_extract_twap_id(response), 12345)
+
 
 if __name__ == "__main__":
     unittest.main()

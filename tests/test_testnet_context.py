@@ -2,7 +2,13 @@ import unittest
 from unittest.mock import Mock, patch
 
 from hl_cli.commands.markets import _safe_token_name
-from hl_cli.core.context import CLIContext, Config, _build_info_client, _load_safe_spot_meta
+from hl_cli.core.context import (
+    CLIContext,
+    Config,
+    _build_info_client,
+    _load_safe_spot_meta,
+)
+
 
 class TestnetContextTests(unittest.TestCase):
     def test_safe_token_name_handles_invalid_indexes(self):
@@ -31,7 +37,9 @@ class TestnetContextTests(unittest.TestCase):
         post.assert_called_once()
 
     def test_get_public_client_falls_back_to_sanitized_spot_meta(self):
-        config = Config(private_key=None, wallet_address=None, testnet=True, account=None)
+        config = Config(
+            private_key=None, wallet_address=None, testnet=True, account=None
+        )
         context = CLIContext(config)
         safe_spot_meta = {
             "tokens": [{"name": "USDC"}, {"name": "BTC"}],
@@ -39,8 +47,12 @@ class TestnetContextTests(unittest.TestCase):
         }
         created = object()
 
-        with patch("hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]) as info_cls:
-            with patch("hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta) as loader:
+        with patch(
+            "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
+        ) as info_cls:
+            with patch(
+                "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
+            ) as loader:
                 client = context.get_public_client()
 
         self.assertIs(client, created)
@@ -58,13 +70,23 @@ class TestnetContextTests(unittest.TestCase):
         }
         created = object()
 
-        with patch("hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]) as info_cls:
-            with patch("hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta) as loader:
-                client = _build_info_client("https://api.hyperliquid-testnet.xyz", skip_ws=True)
+        with patch(
+            "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
+        ) as info_cls:
+            with patch(
+                "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
+            ) as loader:
+                client = _build_info_client(
+                    "https://api.hyperliquid-testnet.xyz", skip_ws=True
+                )
 
         self.assertIs(client, created)
         loader.assert_called_once_with("https://api.hyperliquid-testnet.xyz")
-        self.assertEqual(info_cls.call_args_list[1].kwargs, {"skip_ws": True, "spot_meta": safe_spot_meta})
+        self.assertEqual(
+            info_cls.call_args_list[1].kwargs,
+            {"skip_ws": True, "spot_meta": safe_spot_meta},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

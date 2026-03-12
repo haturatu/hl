@@ -29,12 +29,18 @@ class TwapRegistryTests(unittest.TestCase):
                 self.assertEqual(len(active), 1)
                 self.assertEqual(active[0].twap_id, 123)
 
-                record = twap_registry.find_twap_order(network="testnet", user="0xabc", twap_id=123)
+                record = twap_registry.find_twap_order(
+                    network="testnet", user="0xabc", twap_id=123
+                )
                 self.assertIsNotNone(record)
                 self.assertEqual(record.resolved_coin, "BTC")
 
-                twap_registry.mark_twap_cancelled(network="testnet", user="0xabc", twap_id=123)
-                self.assertEqual(twap_registry.list_twap_orders(network="testnet", user="0xabc"), [])
+                twap_registry.mark_twap_cancelled(
+                    network="testnet", user="0xabc", twap_id=123
+                )
+                self.assertEqual(
+                    twap_registry.list_twap_orders(network="testnet", user="0xabc"), []
+                )
 
                 raw = json.loads(path.read_text(encoding="utf-8"))
                 self.assertEqual(raw[0]["status"], "cancelled")
