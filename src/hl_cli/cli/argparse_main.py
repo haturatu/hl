@@ -38,6 +38,11 @@ SUBCOMMANDS: dict[str, list[str]] = {
     "referral": ["set", "status"],
     "completion": ["bash"],
 }
+NESTED_SUBCOMMANDS: dict[str, list[str]] = {
+    "order limit": ["buy", "sell", "long", "short"],
+    "order market": ["buy", "sell", "long", "short", "close"],
+    "order twap": ["long", "short"],
+}
 GLOBAL_OPTIONS = ["--json", "--testnet", "-h", "--help"]
 
 
@@ -59,28 +64,32 @@ def _exit_with_error(msg: str, code: int = 2) -> None:
 def _bash_completion_script() -> str:
     top_level = " ".join(TOP_LEVEL_COMMANDS)
     global_options = " ".join(GLOBAL_OPTIONS)
+    completion_paths = {"": TOP_LEVEL_COMMANDS, **SUBCOMMANDS, **NESTED_SUBCOMMANDS}
     case_lines = "\n".join(
         [
-            f'        {name}) COMPREPLY=( $(compgen -W "{ " ".join(values) }" -- "$cur") ) ;;'
-            for name, values in SUBCOMMANDS.items()
+            f'        "{name}") COMPREPLY=( $(compgen -W "{ " ".join(values) }" -- "$cur") ) ;;'
+            for name, values in completion_paths.items()
         ]
     )
     return dedent(
         f"""\
         # bash completion for hl
         _hl_completion() {{
-            local cur prev cmd i
+            local cur prev path i word
             COMPREPLY=()
             cur="${{COMP_WORDS[COMP_CWORD]}}"
             prev="${{COMP_WORDS[COMP_CWORD-1]}}"
-            cmd=""
+            path=""
 
             for ((i=1; i < COMP_CWORD; i++)); do
-                case "${{COMP_WORDS[i]}}" in
+                word="${{COMP_WORDS[i]}}"
+                case "$word" in
                     -*) ;;
                     *)
-                        cmd="${{COMP_WORDS[i]}}"
-                        break
+                        if [[ -n "$path" ]]; then
+                            path+=" "
+                        fi
+                        path+="$word"
                         ;;
                 esac
             done
@@ -90,12 +99,7 @@ def _bash_completion_script() -> str:
                 return 0
             fi
 
-            if [[ -z "$cmd" ]]; then
-                COMPREPLY=( $(compgen -W "{top_level}" -- "$cur") )
-                return 0
-            fi
-
-            case "$cmd" in
+            case "$path" in
 {case_lines}
                 *)
                     COMPREPLY=()

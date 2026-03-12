@@ -22,7 +22,9 @@ class CompletionTests(unittest.TestCase):
 
         self.assertIn("_hl_completion()", result.stdout)
         self.assertIn("complete -F _hl_completion hl", result.stdout)
-        self.assertIn("order)", result.stdout)
+        self.assertIn('"order")', result.stdout)
+        self.assertIn('"order market")', result.stdout)
+        self.assertIn("buy sell long short close", result.stdout)
 
 
 if __name__ == "__main__":
