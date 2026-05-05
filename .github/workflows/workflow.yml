@@ -101,6 +101,10 @@ jobs:
             asset-name: hl-linux-x86_64
             output-name: hl
             install-system-tools: sudo apt-get update && sudo apt-get install -y patchelf
+          - os: ubuntu-24.04-arm
+            asset-name: hl-linux-arm64
+            output-name: hl
+            install-system-tools: sudo apt-get update && sudo apt-get install -y patchelf
           - os: macos-latest
             asset-name: hl-macos-arm64
             output-name: hl
@@ -141,8 +145,10 @@ jobs:
           PYTHONPATH=src python -m nuitka \
             --onefile \
             --standalone \
+            --assume-yes-for-downloads \
             --output-filename=${{ matrix.output-name }} \
             --nofollow-import-to=parsimonious.tests \
+            --nofollow-import-to=regex.tests \
             --include-package=hl_cli \
             --include-package=hyperliquid \
             --include-package=eth_account \
