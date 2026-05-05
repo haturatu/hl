@@ -42,12 +42,15 @@ test:
 venv:
 	$(PYTHON) -m venv "$(VENV)"
 	$(VENV_PYTHON) -m pip install --upgrade pip
-	$(VENV_PYTHON) -m pip install -e . nuitka zstandard
+	$(VENV_PYTHON) -m pip install --upgrade -e . nuitka zstandard
+	$(VENV_PYTHON) tools/patch_parsimonious_for_nuitka.py
 
 binary: venv
+	rm -rf *.build *.dist *.onefile-build hl hl.exe hl.bin
 	PYTHONPATH=src $(VENV_PYTHON) -m nuitka \
 		--onefile \
 		--standalone \
+		--assume-yes-for-downloads \
 		--output-filename=hl \
 		--nofollow-import-to=parsimonious.tests \
 		--include-package=hl_cli \
@@ -57,7 +60,6 @@ binary: venv
 		--include-package=eth_utils \
 		--include-package=eth_typing \
 		--include-package=parsimonious \
-		--include-package=regex \
 		--include-package=rich \
 		hl_nuitka_entry.py
 	mkdir -p dist
