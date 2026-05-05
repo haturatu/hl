@@ -64,4 +64,4 @@ binary: venv
 	cp hl "$(BINARY_PATH)"
 
 clean:
-	rm -rf "$(VENV)" build dist *.build *.dist *.onefile-build hl hl.bin
+	rm -rf "$(VENV)" build dist *.build *.dist *.onefile-build hl hl.exe hl.bin
