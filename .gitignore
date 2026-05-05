@@ -10,5 +10,13 @@ venv/
 env/
 *.egg-info/
 build/
+*.build/
+*.dist/
+hl
+hl.bin
+hl.build/
+hl.dist/
+hl.onefile-build/
+scripts/
 pip-wheel-metadata/
 dist/
