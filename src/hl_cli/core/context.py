@@ -10,7 +10,7 @@ import requests
 
 from ..infra.db import Account, get_default_account
 from ..types import PerpDexInfo, SpotMeta
-from .testnet_policy import filter_safe_spot_universe, uses_safe_spot_meta_fallback
+from .testnet_policy import filter_safe_spot_universe
 
 
 @dataclass
@@ -127,7 +127,7 @@ def load_config(testnet: bool) -> Config:
 
 
 def _load_safe_spot_meta(base_url: str) -> SpotMeta:
-    # Testnet currently returns some spot pairs with invalid token indexes.
+    # The API can temporarily return spot pairs with invalid token indexes.
     # Filter those out before constructing the SDK client.
     response = requests.post(f"{base_url}/info", json={"type": "spotMeta"}, timeout=20)
     response.raise_for_status()
@@ -139,10 +139,11 @@ def _load_safe_spot_meta(base_url: str) -> SpotMeta:
 
 
 def _build_info_client(base_url: str, **kwargs: object) -> Info:
+    if "spot_meta" not in kwargs and kwargs.get("skip_ws", False) is False:
+        kwargs = {**kwargs, "spot_meta": _load_safe_spot_meta(base_url)}
     try:
         return Info(base_url, **kwargs)
     except IndexError:
-        # Testnet-only defensive fallback for malformed spot metadata.
-        if "spot_meta" in kwargs or not uses_safe_spot_meta_fallback(base_url):
+        if "spot_meta" in kwargs:
             raise
         return Info(base_url, spot_meta=_load_safe_spot_meta(base_url), **kwargs)

@@ -3,10 +3,10 @@ import json
 from queue import Empty, Queue
 from typing import Optional
 
-from hyperliquid.info import Info
 from hyperliquid.utils.types import L2BookData
 
 from ..cli.runtime import CommandContext, cli_command, console, run_blocking
+from ..core.context import _build_info_client
 from ..types import AllMids, AssetLeveragePayload, ClearinghouseState, PerpMeta
 from ..utils.output import out
 from ..utils.validators import validate_address
@@ -57,7 +57,7 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
         )
 
     if watch:
-        stream_info = Info(context.base_url, skip_ws=False)
+        stream_info = _build_info_client(context.base_url, skip_ws=False)
         updates: Queue[L2BookData] = Queue()
         subscription = {"type": "l2Book", "coin": coin}
         subscription_id = stream_info.subscribe(

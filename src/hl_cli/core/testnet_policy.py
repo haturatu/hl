@@ -1,4 +1,3 @@
-from hyperliquid.utils.constants import TESTNET_API_URL
 from hyperliquid.utils.types import SpotAssetInfo, SpotMeta, SpotTokenInfo
 
 
@@ -8,10 +7,6 @@ def uses_main_perp_only(testnet: bool) -> bool:
 
 def includes_builder_perps(testnet: bool) -> bool:
     return not testnet
-
-
-def uses_safe_spot_meta_fallback(base_url: str) -> bool:
-    return base_url == TESTNET_API_URL
 
 
 def valid_spot_token_refs(tokens: list[SpotTokenInfo], refs: object) -> bool:
