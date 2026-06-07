@@ -1,10 +1,7 @@
 import contextlib
 import json
-import select
 import sys
-import termios
 import time
-import tty
 from itertools import cycle
 from typing import Callable, Iterator, Literal, Optional
 
@@ -69,6 +66,13 @@ def _raw_tty_mode() -> Iterator[bool]:
     if not sys.stdin.isatty():
         yield False
         return
+    if sys.platform == "win32":
+        yield True
+        return
+
+    import termios
+    import tty
+
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
     try:
@@ -81,6 +85,35 @@ def _raw_tty_mode() -> Iterator[bool]:
 def _read_key(timeout: float = 0.0) -> Optional[str]:
     if not sys.stdin.isatty():
         return None
+    if sys.platform == "win32":
+        return _read_windows_key(timeout)
+    return _read_posix_key(timeout)
+
+
+def _read_windows_key(timeout: float = 0.0) -> Optional[str]:
+    import msvcrt
+
+    deadline = time.time() + timeout
+    while not msvcrt.kbhit():
+        if timeout <= 0 or time.time() >= deadline:
+            return None
+        time.sleep(min(0.01, max(0.0, deadline - time.time())))
+
+    first = msvcrt.getwch()
+    if first not in {"\x00", "\xe0"}:
+        return first
+
+    second = msvcrt.getwch()
+    if second == "H":
+        return "\x1b[A"
+    if second == "P":
+        return "\x1b[B"
+    return first + second
+
+
+def _read_posix_key(timeout: float = 0.0) -> Optional[str]:
+    import select
+
     ready, _, _ = select.select([sys.stdin], [], [], timeout)
     if not ready:
         return None
