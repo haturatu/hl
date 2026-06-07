@@ -111,7 +111,7 @@ hl --help
 Windows PowerShell:
 
 ```powershell
-$Tag = "v0.1.11"
+$Tag = "v0.1.12"
 $BinDir = "$env:USERPROFILE\bin"
 New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
 Invoke-WebRequest `
