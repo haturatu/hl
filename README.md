@@ -59,7 +59,7 @@ GitHub Releases include Nuitka-built single binaries for:
 Linux x86_64:
 
 ```bash
-TAG=v0.1.12
+TAG=v0.1.14
 curl -L -o hl "https://github.com/haturatu/hl/releases/download/${TAG}/hl-linux-x86_64"
 chmod +x hl
 mkdir -p ~/.local/bin
@@ -72,7 +72,7 @@ hl --help
 Linux arm64:
 
 ```bash
-TAG=v0.1.12
+TAG=v0.1.14
 curl -L -o hl "https://github.com/haturatu/hl/releases/download/${TAG}/hl-linux-arm64"
 chmod +x hl
 mkdir -p ~/.local/bin
@@ -85,7 +85,7 @@ hl --help
 macOS Apple Silicon:
 
 ```bash
-TAG=v0.1.12
+TAG=v0.1.14
 curl -L -o hl "https://github.com/haturatu/hl/releases/download/${TAG}/hl-macos-arm64"
 chmod +x hl
 mkdir -p ~/.local/bin
@@ -98,7 +98,7 @@ hl --help
 macOS Intel:
 
 ```bash
-TAG=v0.1.12
+TAG=v0.1.14
 curl -L -o hl "https://github.com/haturatu/hl/releases/download/${TAG}/hl-macos-x86_64"
 chmod +x hl
 mkdir -p ~/.local/bin
@@ -111,7 +111,7 @@ hl --help
 Windows PowerShell:
 
 ```powershell
-$Tag = "v0.1.12"
+$Tag = "v0.1.14"
 $BinDir = "$env:USERPROFILE\bin"
 New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
 Invoke-WebRequest `
