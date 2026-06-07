@@ -10,7 +10,7 @@ from hl_cli.core.context import (
 )
 
 
-class TestnetContextTests(unittest.TestCase):
+class ContextTests(unittest.TestCase):
     def test_safe_token_name_handles_invalid_indexes(self):
         tokens = [{"name": "USDC"}, {"name": "BTC"}]
 
@@ -85,6 +85,53 @@ class TestnetContextTests(unittest.TestCase):
         self.assertEqual(
             info_cls.call_args_list[1].kwargs,
             {"skip_ws": True, "spot_meta": safe_spot_meta},
+        )
+
+    def test_build_info_client_falls_back_on_mainnet_malformed_spot_meta(self):
+        safe_spot_meta = {
+            "tokens": [{"name": "USDC"}, {"name": "BTC"}],
+            "universe": [{"name": "BTC/USDC", "tokens": [1, 0]}],
+        }
+        created = object()
+
+        with patch(
+            "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
+        ) as info_cls:
+            with patch(
+                "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
+            ) as loader:
+                client = _build_info_client(
+                    "https://api.hyperliquid.xyz", skip_ws=True
+                )
+
+        self.assertIs(client, created)
+        loader.assert_called_once_with("https://api.hyperliquid.xyz")
+        self.assertEqual(
+            info_cls.call_args_list[1].kwargs,
+            {"skip_ws": True, "spot_meta": safe_spot_meta},
+        )
+
+    def test_build_info_client_preloads_sanitized_spot_meta_for_websocket_client(self):
+        safe_spot_meta = {
+            "tokens": [{"name": "USDC"}, {"name": "BTC"}],
+            "universe": [{"name": "BTC/USDC", "tokens": [1, 0]}],
+        }
+        created = object()
+
+        with patch("hl_cli.core.context.Info", return_value=created) as info_cls:
+            with patch(
+                "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
+            ) as loader:
+                client = _build_info_client(
+                    "https://api.hyperliquid.xyz", skip_ws=False
+                )
+
+        self.assertIs(client, created)
+        loader.assert_called_once_with("https://api.hyperliquid.xyz")
+        info_cls.assert_called_once_with(
+            "https://api.hyperliquid.xyz",
+            skip_ws=False,
+            spot_meta=safe_spot_meta,
         )
 
 

@@ -3,6 +3,7 @@ import json
 from queue import Empty, Queue
 from typing import Optional
 
+from hyperliquid.info import Info
 from hyperliquid.utils.types import L2BookData
 
 from ..cli.runtime import CommandContext, cli_command, console, run_blocking
