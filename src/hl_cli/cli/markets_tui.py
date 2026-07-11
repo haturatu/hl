@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
 
+from ..i18n import _
 from ..types import AllMids, DisplayValue, MarketKind, MarketRow, MarketsPayload
 from ..utils.market_table import (
     build_market_table,
@@ -153,7 +154,7 @@ def _find_match(
     total = len(rows)
     step = 1 if forward else -1
     index = start
-    for _ in range(total):
+    for _i in range(total):
         index = (index + step) % total
         if _matches_query(rows[index], query):
             return index
@@ -299,7 +300,9 @@ def _render_table(
         for row in visible_rows
     ]
     table = build_market_table(
-        title=f"Markets ({len(rows['perpMarkets'])} perps, {len(rows['spotMarkets'])} spot)",
+        title=_("Markets ({perp} perps, {spot} spot)").format(
+            perp=len(rows["perpMarkets"]), spot=len(rows["spotMarkets"])
+        ),
         columns=columns,
         rendered_rows=rendered_rows,
         widths=widths_by_scope[state.scope],
@@ -313,7 +316,10 @@ def _render_table(
         help_text = (
             f"scope={state.scope}  rows={len(current_rows)}  "
             f"search={state.search_query or '-'}  "
-            "hjkl/arrows move  gg/G top/bottom  / ? search  n/N next/prev  h perp  l spot  a all  q quit"
+            + _(
+                "hjkl/arrows move  gg/G top/bottom  / ? search  n/N next/prev  "
+                "h perp  l spot  a all  q quit"
+            )
         )
     return Panel(table, subtitle=help_text)
 

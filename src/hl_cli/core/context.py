@@ -8,6 +8,8 @@ from hyperliquid.info import Info
 from hyperliquid.utils.constants import MAINNET_API_URL, TESTNET_API_URL
 import requests
 
+from ..i18n import _
+
 from ..infra.db import Account, get_default_account
 from ..types import PerpDexInfo, SpotMeta
 from .testnet_policy import filter_safe_spot_universe
@@ -53,10 +55,12 @@ class CLIContext:
             if not self.config.private_key:
                 if self.config.account and self.config.account.type == "readonly":
                     raise RuntimeError(
-                        f'Account "{self.config.account.alias}" is read-only and cannot trade. '
-                        "Use 'hl account add' to add an API wallet."
+                        _(
+                            'Account "{alias}" is read-only and cannot trade. '
+                            "Use 'hl account add' to add an API wallet."
+                        ).format(alias=self.config.account.alias)
                     )
-                raise RuntimeError("No account configured. Run 'hl account add'.")
+                raise RuntimeError(_("No account configured. Run 'hl account add'."))
             wallet = EthAccount.from_key(self.config.private_key)
             kwargs = {
                 "wallet": wallet,

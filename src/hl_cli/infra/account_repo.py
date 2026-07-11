@@ -2,6 +2,7 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Optional
 
+from ..i18n import _
 from . import db as db_module
 from .db_crypto import (
     decrypt_optional_value,
@@ -189,7 +190,9 @@ def set_default_account(alias: str, network: str) -> Account:
     ).fetchone()
     conn.close()
     if not row:
-        raise ValueError(f'Account with alias "{alias}" not found')
+        raise ValueError(
+            _('Account with alias "{alias}" not found').format(alias=alias)
+        )
     return _to_account(row)
 
 

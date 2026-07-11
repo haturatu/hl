@@ -73,15 +73,15 @@ class OrderTestnetRoutingTests(unittest.TestCase):
         self.assertEqual(resolve_perp.call_count, 2)
 
     def test_spot_sides_reject_perp_only_flags(self):
-        with self.assertRaisesRegex(RuntimeError, "only supported with long/short"):
+        with self.assertRaisesRegex(RuntimeError, "long/short"):
             _validate_side_mode_args(
                 side="buy", leverage=5, cross=False, isolated=False
             )
-        with self.assertRaisesRegex(RuntimeError, "only supported with long/short"):
+        with self.assertRaisesRegex(RuntimeError, "long/short"):
             _validate_side_mode_args(
                 side="sell", leverage=None, cross=True, isolated=False
             )
-        with self.assertRaisesRegex(RuntimeError, "only supported with long/short"):
+        with self.assertRaisesRegex(RuntimeError, "long/short"):
             _validate_side_mode_args(
                 side="buy", leverage=None, cross=False, isolated=False, reduce_only=True
             )

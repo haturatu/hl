@@ -1,0 +1,851 @@
+msgid ""
+msgstr ""
+"Language: zh\n"
+"Project-Id-Version: hl_cli\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Command tree:\n  account add|ls|set-default|remove|positions|orders|balances|portfolio\n  order ls|limit|market|tpsl|twap|twap-cancel|cancel|cancel-all|set-leverage|configure\n  asset price|book|leverage\n  markets ls\n  referral set|status\nExamples:\n  hl account add\n  hl order twap buy 1 BTC 30 --randomize\n  hl order twap-cancel BTC 12345\n  hl account positions --watch\n"
+msgstr "命令树:\n  account add|ls|set-default|remove|positions|orders|balances|portfolio\n  order ls|limit|market|tpsl|twap|twap-cancel|cancel|cancel-all|set-leverage|configure\n  asset price|book|leverage\n  markets ls\n  referral set|status\n示例:\n  hl account add\n  hl order twap buy 1 BTC 30 --randomize\n  hl order twap-cancel BTC 12345\n  hl account positions --watch\n"
+
+msgid "Account management and information"
+msgstr "账户管理与信息"
+
+msgid "Add account"
+msgstr "添加账户"
+
+msgid "List accounts"
+msgstr "账户列表"
+
+msgid "Set default account"
+msgstr "设置默认账户"
+
+msgid "Remove account"
+msgstr "删除账户"
+
+msgid "Order management and trading"
+msgstr "订单管理与交易"
+
+msgid "List open orders"
+msgstr "未成交订单列表"
+
+msgid "Place limit order (buy/sell = spot, long/short = perp)"
+msgstr "下限价单 (buy/sell = 现货, long/short = 永续)"
+
+msgid "Place market order (buy/sell = spot, long/short/close = perp)"
+msgstr "下市价单 (buy/sell = 现货, long/short/close = 永续)"
+
+msgid "Place TWAP order (perp only: use long/short)"
+msgstr "下TWAP订单 (仅永续: 使用 long/short)"
+
+msgid "Set TP/SL trigger orders for an open position"
+msgstr "为持仓设置止盈/止损触发订单"
+
+msgid "Cancel native TWAP order (interactive if omitted)"
+msgstr "取消原生TWAP订单 (省略时进入交互模式)"
+
+msgid "Cancel order"
+msgstr "取消订单"
+
+msgid "Cancel all orders"
+msgstr "取消全部订单"
+
+msgid "Set leverage"
+msgstr "设置杠杆"
+
+msgid "Configure order defaults"
+msgstr "配置订单默认值"
+
+msgid "Asset-specific information"
+msgstr "币种特定信息"
+
+msgid "Get price"
+msgstr "获取价格"
+
+msgid "Get orderbook"
+msgstr "获取订单簿"
+
+msgid "Get leverage info"
+msgstr "获取杠杆信息"
+
+msgid "Market information"
+msgstr "市场信息"
+
+msgid "List markets"
+msgstr "市场列表"
+
+msgid "Search markets by partial symbol/name"
+msgstr "按部分代号/名称搜索市场"
+
+msgid "Referral management"
+msgstr "邀请管理"
+
+msgid "Set referral code"
+msgstr "设置邀请码"
+
+msgid "Get referral status"
+msgstr "获取邀请状态"
+
+msgid "Print shell completion script"
+msgstr "输出 shell 补全脚本"
+
+msgid "Print bash completion script"
+msgstr "输出 bash 补全脚本"
+
+msgid "Missing arguments. See: hl order limit -h"
+msgstr "缺少参数。参见: hl order limit -h"
+
+msgid "Missing price. Syntax: hl order limit <side> <size> <coin> <price>"
+msgstr "缺少价格。语法: hl order limit <side> <size> <coin> <price>"
+
+msgid "Missing arguments. See: hl order market -h"
+msgstr "缺少参数。参见: hl order market -h"
+
+msgid "Missing coin. Syntax: hl order market <side> <size> <coin>"
+msgstr "缺少币种。语法: hl order market <side> <size> <coin>"
+
+msgid "CLI for Hyperliquid DEX"
+msgstr "Hyperliquid DEX 命令行工具"
+
+msgid "Output in JSON format"
+msgstr "以 JSON 格式输出"
+
+msgid "Use testnet"
+msgstr "使用测试网"
+
+msgid "Display language (e.g. en, ja, zh, ko)"
+msgstr "显示语言 (例如 en, ja, zh, ko)"
+
+msgid "Get positions"
+msgstr "获取持仓"
+
+msgid "Get orders"
+msgstr "获取订单"
+
+msgid "Get balances"
+msgstr "获取余额"
+
+msgid "Get portfolio"
+msgstr "获取投资组合"
+
+msgid "USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only"
+msgstr "用于计算下单数量的 USD 保证金。使用 --leverage 时数量为 stake × leverage；否则仅为 stake"
+
+msgid "Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation"
+msgstr "下单前可选的杠杆更新。若省略，命令行在计算数量时不会将 stake 乘以杠杆"
+
+msgid "Use cross margin with --leverage"
+msgstr "配合 --leverage 使用全仓保证金"
+
+msgid "Use isolated margin with --leverage"
+msgstr "配合 --leverage 使用逐仓保证金"
+
+msgid "Perp only: reduce-only for long/short"
+msgstr "仅永续: long/short 的 reduce-only"
+
+msgid "USD used to derive order size. For buy/sell this is spot size; for long/short this is perp margin."
+msgstr "用于计算下单数量的 USD。buy/sell 时为现货数量；long/short 时为永续保证金。"
+
+msgid "Perp only: optional leverage update before placing long/short"
+msgstr "仅永续: 下 long/short 单前可选的杠杆更新"
+
+msgid "Perp only: use cross margin with --leverage"
+msgstr "仅永续: 配合 --leverage 使用全仓保证金"
+
+msgid "Perp only: use isolated margin with --leverage"
+msgstr "仅永续: 配合 --leverage 使用逐仓保证金"
+
+msgid "Perp close only: close ratio (0 < ratio <= 1)"
+msgstr "仅平永续: 平仓比例 (0 < ratio <= 1)"
+
+msgid "USD margin used to derive total TWAP size. With --leverage, size uses stake x leverage; without it, size uses stake only"
+msgstr "用于计算 TWAP 总数量的 USD 保证金。使用 --leverage 时数量为 stake × leverage；否则仅为 stake"
+
+msgid "Take-profit trigger price"
+msgstr "止盈触发价格"
+
+msgid "Stop-loss trigger price"
+msgstr "止损触发价格"
+
+msgid "Position ratio to protect (0 < ratio <= 1)"
+msgstr "要保护的仓位比例 (0 < ratio <= 1)"
+
+msgid "Filter perp markets by category (e.g. stocks, commodities, indices, fx, preipo, crypto)"
+msgstr "按类别筛选永续市场 (例如 stocks, commodities, indices, fx, preipo, crypto)"
+
+msgid "Sort markets by volume, oi, price, change, funding, or coin"
+msgstr "按成交量、持仓、价格、涨跌幅、资金费率或币种排序"
+
+msgid "Sort matches by volume, oi, price, change, funding, or coin"
+msgstr "按成交量、持仓、价格、涨跌幅、资金费率或币种对结果排序"
+
+msgid "When --stake is used, syntax is: hl order limit <side> <coin> <price> --stake <usd>"
+msgstr "使用 --stake 时语法为: hl order limit <side> <coin> <price> --stake <usd>"
+
+msgid "price must be positive"
+msgstr "价格必须为正数"
+
+msgid "stake must be positive"
+msgstr "stake 必须为正数"
+
+msgid "When --stake is used, syntax is: hl order market <side> <coin> --stake <usd>"
+msgstr "使用 --stake 时语法为: hl order market <side> <coin> --stake <usd>"
+
+msgid "Missing order subcommand. Run: hl order -h"
+msgstr "缺少 order 子命令。运行: hl order -h"
+
+msgid "Missing asset subcommand. Run: hl asset -h"
+msgstr "缺少 asset 子命令。运行: hl asset -h"
+
+msgid "Missing markets subcommand. Run: hl markets -h"
+msgstr "缺少 markets 子命令。运行: hl markets -h"
+
+msgid "Missing referral subcommand. Run: hl referral -h"
+msgstr "缺少 referral 子命令。运行: hl referral -h"
+
+msgid "Missing completion subcommand. Run: hl completion -h"
+msgstr "缺少 completion 子命令。运行: hl completion -h"
+
+msgid "Unknown command: {cmd}"
+msgstr "未知命令: {cmd}"
+
+msgid "Unsupported shell: {shell}"
+msgstr "不支持的 shell: {shell}"
+
+msgid "Invalid price: {price}"
+msgstr "无效的价格: {price}"
+
+msgid "Unknown markets subcommand: {sc}"
+msgstr "未知的 markets 子命令: {sc}"
+
+msgid "Unknown referral subcommand: {sc}"
+msgstr "未知的 referral 子命令: {sc}"
+
+msgid "Close syntax: hl order market close <coin>"
+msgstr "平仓语法: hl order market close <coin>"
+
+msgid "--stake cannot be used with market close"
+msgstr "--stake 不能与 market close 同时使用"
+
+msgid "--leverage/--cross/--isolated cannot be used with market close"
+msgstr "--leverage/--cross/--isolated 不能与 market close 同时使用"
+
+msgid "--ratio is only supported with: hl order market close <coin>"
+msgstr "--ratio 仅支持: hl order market close <coin>"
+
+msgid "Unknown asset subcommand: {sc}"
+msgstr "未知的 asset 子命令: {sc}"
+
+msgid "Unknown account subcommand: {sc}"
+msgstr "未知的 account 子命令: {sc}"
+
+msgid "Unknown order subcommand: {sc}"
+msgstr "未知的 order 子命令: {sc}"
+
+msgid "hjkl/arrows move  gg/G top/bottom  / ? search  n/N next/prev  h perp  l spot  a all  q quit"
+msgstr "hjkl/方向键移动  gg/G 顶部/底部  / ? 搜索  n/N 下一个/上一个  h 永续  l 现货  a 全部  q 退出"
+
+msgid "Markets ({perp} perps, {spot} spot)"
+msgstr "市场 ({perp} 永续, {spot} 现货)"
+
+msgid "Y/n"
+msgstr "Y/n"
+
+msgid "y/N"
+msgstr "y/N"
+
+msgid "\nExecution time: {elapsed:.2f}s"
+msgstr "\n执行时间: {elapsed:.2f}秒"
+
+msgid "\n[bold]Wallet Setup Guide[/bold]"
+msgstr "\n[bold]钱包设置指南[/bold]"
+
+msgid "1. To add an API wallet:"
+msgstr "1. 添加 API 钱包:"
+
+msgid "   - Generate an API wallet private key on Hyperliquid"
+msgstr "   - 在 Hyperliquid 上生成 API 钱包私钥"
+
+msgid "   - Mainnet: https://app.hyperliquid.xyz/API"
+msgstr "   - 主网: https://app.hyperliquid.xyz/API"
+
+msgid "   - Testnet: https://app.hyperliquid-testnet.xyz/API"
+msgstr "   - 测试网: https://app.hyperliquid-testnet.xyz/API"
+
+msgid "   - Run: [bold]hl account add[/bold] -> choose [bold]1[/bold]"
+msgstr "   - 运行: [bold]hl account add[/bold] -> 选择 [bold]1[/bold]"
+
+msgid "2. To add a read-only wallet:"
+msgstr "2. 添加只读钱包:"
+
+msgid "   - Run: [bold]hl account add[/bold] -> choose [bold]2[/bold]"
+msgstr "   - 运行: [bold]hl account add[/bold] -> 选择 [bold]2[/bold]"
+
+msgid "   - Enter the wallet address to monitor (0x...)"
+msgstr "   - 输入要监控的钱包地址 (0x...)"
+
+msgid "Verification commands:"
+msgstr "验证命令:"
+
+msgid " - [bold]hl account ls[/bold]"
+msgstr " - [bold]hl account ls[/bold]"
+
+msgid " - [bold]hl account set-default <alias>[/bold]\n"
+msgstr " - [bold]hl account set-default <alias>[/bold]\n"
+
+msgid "\n=== Add New Account ===\n"
+msgstr "\n=== 添加新账户 ===\n"
+
+msgid "1) Use existing API wallet"
+msgstr "1) 使用现有 API 钱包"
+
+msgid "2) Add read-only account"
+msgstr "2) 添加只读账户"
+
+msgid "Cancelled."
+msgstr "已取消。"
+
+msgid "Failed to remove account"
+msgstr "删除账户失败"
+
+msgid "Select setup method [1/2]: "
+msgstr "选择设置方式 [1/2]: "
+
+msgid "This key is not registered as an API wallet (agent) on Hyperliquid"
+msgstr "此密钥未在 Hyperliquid 上注册为 API 钱包 (agent)"
+
+msgid "Set as default account?"
+msgstr "设为默认账户?"
+
+msgid "Invalid selection"
+msgstr "无效的选择"
+
+msgid "No accounts found. Run 'hl account add'."
+msgstr "未找到账户。运行 'hl account add'。"
+
+msgid "Accounts"
+msgstr "账户"
+
+msgid "\nVisit {url} and generate an API wallet key.\n"
+msgstr "\n访问 {url} 并生成 API 钱包密钥。\n"
+
+msgid "Alias cannot be empty."
+msgstr "别名不能为空。"
+
+msgid "*"
+msgstr "*"
+
+msgid "Alias"
+msgstr "别名"
+
+msgid "Address"
+msgstr "地址"
+
+msgid "Type"
+msgstr "类型"
+
+msgid "API Wallet"
+msgstr "API 钱包"
+
+msgid "Account with alias \"{alias}\" not found"
+msgstr "未找到别名为 \"{alias}\" 的账户"
+
+msgid "Positions"
+msgstr "持仓"
+
+msgid "Open Orders"
+msgstr "未成交订单"
+
+msgid "Enter API wallet private key: "
+msgstr "输入 API 钱包私钥: "
+
+msgid "Alias: "
+msgstr "别名: "
+
+msgid "Coin"
+msgstr "币种"
+
+msgid "Size"
+msgstr "数量"
+
+msgid "Entry"
+msgstr "开仓价"
+
+msgid "Value"
+msgstr "价值"
+
+msgid "PnL"
+msgstr "盈亏"
+
+msgid "Leverage"
+msgstr "杠杆"
+
+msgid "Liq"
+msgstr "清算价"
+
+msgid "OID"
+msgstr "订单ID"
+
+msgid "Side"
+msgstr "方向"
+
+msgid "Price"
+msgstr "价格"
+
+msgid "Time"
+msgstr "时间"
+
+msgid "Token"
+msgstr "代币"
+
+msgid "Total"
+msgstr "总计"
+
+msgid "Hold"
+msgstr "冻结"
+
+msgid "Available"
+msgstr "可用"
+
+msgid "Spot Balances"
+msgstr "现货余额"
+
+msgid "Alias \"{alias}\" is already taken."
+msgstr "别名 \"{alias}\" 已被使用。"
+
+msgid "Wallet address to watch: "
+msgstr "要监控的钱包地址: "
+
+msgid "Balances (Perp USD: {perp})"
+msgstr "余额 (永续 USD: {perp})"
+
+msgid "Portfolio AccountValue={value} MarginUsed={used}"
+msgstr "投资组合 账户价值={value} 已用保证金={used}"
+
+msgid "Asks"
+msgstr "卖单"
+
+msgid "Bids"
+msgstr "买单"
+
+msgid "N"
+msgstr "笔数"
+
+msgid "Coin not found: {coin}"
+msgstr "未找到币种: {coin}"
+
+msgid "query must not be empty"
+msgstr "查询词不能为空"
+
+msgid "invalid sort field: {field} (expected one of: {allowed})"
+msgstr "无效的排序字段: {field} (应为以下之一: {allowed})"
+
+msgid "ℹ️  Request completed."
+msgstr "ℹ️  请求已完成。"
+
+msgid "interval must be '<minutes>' or '<slice_minutes>,<orders>' (e.g. 30 or 5,10)"
+msgstr "间隔必须是 '<分钟>' 或 '<分段分钟>,<订单数>' (例如 30 或 5,10)"
+
+msgid "❌ Order rejected"
+msgstr "❌ 订单被拒绝"
+
+msgid "Use only one of --cross or --isolated"
+msgstr "--cross 与 --isolated 只能使用其一"
+
+msgid "leverage must be a positive integer"
+msgstr "杠杆必须为正整数"
+
+msgid "size must be a positive number"
+msgstr "数量必须为正数"
+
+msgid "coin must not be empty"
+msgstr "币种不能为空"
+
+msgid "stake must be a positive number"
+msgstr "stake 必须为正数"
+
+msgid "leverage must be a positive integer when used with --stake"
+msgstr "与 --stake 配合使用时，杠杆必须为正整数"
+
+msgid "TWAP ID"
+msgstr "TWAP ID"
+
+msgid "Total Size"
+msgstr "总数量"
+
+msgid "Minutes"
+msgstr "分钟"
+
+msgid "Submitted"
+msgstr "已提交"
+
+msgid "ratio must be > 0 and <= 1"
+msgstr "ratio 必须为 0 < ratio <= 1"
+
+msgid "Specify at least one of --tp or --sl"
+msgstr "至少指定 --tp 或 --sl 之一"
+
+msgid "tp must be a positive number"
+msgstr "tp 必须为正数"
+
+msgid "sl must be a positive number"
+msgstr "sl 必须为正数"
+
+msgid "✅ TP/SL orders submitted"
+msgstr "✅ TP/SL 订单已提交"
+
+msgid "minutes must be a positive integer"
+msgstr "分钟必须为正整数"
+
+msgid "minutes and orders must be positive integers"
+msgstr "分钟和订单数必须为正整数"
+
+msgid "Could not resolve max leverage for {coin}"
+msgstr "无法解析 {coin} 的最大杠杆"
+
+msgid "--cross/--isolated requires --leverage"
+msgstr "--cross/--isolated 需要 --leverage"
+
+msgid "--leverage/--cross/--isolated are only supported with long/short"
+msgstr "--leverage/--cross/--isolated 仅支持 long/short"
+
+msgid "--reduce-only is only supported with long/short"
+msgstr "--reduce-only 仅支持 long/short"
+
+msgid "Tracked TWAP Orders"
+msgstr "已跟踪的 TWAP 订单"
+
+msgid "❌ TWAP order rejected"
+msgstr "❌ TWAP 订单被拒绝"
+
+msgid "✅ TWAP order submitted"
+msgstr "✅ TWAP 订单已提交"
+
+msgid "No tracked active TWAP orders found"
+msgstr "未找到已跟踪的有效 TWAP 订单"
+
+msgid "No open orders to cancel"
+msgstr "没有可取消的未成交订单"
+
+msgid "Cancelled"
+msgstr "已取消"
+
+msgid "✅ Leverage updated"
+msgstr "✅ 杠杆已更新"
+
+msgid "❌ Leverage update failed"
+msgstr "❌ 杠杆更新失败"
+
+msgid "Slippage must be a non-negative number"
+msgstr "滑点必须为非负数"
+
+msgid "⚠️  Leverage update failed: {response}"
+msgstr "⚠️  杠杆更新失败: {response}"
+
+msgid "\nReason: {reason}"
+msgstr "\n原因: {reason}"
+
+msgid "\nTip: Increase --stake or --leverage so position value is at least $10."
+msgstr "\n提示: 请将 --stake 或 --leverage 调大，使仓位价值至少达到 $10。"
+
+msgid "{order_kind} order executed"
+msgstr "{order_kind} 订单已成交"
+
+msgid "\nAsset: {coin}"
+msgstr "\n币种: {coin}"
+
+msgid "Side: {side}"
+msgstr "方向: {side}"
+
+msgid "Filled size: {size} {coin}"
+msgstr "成交数量: {size} {coin}"
+
+msgid "Average price: {price}"
+msgstr "平均价格: {price}"
+
+msgid "Order ID: {oid}"
+msgstr "订单ID: {oid}"
+
+msgid "{order_kind} order placed"
+msgstr "{order_kind} 订单已挂出"
+
+msgid "Warning: Invalid leverage value ({leverage}) for {coin}. Retrying with max leverage {max_lev}."
+msgstr "警告: {coin} 的杠杆值 ({leverage}) 无效。将使用最大杠杆 {max_lev} 重试。"
+
+msgid "size too small for {coin}; minimum unit is 1e-{decimals}"
+msgstr "{coin} 的数量过小；最小单位为 1e-{decimals}"
+
+msgid "Spot market not found: {coin}"
+msgstr "未找到现货市场: {coin}"
+
+msgid "No open position found for {coin}"
+msgstr "未找到 {coin} 的持仓"
+
+msgid "Multiple open positions matched '{coin}': {coins}. Please specify the dex-prefixed symbol (e.g. xyz:TSLA)."
+msgstr "多个持仓匹配 '{coin}': {coins}。请指定带 dex 前缀的代号 (例如 xyz:TSLA)。"
+
+msgid "Close side: {side}"
+msgstr "平仓方向: {side}"
+
+msgid "Protected size: {size}"
+msgstr "保护数量: {size}"
+
+msgid "Manage it with 'hl order ls' or 'hl order twap-cancel'."
+msgstr "使用 'hl order ls' 或 'hl order twap-cancel' 进行管理。"
+
+msgid "Order {order_id} not found"
+msgstr "未找到订单 {order_id}"
+
+msgid "⚙️  Leverage set: {coin} {leverage}x ({margin})"
+msgstr "⚙️  杠杆已设置: {coin} {leverage}x ({margin})"
+
+msgid "Your stake (margin): {stake}"
+msgstr "你的 stake (保证金): {stake}"
+
+msgid "BUY"
+msgstr "买入"
+
+msgid "SELL"
+msgstr "卖出"
+
+msgid "TP trigger: {tp}"
+msgstr "止盈触发: {tp}"
+
+msgid "SL trigger: {sl}"
+msgstr "止损触发: {sl}"
+
+msgid "Total size: {size} {coin}"
+msgstr "总数量: {size} {coin}"
+
+msgid "Duration: {minutes} min"
+msgstr "时长: {minutes} 分钟"
+
+msgid "Randomize: {state}"
+msgstr "随机化: {state}"
+
+msgid "Leverage: {leverage}x"
+msgstr "杠杆: {leverage}x"
+
+msgid "Margin type: {margin}"
+msgstr "保证金类型: {margin}"
+
+msgid "cross"
+msgstr "全仓"
+
+msgid "isolated"
+msgstr "逐仓"
+
+msgid "on"
+msgstr "开"
+
+msgid "off"
+msgstr "关"
+
+msgid "TWAP ID: {twap_id}"
+msgstr "TWAP ID: {twap_id}"
+
+msgid "Tracked TWAP {twap_id} not found"
+msgstr "未找到已跟踪的 TWAP {twap_id}"
+
+msgid "No account configured. Run 'hl account add'."
+msgstr "未配置账户。运行 'hl account add'。"
+
+msgid "Account \"{alias}\" is read-only and cannot trade. Use 'hl account add' to add an API wallet."
+msgstr "账户 \"{alias}\" 为只读账户，无法交易。请使用 'hl account add' 添加 API 钱包。"
+
+msgid "Pair"
+msgstr "交易对"
+
+msgid "24h%"
+msgstr "24h%"
+
+msgid "Vol"
+msgstr "成交量"
+
+msgid "Category"
+msgstr "类别"
+
+msgid "Funding"
+msgstr "资金费率"
+
+msgid "OI"
+msgstr "持仓"
+
+msgid "Balances"
+msgstr "余额"
+
+msgid "[green]✅ Account saved[/green]"
+msgstr "[green]✅ 账户已保存[/green]"
+
+msgid "Portfolio"
+msgstr "投资组合"
+
+msgid "Asset Leverage"
+msgstr "币种杠杆"
+
+msgid "Margin"
+msgstr "保证金"
+
+msgid "[green]✅ TWAP cancel submitted[/green]"
+msgstr "[green]✅ TWAP 取消已提交[/green]"
+
+msgid "Market Price"
+msgstr "市场价格"
+
+msgid "Order Defaults"
+msgstr "订单默认值"
+
+msgid "[red]❌ Request failed[/red]"
+msgstr "[red]❌ 请求失败[/red]"
+
+msgid "No open positions"
+msgstr "无持仓"
+
+msgid "Margin Summary"
+msgstr "保证金摘要"
+
+msgid "No spot balances"
+msgstr "无现货余额"
+
+msgid "Order request accepted"
+msgstr "订单请求已接受"
+
+msgid "No open orders"
+msgstr "无未成交订单"
+
+msgid "Position"
+msgstr "持仓"
+
+msgid "Position: none"
+msgstr "持仓: 无"
+
+msgid "[red]❌ TWAP cancel rejected[/red]"
+msgstr "[red]❌ TWAP 取消被拒绝[/red]"
+
+msgid "- Perp balance: {value}"
+msgstr "- 永续余额: {value}"
+
+msgid "[red]❌ Order rejected[/red]"
+msgstr "[red]❌ 订单被拒绝[/red]"
+
+msgid "[green]✅ Order filled[/green]"
+msgstr "[green]✅ 订单已成交[/green]"
+
+msgid "[cyan]🕒 Order resting on book[/cyan]"
+msgstr "[cyan]🕒 订单已挂单[/cyan]"
+
+msgid "Alias: {alias}"
+msgstr "别名: {alias}"
+
+msgid "Address: {address}"
+msgstr "地址: {address}"
+
+msgid "Type: {type}"
+msgstr "类型: {type}"
+
+msgid "- Account value: {value}"
+msgstr "- 账户价值: {value}"
+
+msgid "- Margin used: {value}"
+msgstr "- 已用保证金: {value}"
+
+msgid "Markets: {perp} perp / {spot} spot"
+msgstr "市场: 永续 {perp} / 现货 {spot}"
+
+msgid "Perp Markets"
+msgstr "永续市场"
+
+msgid "Spot Markets"
+msgstr "现货市场"
+
+msgid "- Asset: {coin}"
+msgstr "- 币种: {coin}"
+
+msgid "- Mark price: {price}"
+msgstr "- 标记价格: {price}"
+
+msgid "- Max leverage: {leverage}x"
+msgstr "- 最大杠杆: {leverage}x"
+
+msgid "- Available margin: {value}"
+msgstr "- 可用保证金: {value}"
+
+msgid "Asset: {coin}"
+msgstr "币种: {coin}"
+
+msgid "[red]Error:[/red] {message}"
+msgstr "[red]错误:[/red] {message}"
+
+msgid "[green]{message}[/green]"
+msgstr "[green]{message}[/green]"
+
+msgid "- Price: {price}"
+msgstr "- 价格: {price}"
+
+msgid "- Slippage: {slippage}"
+msgstr "- 滑点: {slippage}"
+
+msgid "Reason: {reason}"
+msgstr "原因: {reason}"
+
+msgid "- Total margin used: {value}"
+msgstr "- 已用保证金合计: {value}"
+
+msgid "{rtype}: ok"
+msgstr "{rtype}: 成功"
+
+msgid "API wallet: {wallet}"
+msgstr "API 钱包: {wallet}"
+
+msgid "- Size: {size}"
+msgstr "- 数量: {size}"
+
+msgid "- Entry: {price}"
+msgstr "- 开仓价: {price}"
+
+msgid "- Value: {value}"
+msgstr "- 价值: {value}"
+
+msgid "- Unrealized PnL: {value}"
+msgstr "- 未实现盈亏: {value}"
+
+msgid "No-op"
+msgstr "无操作"
+
+msgid "Filled size: {size}"
+msgstr "成交数量: {size}"
+
+msgid "- Average price: {price}"
+msgstr "- 平均价格: {price}"
+
+msgid "Asks ({coin})"
+msgstr "卖单 ({coin})"
+
+msgid "Bids ({coin})"
+msgstr "买单 ({coin})"
+
+msgid "[red]Error:[/red] {error}"
+msgstr "[red]错误:[/red] {error}"
+
+msgid "{rtype}: {status}"
+msgstr "{rtype}: {status}"
+
+msgid "Side must be \"buy\", \"sell\", \"long\", or \"short\""
+msgstr "方向必须是 \"buy\"、\"sell\"、\"long\" 或 \"short\""
+
+msgid "Invalid private key format"
+msgstr "私钥格式无效"
+
+msgid "Time-in-force must be \"Gtc\", \"Ioc\", or \"Alo\""
+msgstr "有效期必须是 \"Gtc\"、\"Ioc\" 或 \"Alo\""
+
+msgid "Invalid address: {value}"
+msgstr "地址无效: {value}"
+
+msgid "{name} must be a positive number"
+msgstr "{name} 必须为正数"
+
+msgid "{name} must be a positive integer"
+msgstr "{name} 必须为正整数"
