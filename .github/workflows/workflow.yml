@@ -100,11 +100,11 @@ jobs:
           - os: ubuntu-latest
             asset-name: hl-linux-x86_64
             output-name: hl
-            install-system-tools: sudo apt-get update && sudo apt-get install -y patchelf
+            install-system-tools: sudo apt-get update && sudo apt-get install -y patchelf ccache
           - os: ubuntu-24.04-arm
             asset-name: hl-linux-arm64
             output-name: hl
-            install-system-tools: sudo apt-get update && sudo apt-get install -y patchelf
+            install-system-tools: sudo apt-get update && sudo apt-get install -y patchelf ccache
           - os: macos-latest
             asset-name: hl-macos-arm64
             output-name: hl
@@ -130,15 +130,32 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
+      # Nuitka stores generated C compilation results below this directory.  Persist
+      # it between workflow runs so unchanged dependencies do not get rebuilt.
+      - name: Restore Nuitka compilation cache
+        uses: actions/cache@v4
+        with:
+          path: .nuitka-cache
+          key: nuitka-${{ runner.os }}-${{ matrix.asset-name }}-py312-${{ hashFiles('pyproject.toml', '.github/workflows/workflow.yml') }}
+          restore-keys: |
+            nuitka-${{ runner.os }}-${{ matrix.asset-name }}-py312-
+
       - name: Install system build tools
         if: matrix.install-system-tools != ''
         shell: bash
         run: ${{ matrix.install-system-tools }}
 
+      - name: Install macOS compiler cache
+        if: runner.os == 'macOS'
+        shell: bash
+        run: brew install ccache
+
       - name: Install Python build tools
         run: python -m pip install --upgrade pip nuitka zstandard
 
       - name: Build single binary
+        env:
+          NUITKA_CACHE_DIR: ${{ github.workspace }}/.nuitka-cache
         shell: bash
         run: |
           python -m pip install --upgrade -e .
