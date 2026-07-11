@@ -1,0 +1,851 @@
+msgid ""
+msgstr ""
+"Language: ko\n"
+"Project-Id-Version: hl_cli\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Command tree:\n  account add|ls|set-default|remove|positions|orders|balances|portfolio\n  order ls|limit|market|tpsl|twap|twap-cancel|cancel|cancel-all|set-leverage|configure\n  asset price|book|leverage\n  markets ls\n  referral set|status\nExamples:\n  hl account add\n  hl order twap buy 1 BTC 30 --randomize\n  hl order twap-cancel BTC 12345\n  hl account positions --watch\n"
+msgstr "명령 트리:\n  account add|ls|set-default|remove|positions|orders|balances|portfolio\n  order ls|limit|market|tpsl|twap|twap-cancel|cancel|cancel-all|set-leverage|configure\n  asset price|book|leverage\n  markets ls\n  referral set|status\n예시:\n  hl account add\n  hl order twap buy 1 BTC 30 --randomize\n  hl order twap-cancel BTC 12345\n  hl account positions --watch\n"
+
+msgid "Account management and information"
+msgstr "계정 관리 및 정보"
+
+msgid "Add account"
+msgstr "계정 추가"
+
+msgid "List accounts"
+msgstr "계정 목록"
+
+msgid "Set default account"
+msgstr "기본 계정 설정"
+
+msgid "Remove account"
+msgstr "계정 삭제"
+
+msgid "Order management and trading"
+msgstr "주문 관리 및 거래"
+
+msgid "List open orders"
+msgstr "미체결 주문 목록"
+
+msgid "Place limit order (buy/sell = spot, long/short = perp)"
+msgstr "지정가 주문 (buy/sell = 현물, long/short = 무기한)"
+
+msgid "Place market order (buy/sell = spot, long/short/close = perp)"
+msgstr "시장가 주문 (buy/sell = 현물, long/short/close = 무기한)"
+
+msgid "Place TWAP order (perp only: use long/short)"
+msgstr "TWAP 주문 (무기한 전용: long/short 사용)"
+
+msgid "Set TP/SL trigger orders for an open position"
+msgstr "보유 포지션의 TP/SL 트리거 주문 설정"
+
+msgid "Cancel native TWAP order (interactive if omitted)"
+msgstr "네이티브 TWAP 주문 취소 (생략 시 대화형)"
+
+msgid "Cancel order"
+msgstr "주문 취소"
+
+msgid "Cancel all orders"
+msgstr "모든 주문 취소"
+
+msgid "Set leverage"
+msgstr "레버리지 설정"
+
+msgid "Configure order defaults"
+msgstr "주문 기본값 설정"
+
+msgid "Asset-specific information"
+msgstr "종목별 정보"
+
+msgid "Get price"
+msgstr "가격 조회"
+
+msgid "Get orderbook"
+msgstr "오더북 조회"
+
+msgid "Get leverage info"
+msgstr "레버리지 정보 조회"
+
+msgid "Market information"
+msgstr "마켓 정보"
+
+msgid "List markets"
+msgstr "마켓 목록"
+
+msgid "Search markets by partial symbol/name"
+msgstr "부분 심볼/이름으로 마켓 검색"
+
+msgid "Referral management"
+msgstr "레퍼럴 관리"
+
+msgid "Set referral code"
+msgstr "레퍼럴 코드 설정"
+
+msgid "Get referral status"
+msgstr "레퍼럴 상태 조회"
+
+msgid "Print shell completion script"
+msgstr "셸 완성 스크립트 출력"
+
+msgid "Print bash completion script"
+msgstr "bash 완성 스크립트 출력"
+
+msgid "Missing arguments. See: hl order limit -h"
+msgstr "인수가 부족합니다. 참고: hl order limit -h"
+
+msgid "Missing price. Syntax: hl order limit <side> <size> <coin> <price>"
+msgstr "가격이 없습니다. 문법: hl order limit <side> <size> <coin> <price>"
+
+msgid "Missing arguments. See: hl order market -h"
+msgstr "인수가 부족합니다. 참고: hl order market -h"
+
+msgid "Missing coin. Syntax: hl order market <side> <size> <coin>"
+msgstr "코인이 없습니다. 문법: hl order market <side> <size> <coin>"
+
+msgid "CLI for Hyperliquid DEX"
+msgstr "Hyperliquid DEX 용 CLI"
+
+msgid "Output in JSON format"
+msgstr "JSON 형식으로 출력"
+
+msgid "Use testnet"
+msgstr "테스트넷 사용"
+
+msgid "Display language (e.g. en, ja, zh, ko)"
+msgstr "표시 언어 (예: en, ja, zh, ko)"
+
+msgid "Get positions"
+msgstr "포지션 조회"
+
+msgid "Get orders"
+msgstr "주문 조회"
+
+msgid "Get balances"
+msgstr "잔고 조회"
+
+msgid "Get portfolio"
+msgstr "포트폴리오 조회"
+
+msgid "USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only"
+msgstr "주문 크기 산출에 사용되는 USD 증거금. --leverage 사용 시 크기는 stake × leverage, 미사용 시 stake만 적용"
+
+msgid "Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation"
+msgstr "주문 전 선택적 레버리지 업데이트. 생략 시 CLI는 크기 계산에 stake에 레버리지를 곱하지 않음"
+
+msgid "Use cross margin with --leverage"
+msgstr "--leverage와 함께 교차 마진 사용"
+
+msgid "Use isolated margin with --leverage"
+msgstr "--leverage와 함께 격리 마진 사용"
+
+msgid "Perp only: reduce-only for long/short"
+msgstr "무기한 전용: long/short용 reduce-only"
+
+msgid "USD used to derive order size. For buy/sell this is spot size; for long/short this is perp margin."
+msgstr "주문 크기 산출에 사용되는 USD. buy/sell은 현물 크기, long/short은 무기한 증거금으로 처리됨."
+
+msgid "Perp only: optional leverage update before placing long/short"
+msgstr "무기한 전용: long/short 주문 전 선택적 레버리지 업데이트"
+
+msgid "Perp only: use cross margin with --leverage"
+msgstr "무기한 전용: --leverage와 함께 교차 마진 사용"
+
+msgid "Perp only: use isolated margin with --leverage"
+msgstr "무기한 전용: --leverage와 함께 격리 마진 사용"
+
+msgid "Perp close only: close ratio (0 < ratio <= 1)"
+msgstr "무기한 청산 전용: 청산 비율 (0 < ratio <= 1)"
+
+msgid "USD margin used to derive total TWAP size. With --leverage, size uses stake x leverage; without it, size uses stake only"
+msgstr "TWAP 전체 크기 산출에 사용되는 USD 증거금. --leverage 사용 시 크기는 stake × leverage, 미사용 시 stake만 적용"
+
+msgid "Take-profit trigger price"
+msgstr "익절(TP) 트리거 가격"
+
+msgid "Stop-loss trigger price"
+msgstr "손절(SL) 트리거 가격"
+
+msgid "Position ratio to protect (0 < ratio <= 1)"
+msgstr "보호할 포지션 비율 (0 < ratio <= 1)"
+
+msgid "Filter perp markets by category (e.g. stocks, commodities, indices, fx, preipo, crypto)"
+msgstr "카테고리로 무기한 마켓 필터 (예: stocks, commodities, indices, fx, preipo, crypto)"
+
+msgid "Sort markets by volume, oi, price, change, funding, or coin"
+msgstr "거래량, OI, 가격, 변동률, 펀딩, 코인순 정렬"
+
+msgid "Sort matches by volume, oi, price, change, funding, or coin"
+msgstr "검색 결과를 거래량, OI, 가격, 변동률, 펀딩, 코인순 정렬"
+
+msgid "When --stake is used, syntax is: hl order limit <side> <coin> <price> --stake <usd>"
+msgstr "--stake 사용 시 문법: hl order limit <side> <coin> <price> --stake <usd>"
+
+msgid "price must be positive"
+msgstr "가격은 양수여야 합니다"
+
+msgid "stake must be positive"
+msgstr "stake는 양수여야 합니다"
+
+msgid "When --stake is used, syntax is: hl order market <side> <coin> --stake <usd>"
+msgstr "--stake 사용 시 문법: hl order market <side> <coin> --stake <usd>"
+
+msgid "Missing order subcommand. Run: hl order -h"
+msgstr "order 하위 명령이 없습니다. 실행: hl order -h"
+
+msgid "Missing asset subcommand. Run: hl asset -h"
+msgstr "asset 하위 명령이 없습니다. 실행: hl asset -h"
+
+msgid "Missing markets subcommand. Run: hl markets -h"
+msgstr "markets 하위 명령이 없습니다. 실행: hl markets -h"
+
+msgid "Missing referral subcommand. Run: hl referral -h"
+msgstr "referral 하위 명령이 없습니다. 실행: hl referral -h"
+
+msgid "Missing completion subcommand. Run: hl completion -h"
+msgstr "completion 하위 명령이 없습니다. 실행: hl completion -h"
+
+msgid "Unknown command: {cmd}"
+msgstr "알 수 없는 명령: {cmd}"
+
+msgid "Unsupported shell: {shell}"
+msgstr "지원되지 않는 셸: {shell}"
+
+msgid "Invalid price: {price}"
+msgstr "잘못된 가격: {price}"
+
+msgid "Unknown markets subcommand: {sc}"
+msgstr "알 수 없는 markets 하위 명령: {sc}"
+
+msgid "Unknown referral subcommand: {sc}"
+msgstr "알 수 없는 referral 하위 명령: {sc}"
+
+msgid "Close syntax: hl order market close <coin>"
+msgstr "청산 문법: hl order market close <coin>"
+
+msgid "--stake cannot be used with market close"
+msgstr "--stake는 market close와 함께 사용할 수 없습니다"
+
+msgid "--leverage/--cross/--isolated cannot be used with market close"
+msgstr "--leverage/--cross/--isolated는 market close와 함께 사용할 수 없습니다"
+
+msgid "--ratio is only supported with: hl order market close <coin>"
+msgstr "--ratio는 hl order market close <coin>에서만 지원됩니다"
+
+msgid "Unknown asset subcommand: {sc}"
+msgstr "알 수 없는 asset 하위 명령: {sc}"
+
+msgid "Unknown account subcommand: {sc}"
+msgstr "알 수 없는 account 하위 명령: {sc}"
+
+msgid "Unknown order subcommand: {sc}"
+msgstr "알 수 없는 order 하위 명령: {sc}"
+
+msgid "hjkl/arrows move  gg/G top/bottom  / ? search  n/N next/prev  h perp  l spot  a all  q quit"
+msgstr "hjkl/방향키 이동  gg/G 처음/끝  / ? 검색  n/N 다음/이전  h 무기한  l 현물  a 전체  q 종료"
+
+msgid "Markets ({perp} perps, {spot} spot)"
+msgstr "마켓 ({perp} 무기한, {spot} 현물)"
+
+msgid "Y/n"
+msgstr "Y/n"
+
+msgid "y/N"
+msgstr "y/N"
+
+msgid "\nExecution time: {elapsed:.2f}s"
+msgstr "\n실행 시간: {elapsed:.2f}초"
+
+msgid "\n[bold]Wallet Setup Guide[/bold]"
+msgstr "\n[bold]지갑 설정 가이드[/bold]"
+
+msgid "1. To add an API wallet:"
+msgstr "1. API 지갑 추가:"
+
+msgid "   - Generate an API wallet private key on Hyperliquid"
+msgstr "   - Hyperliquid에서 API 지갑 개인키 생성"
+
+msgid "   - Mainnet: https://app.hyperliquid.xyz/API"
+msgstr "   - 메인넷: https://app.hyperliquid.xyz/API"
+
+msgid "   - Testnet: https://app.hyperliquid-testnet.xyz/API"
+msgstr "   - 테스트넷: https://app.hyperliquid-testnet.xyz/API"
+
+msgid "   - Run: [bold]hl account add[/bold] -> choose [bold]1[/bold]"
+msgstr "   - 실행: [bold]hl account add[/bold] -> [bold]1[/bold] 선택"
+
+msgid "2. To add a read-only wallet:"
+msgstr "2. 읽기 전용 지갑 추가:"
+
+msgid "   - Run: [bold]hl account add[/bold] -> choose [bold]2[/bold]"
+msgstr "   - 실행: [bold]hl account add[/bold] -> [bold]2[/bold] 선택"
+
+msgid "   - Enter the wallet address to monitor (0x...)"
+msgstr "   - 모니터링할 지갑 주소 입력 (0x...)"
+
+msgid "Verification commands:"
+msgstr "확인 명령:"
+
+msgid " - [bold]hl account ls[/bold]"
+msgstr " - [bold]hl account ls[/bold]"
+
+msgid " - [bold]hl account set-default <alias>[/bold]\n"
+msgstr " - [bold]hl account set-default <alias>[/bold]\n"
+
+msgid "\n=== Add New Account ===\n"
+msgstr "\n=== 새 계정 추가 ===\n"
+
+msgid "1) Use existing API wallet"
+msgstr "1) 기존 API 지갑 사용"
+
+msgid "2) Add read-only account"
+msgstr "2) 읽기 전용 계정 추가"
+
+msgid "Cancelled."
+msgstr "취소되었습니다."
+
+msgid "Failed to remove account"
+msgstr "계정 삭제 실패"
+
+msgid "Select setup method [1/2]: "
+msgstr "설정 방법 선택 [1/2]: "
+
+msgid "This key is not registered as an API wallet (agent) on Hyperliquid"
+msgstr "이 키는 Hyperliquid의 API 지갑(agent)으로 등록되지 않았습니다"
+
+msgid "Set as default account?"
+msgstr "기본 계정으로 설정할까요?"
+
+msgid "Invalid selection"
+msgstr "잘못된 선택입니다"
+
+msgid "No accounts found. Run 'hl account add'."
+msgstr "계정을 찾을 수 없습니다. 실행: 'hl account add'."
+
+msgid "Accounts"
+msgstr "계정"
+
+msgid "\nVisit {url} and generate an API wallet key.\n"
+msgstr "\n{url} 방문 후 API 지갑 키를 생성하세요.\n"
+
+msgid "Alias cannot be empty."
+msgstr "별칭은 비어 있을 수 없습니다."
+
+msgid "*"
+msgstr "*"
+
+msgid "Alias"
+msgstr "별칭"
+
+msgid "Address"
+msgstr "주소"
+
+msgid "Type"
+msgstr "유형"
+
+msgid "API Wallet"
+msgstr "API 지갑"
+
+msgid "Account with alias \"{alias}\" not found"
+msgstr "별칭 \"{alias}\"인 계정을 찾을 수 없습니다"
+
+msgid "Positions"
+msgstr "포지션"
+
+msgid "Open Orders"
+msgstr "미체결 주문"
+
+msgid "Enter API wallet private key: "
+msgstr "API 지갑 개인키 입력: "
+
+msgid "Alias: "
+msgstr "별칭: "
+
+msgid "Coin"
+msgstr "코인"
+
+msgid "Size"
+msgstr "수량"
+
+msgid "Entry"
+msgstr "진입가"
+
+msgid "Value"
+msgstr "평가액"
+
+msgid "PnL"
+msgstr "손익"
+
+msgid "Leverage"
+msgstr "레버리지"
+
+msgid "Liq"
+msgstr "청산가"
+
+msgid "OID"
+msgstr "주문ID"
+
+msgid "Side"
+msgstr "방향"
+
+msgid "Price"
+msgstr "가격"
+
+msgid "Time"
+msgstr "시간"
+
+msgid "Token"
+msgstr "토큰"
+
+msgid "Total"
+msgstr "합계"
+
+msgid "Hold"
+msgstr "잠금"
+
+msgid "Available"
+msgstr "가용"
+
+msgid "Spot Balances"
+msgstr "현물 잔고"
+
+msgid "Alias \"{alias}\" is already taken."
+msgstr "별칭 \"{alias}\"은(는) 이미 사용 중입니다."
+
+msgid "Wallet address to watch: "
+msgstr "모니터링할 지갑 주소: "
+
+msgid "Balances (Perp USD: {perp})"
+msgstr "잔고 (무기한 USD: {perp})"
+
+msgid "Portfolio AccountValue={value} MarginUsed={used}"
+msgstr "포트폴리오 계정가치={value} 사용증거금={used}"
+
+msgid "Asks"
+msgstr "매도"
+
+msgid "Bids"
+msgstr "매수"
+
+msgid "N"
+msgstr "건수"
+
+msgid "Coin not found: {coin}"
+msgstr "코인을 찾을 수 없음: {coin}"
+
+msgid "query must not be empty"
+msgstr "검색어는 비어 있을 수 없습니다"
+
+msgid "invalid sort field: {field} (expected one of: {allowed})"
+msgstr "잘못된 정렬 항목: {field} (다음 중 하나여야 함: {allowed})"
+
+msgid "ℹ️  Request completed."
+msgstr "ℹ️  요청 완료."
+
+msgid "interval must be '<minutes>' or '<slice_minutes>,<orders>' (e.g. 30 or 5,10)"
+msgstr "간격은 '<분>' 또는 '<분할분>,<주문수>' 형식이어야 함 (예: 30 또는 5,10)"
+
+msgid "❌ Order rejected"
+msgstr "❌ 주문 거부됨"
+
+msgid "Use only one of --cross or --isolated"
+msgstr "--cross 또는 --isolated 중 하나만 사용하세요"
+
+msgid "leverage must be a positive integer"
+msgstr "레버리지는 양의 정수여야 합니다"
+
+msgid "size must be a positive number"
+msgstr "수량은 양수여야 합니다"
+
+msgid "coin must not be empty"
+msgstr "코인은 비어 있을 수 없습니다"
+
+msgid "stake must be a positive number"
+msgstr "stake는 양수여야 합니다"
+
+msgid "leverage must be a positive integer when used with --stake"
+msgstr "--stake와 함께 사용 시 레버리지는 양의 정수여야 합니다"
+
+msgid "TWAP ID"
+msgstr "TWAP ID"
+
+msgid "Total Size"
+msgstr "총 수량"
+
+msgid "Minutes"
+msgstr "분"
+
+msgid "Submitted"
+msgstr "제출됨"
+
+msgid "ratio must be > 0 and <= 1"
+msgstr "ratio는 0 < ratio <= 1 이어야 합니다"
+
+msgid "Specify at least one of --tp or --sl"
+msgstr "--tp 또는 --sl 중 최소 하나를 지정하세요"
+
+msgid "tp must be a positive number"
+msgstr "tp는 양수여야 합니다"
+
+msgid "sl must be a positive number"
+msgstr "sl은 양수여야 합니다"
+
+msgid "✅ TP/SL orders submitted"
+msgstr "✅ TP/SL 주문 제출됨"
+
+msgid "minutes must be a positive integer"
+msgstr "분은 양의 정수여야 합니다"
+
+msgid "minutes and orders must be positive integers"
+msgstr "분과 주문 수는 양의 정수여야 합니다"
+
+msgid "Could not resolve max leverage for {coin}"
+msgstr "{coin}의 최대 레버리지를 확인할 수 없습니다"
+
+msgid "--cross/--isolated requires --leverage"
+msgstr "--cross/--isolated에는 --leverage가 필요합니다"
+
+msgid "--leverage/--cross/--isolated are only supported with long/short"
+msgstr "--leverage/--cross/--isolated는 long/short에서만 지원됩니다"
+
+msgid "--reduce-only is only supported with long/short"
+msgstr "--reduce-only는 long/short에서만 지원됩니다"
+
+msgid "Tracked TWAP Orders"
+msgstr "추적 중인 TWAP 주문"
+
+msgid "❌ TWAP order rejected"
+msgstr "❌ TWAP 주문 거부됨"
+
+msgid "✅ TWAP order submitted"
+msgstr "✅ TWAP 주문 제출됨"
+
+msgid "No tracked active TWAP orders found"
+msgstr "추적 중인 활성 TWAP 주문이 없습니다"
+
+msgid "No open orders to cancel"
+msgstr "취소할 미체결 주문이 없습니다"
+
+msgid "Cancelled"
+msgstr "취소됨"
+
+msgid "✅ Leverage updated"
+msgstr "✅ 레버리지 업데이트됨"
+
+msgid "❌ Leverage update failed"
+msgstr "❌ 레버리지 업데이트 실패"
+
+msgid "Slippage must be a non-negative number"
+msgstr "슬리피지는 0 이상의 수여야 합니다"
+
+msgid "⚠️  Leverage update failed: {response}"
+msgstr "⚠️  레버리지 업데이트 실패: {response}"
+
+msgid "\nReason: {reason}"
+msgstr "\n이유: {reason}"
+
+msgid "\nTip: Increase --stake or --leverage so position value is at least $10."
+msgstr "\n팁: 포지션 가치가 최소 $10가 되도록 --stake 또는 --leverage를 늘리세요."
+
+msgid "{order_kind} order executed"
+msgstr "{order_kind} 주문 체결됨"
+
+msgid "\nAsset: {coin}"
+msgstr "\n코인: {coin}"
+
+msgid "Side: {side}"
+msgstr "방향: {side}"
+
+msgid "Filled size: {size} {coin}"
+msgstr "체결 수량: {size} {coin}"
+
+msgid "Average price: {price}"
+msgstr "평균 가격: {price}"
+
+msgid "Order ID: {oid}"
+msgstr "주문 ID: {oid}"
+
+msgid "{order_kind} order placed"
+msgstr "{order_kind} 주문 접수됨"
+
+msgid "Warning: Invalid leverage value ({leverage}) for {coin}. Retrying with max leverage {max_lev}."
+msgstr "경고: {coin}의 레버리지 값({leverage})이 잘못되었습니다. 최대 레버리지 {max_lev}로 재시도합니다."
+
+msgid "size too small for {coin}; minimum unit is 1e-{decimals}"
+msgstr "{coin} 수량이 너무 작습니다. 최소 단위는 1e-{decimals}입니다"
+
+msgid "Spot market not found: {coin}"
+msgstr "현물 마켓을 찾을 수 없음: {coin}"
+
+msgid "No open position found for {coin}"
+msgstr "{coin}의 포지션을 찾을 수 없습니다"
+
+msgid "Multiple open positions matched '{coin}': {coins}. Please specify the dex-prefixed symbol (e.g. xyz:TSLA)."
+msgstr "'{coin}'와 일치하는 포지션이 여러 개입니다: {coins}. dex 접두 코인(예: xyz:TSLA)을 지정하세요."
+
+msgid "Close side: {side}"
+msgstr "청산 방향: {side}"
+
+msgid "Protected size: {size}"
+msgstr "보호 수량: {size}"
+
+msgid "Manage it with 'hl order ls' or 'hl order twap-cancel'."
+msgstr "'hl order ls' 또는 'hl order twap-cancel'로 관리하세요."
+
+msgid "Order {order_id} not found"
+msgstr "주문 {order_id}을(를) 찾을 수 없습니다"
+
+msgid "⚙️  Leverage set: {coin} {leverage}x ({margin})"
+msgstr "⚙️  레버리지 설정: {coin} {leverage}x ({margin})"
+
+msgid "Your stake (margin): {stake}"
+msgstr "내 stake (증거금): {stake}"
+
+msgid "BUY"
+msgstr "매수"
+
+msgid "SELL"
+msgstr "매도"
+
+msgid "TP trigger: {tp}"
+msgstr "TP 트리거: {tp}"
+
+msgid "SL trigger: {sl}"
+msgstr "SL 트리거: {sl}"
+
+msgid "Total size: {size} {coin}"
+msgstr "총 수량: {size} {coin}"
+
+msgid "Duration: {minutes} min"
+msgstr "기간: {minutes}분"
+
+msgid "Randomize: {state}"
+msgstr "무작위: {state}"
+
+msgid "Leverage: {leverage}x"
+msgstr "레버리지: {leverage}x"
+
+msgid "Margin type: {margin}"
+msgstr "마진 유형: {margin}"
+
+msgid "cross"
+msgstr "교차"
+
+msgid "isolated"
+msgstr "격리"
+
+msgid "on"
+msgstr "켜짐"
+
+msgid "off"
+msgstr "꺼짐"
+
+msgid "TWAP ID: {twap_id}"
+msgstr "TWAP ID: {twap_id}"
+
+msgid "Tracked TWAP {twap_id} not found"
+msgstr "추적 중인 TWAP {twap_id}을(를) 찾을 수 없습니다"
+
+msgid "No account configured. Run 'hl account add'."
+msgstr "설정된 계정이 없습니다. 실행: 'hl account add'."
+
+msgid "Account \"{alias}\" is read-only and cannot trade. Use 'hl account add' to add an API wallet."
+msgstr "계정 \"{alias}\"은(는) 읽기 전용이라 거래할 수 없습니다. 'hl account add'로 API 지갑을 추가하세요."
+
+msgid "Pair"
+msgstr "페어"
+
+msgid "24h%"
+msgstr "24h%"
+
+msgid "Vol"
+msgstr "거래량"
+
+msgid "Category"
+msgstr "카테고리"
+
+msgid "Funding"
+msgstr "펀딩"
+
+msgid "OI"
+msgstr "OI"
+
+msgid "Balances"
+msgstr "잔고"
+
+msgid "[green]✅ Account saved[/green]"
+msgstr "[green]✅ 계정 저장됨[/green]"
+
+msgid "Portfolio"
+msgstr "포트폴리오"
+
+msgid "Asset Leverage"
+msgstr "종목 레버리지"
+
+msgid "Margin"
+msgstr "증거금"
+
+msgid "[green]✅ TWAP cancel submitted[/green]"
+msgstr "[green]✅ TWAP 취소 제출됨[/green]"
+
+msgid "Market Price"
+msgstr "시장 가격"
+
+msgid "Order Defaults"
+msgstr "주문 기본값"
+
+msgid "[red]❌ Request failed[/red]"
+msgstr "[red]❌ 요청 실패[/red]"
+
+msgid "No open positions"
+msgstr "보유 포지션 없음"
+
+msgid "Margin Summary"
+msgstr "증거금 요약"
+
+msgid "No spot balances"
+msgstr "현물 잔고 없음"
+
+msgid "Order request accepted"
+msgstr "주문 요청 수락됨"
+
+msgid "No open orders"
+msgstr "미체결 주문 없음"
+
+msgid "Position"
+msgstr "포지션"
+
+msgid "Position: none"
+msgstr "포지션: 없음"
+
+msgid "[red]❌ TWAP cancel rejected[/red]"
+msgstr "[red]❌ TWAP 취소 거부됨[/red]"
+
+msgid "- Perp balance: {value}"
+msgstr "- 무기한 잔고: {value}"
+
+msgid "[red]❌ Order rejected[/red]"
+msgstr "[red]❌ 주문 거부됨[/red]"
+
+msgid "[green]✅ Order filled[/green]"
+msgstr "[green]✅ 주문 체결됨[/green]"
+
+msgid "[cyan]🕒 Order resting on book[/cyan]"
+msgstr "[cyan]🕒 주문이 호가창에 올라감[/cyan]"
+
+msgid "Alias: {alias}"
+msgstr "별칭: {alias}"
+
+msgid "Address: {address}"
+msgstr "주소: {address}"
+
+msgid "Type: {type}"
+msgstr "유형: {type}"
+
+msgid "- Account value: {value}"
+msgstr "- 계정 가치: {value}"
+
+msgid "- Margin used: {value}"
+msgstr "- 사용 증거금: {value}"
+
+msgid "Markets: {perp} perp / {spot} spot"
+msgstr "마켓: 무기한 {perp} / 현물 {spot}"
+
+msgid "Perp Markets"
+msgstr "무기한 마켓"
+
+msgid "Spot Markets"
+msgstr "현물 마켓"
+
+msgid "- Asset: {coin}"
+msgstr "- 코인: {coin}"
+
+msgid "- Mark price: {price}"
+msgstr "- 표시 가격: {price}"
+
+msgid "- Max leverage: {leverage}x"
+msgstr "- 최대 레버리지: {leverage}x"
+
+msgid "- Available margin: {value}"
+msgstr "- 가용 증거금: {value}"
+
+msgid "Asset: {coin}"
+msgstr "코인: {coin}"
+
+msgid "[red]Error:[/red] {message}"
+msgstr "[red]오류:[/red] {message}"
+
+msgid "[green]{message}[/green]"
+msgstr "[green]{message}[/green]"
+
+msgid "- Price: {price}"
+msgstr "- 가격: {price}"
+
+msgid "- Slippage: {slippage}"
+msgstr "- 슬리피지: {slippage}"
+
+msgid "Reason: {reason}"
+msgstr "이유: {reason}"
+
+msgid "- Total margin used: {value}"
+msgstr "- 사용 증거금 합계: {value}"
+
+msgid "{rtype}: ok"
+msgstr "{rtype}: 성공"
+
+msgid "API wallet: {wallet}"
+msgstr "API 지갑: {wallet}"
+
+msgid "- Size: {size}"
+msgstr "- 수량: {size}"
+
+msgid "- Entry: {price}"
+msgstr "- 진입가: {price}"
+
+msgid "- Value: {value}"
+msgstr "- 평가액: {value}"
+
+msgid "- Unrealized PnL: {value}"
+msgstr "- 미실현 손익: {value}"
+
+msgid "No-op"
+msgstr "동작 없음"
+
+msgid "Filled size: {size}"
+msgstr "체결 수량: {size}"
+
+msgid "- Average price: {price}"
+msgstr "- 평균 가격: {price}"
+
+msgid "Asks ({coin})"
+msgstr "매도 ({coin})"
+
+msgid "Bids ({coin})"
+msgstr "매수 ({coin})"
+
+msgid "[red]Error:[/red] {error}"
+msgstr "[red]오류:[/red] {error}"
+
+msgid "{rtype}: {status}"
+msgstr "{rtype}: {status}"
+
+msgid "Side must be \"buy\", \"sell\", \"long\", or \"short\""
+msgstr "방향은 \"buy\", \"sell\", \"long\", \"short\" 중 하나여야 합니다"
+
+msgid "Invalid private key format"
+msgstr "잘못된 개인키 형식"
+
+msgid "Time-in-force must be \"Gtc\", \"Ioc\", or \"Alo\""
+msgstr "체결 조건은 \"Gtc\", \"Ioc\", \"Alo\" 중 하나여야 합니다"
+
+msgid "Invalid address: {value}"
+msgstr "잘못된 주소: {value}"
+
+msgid "{name} must be a positive number"
+msgstr "{name}은(는) 양수여야 합니다"
+
+msgid "{name} must be a positive integer"
+msgstr "{name}은(는) 양의 정수여야 합니다"

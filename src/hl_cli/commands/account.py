@@ -24,6 +24,7 @@ from ..types import BalancesPayload, OpenOrderRow, PortfolioPayload, PositionsPa
 from ..utils.output import out
 from ..utils.validators import normalize_private_key, validate_address
 from ..utils.watch import watch_loop
+from ..i18n import _
 from .common import (
     _confirm,
     _ctx,
@@ -36,20 +37,20 @@ from .common import (
 
 
 def _print_account_add_guide() -> None:
-    console.print("\n[bold]Wallet Setup Guide[/bold]")
-    console.print("1. To add an API wallet:")
-    console.print("   - Generate an API wallet private key on Hyperliquid")
-    console.print("   - Mainnet: https://app.hyperliquid.xyz/API")
-    console.print("   - Testnet: https://app.hyperliquid-testnet.xyz/API")
-    console.print("   - Run: [bold]hl account add[/bold] -> choose [bold]1[/bold]")
+    console.print(_("\n[bold]Wallet Setup Guide[/bold]"))
+    console.print(_("1. To add an API wallet:"))
+    console.print(_("   - Generate an API wallet private key on Hyperliquid"))
+    console.print(_("   - Mainnet: https://app.hyperliquid.xyz/API"))
+    console.print(_("   - Testnet: https://app.hyperliquid-testnet.xyz/API"))
+    console.print(_("   - Run: [bold]hl account add[/bold] -> choose [bold]1[/bold]"))
     console.print("")
-    console.print("2. To add a read-only wallet:")
-    console.print("   - Run: [bold]hl account add[/bold] -> choose [bold]2[/bold]")
-    console.print("   - Enter the wallet address to monitor (0x...)")
+    console.print(_("2. To add a read-only wallet:"))
+    console.print(_("   - Run: [bold]hl account add[/bold] -> choose [bold]2[/bold]"))
+    console.print(_("   - Enter the wallet address to monitor (0x...)"))
     console.print("")
-    console.print("Verification commands:")
-    console.print(" - [bold]hl account ls[/bold]")
-    console.print(" - [bold]hl account set-default <alias>[/bold]\n")
+    console.print(_("Verification commands:"))
+    console.print(_(" - [bold]hl account ls[/bold]"))
+    console.print(_(" - [bold]hl account set-default <alias>[/bold]\n"))
 
 
 @cli_command
@@ -58,11 +59,11 @@ def account_add(ctx: CommandContext) -> None:
     is_testnet = context.config.testnet
     network = _network_name(context)
 
-    print("\n=== Add New Account ===\n")
+    print(_("\n=== Add New Account ===\n"))
     _print_account_add_guide()
-    print("1) Use existing API wallet")
-    print("2) Add read-only account")
-    choice = input("Select setup method [1/2]: ").strip()
+    print(_("1) Use existing API wallet"))
+    print(_("2) Add read-only account"))
+    choice = input(_("Select setup method [1/2]: ")).strip()
 
     if choice == "1":
         api_url = (
@@ -70,30 +71,32 @@ def account_add(ctx: CommandContext) -> None:
             if is_testnet
             else "https://app.hyperliquid.xyz/API"
         )
-        print(f"\nVisit {api_url} and generate an API wallet key.\n")
-        api_key = normalize_private_key(input("Enter API wallet private key: ").strip())
+        print(_("\nVisit {url} and generate an API wallet key.\n").format(url=api_url))
+        api_key = normalize_private_key(input(_("Enter API wallet private key: ")).strip())
 
         info = context.get_public_client()
         api_wallet_addr = EthAccount.from_key(api_key).address
         role = info.user_role(api_wallet_addr)
         if role.get("role") != "agent":
             raise RuntimeError(
-                "This key is not registered as an API wallet (agent) on Hyperliquid"
+                _(
+                    "This key is not registered as an API wallet (agent) on Hyperliquid"
+                )
             )
         user_address = role["data"]["user"]
 
         while True:
-            alias = input("Alias: ").strip()
+            alias = input(_("Alias: ")).strip()
             if not alias:
-                print("Alias cannot be empty.")
+                print(_("Alias cannot be empty."))
                 continue
             if is_alias_taken(alias, network):
-                print(f'Alias "{alias}" is already taken.')
+                print(_('Alias "{alias}" is already taken.').format(alias=alias))
                 continue
             break
 
         set_as_default = get_account_count(network) == 0 or _confirm(
-            "Set as default account?", True
+            _("Set as default account?"), True
         )
         created = create_account(
             alias=alias,
@@ -108,18 +111,18 @@ def account_add(ctx: CommandContext) -> None:
         data["api_wallet_private_key"] = "[REDACTED]"
         out(data, _json(ctx))
     elif choice == "2":
-        user_address = validate_address(input("Wallet address to watch: ").strip())
+        user_address = validate_address(input(_("Wallet address to watch: ")).strip())
         while True:
-            alias = input("Alias: ").strip()
+            alias = input(_("Alias: ")).strip()
             if not alias:
-                print("Alias cannot be empty.")
+                print(_("Alias cannot be empty."))
                 continue
             if is_alias_taken(alias, network):
-                print(f'Alias "{alias}" is already taken.')
+                print(_('Alias "{alias}" is already taken.').format(alias=alias))
                 continue
             break
         set_as_default = get_account_count(network) == 0 or _confirm(
-            "Set as default account?", True
+            _("Set as default account?"), True
         )
         created = create_account(
             alias=alias,
@@ -130,7 +133,7 @@ def account_add(ctx: CommandContext) -> None:
         )
         out(created.__dict__, _json(ctx))
     else:
-        raise RuntimeError("Invalid selection")
+        raise RuntimeError(_("Invalid selection"))
     _done(ctx)
 
 
@@ -142,11 +145,11 @@ def account_ls(ctx: CommandContext) -> None:
         out([a.__dict__ for a in accounts], True)
     else:
         if not accounts:
-            print("No accounts found. Run 'hl account add'.")
+            print(_("No accounts found. Run 'hl account add'."))
         else:
             _render_table(
-                "Accounts",
-                ["*", "Alias", "Address", "Type", "API Wallet"],
+                _("Accounts"),
+                [_("*"), _("Alias"), _("Address"), _("Type"), _("API Wallet")],
                 [
                     [
                         "*" if a.is_default else "",
@@ -170,7 +173,9 @@ def account_set_default(ctx: CommandContext, alias: str) -> None:
     context = _ctx(ctx)
     network = _network_name(context)
     if not get_account_by_alias(alias, network):
-        raise RuntimeError(f'Account with alias "{alias}" not found')
+        raise RuntimeError(
+            _('Account with alias "{alias}" not found').format(alias=alias)
+        )
     updated = set_default_account(alias, network)
     out(updated.__dict__, _json(ctx))
     _done(ctx)
@@ -186,11 +191,11 @@ def account_remove(ctx: CommandContext, alias: str, force: bool = False) -> None
     if not force and not _confirm(
         f'Remove account "{alias}" ({existing.user_address})?', False
     ):
-        print("Cancelled.")
+        print(_("Cancelled."))
         raise SystemExit(0)
     ok = delete_account(alias, network)
     if not ok:
-        raise RuntimeError("Failed to remove account")
+        raise RuntimeError(_("Failed to remove account"))
     out({"deleted": True, "alias": alias}, _json(ctx))
     _done(ctx)
 
@@ -217,8 +222,16 @@ def account_positions(
         watch_loop(
             lambda: _fetch_positions(context, address),
             lambda data: _render_table(
-                "Positions",
-                ["Coin", "Size", "Entry", "Value", "PnL", "Leverage", "Liq"],
+                _("Positions"),
+                [
+                    _("Coin"),
+                    _("Size"),
+                    _("Entry"),
+                    _("Value"),
+                    _("PnL"),
+                    _("Leverage"),
+                    _("Liq"),
+                ],
                 [
                     [
                         p["coin"],
@@ -264,8 +277,8 @@ def account_orders(
         watch_loop(
             lambda: _fetch_orders(context, address),
             lambda rows: _render_table(
-                "Open Orders",
-                ["OID", "Coin", "Side", "Size", "Price", "Time"],
+                _("Open Orders"),
+                [_("OID"), _("Coin"), _("Side"), _("Size"), _("Price"), _("Time")],
                 [
                     [
                         r["oid"],
@@ -307,8 +320,8 @@ def account_balances(
         watch_loop(
             lambda: _fetch_balances(context, address),
             lambda data: _render_table(
-                f"Balances (Perp USD: {data['perpBalance']})",
-                ["Token", "Total", "Hold", "Available"],
+                _("Balances (Perp USD: {perp})").format(perp=data["perpBalance"]),
+                [_("Token"), _("Total"), _("Hold"), _("Available")],
                 [
                     [b["token"], b["total"], b["hold"], b["available"]]
                     for b in data["spotBalances"]
@@ -336,8 +349,17 @@ def account_portfolio(
             fetch,
             lambda d: (
                 _render_table(
-                    f"Portfolio AccountValue={d['accountValue']} MarginUsed={d['totalMarginUsed']}",
-                    ["Coin", "Size", "Entry", "Value", "PnL", "Leverage"],
+                    _(
+                        "Portfolio AccountValue={value} MarginUsed={used}"
+                    ).format(value=d["accountValue"], used=d["totalMarginUsed"]),
+                    [
+                        _("Coin"),
+                        _("Size"),
+                        _("Entry"),
+                        _("Value"),
+                        _("PnL"),
+                        _("Leverage"),
+                    ],
                     [
                         [
                             p["coin"],
@@ -351,8 +373,8 @@ def account_portfolio(
                     ],
                 ),
                 _render_table(
-                    "Spot Balances",
-                    ["Token", "Total", "Hold", "Available"],
+                    _("Spot Balances"),
+                    [_("Token"), _("Total"), _("Hold"), _("Available")],
                     [
                         [b["token"], b["total"], b["hold"], b.get("available", "-")]
                         for b in d["spotBalances"]

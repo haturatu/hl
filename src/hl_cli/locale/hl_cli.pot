@@ -1,0 +1,849 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: hl_cli\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Command tree:\n  account add|ls|set-default|remove|positions|orders|balances|portfolio\n  order ls|limit|market|tpsl|twap|twap-cancel|cancel|cancel-all|set-leverage|configure\n  asset price|book|leverage\n  markets ls\n  referral set|status\nExamples:\n  hl account add\n  hl order twap buy 1 BTC 30 --randomize\n  hl order twap-cancel BTC 12345\n  hl account positions --watch\n"
+msgstr ""
+
+msgid "Account management and information"
+msgstr ""
+
+msgid "Add account"
+msgstr ""
+
+msgid "List accounts"
+msgstr ""
+
+msgid "Set default account"
+msgstr ""
+
+msgid "Remove account"
+msgstr ""
+
+msgid "Order management and trading"
+msgstr ""
+
+msgid "List open orders"
+msgstr ""
+
+msgid "Place limit order (buy/sell = spot, long/short = perp)"
+msgstr ""
+
+msgid "Place market order (buy/sell = spot, long/short/close = perp)"
+msgstr ""
+
+msgid "Place TWAP order (perp only: use long/short)"
+msgstr ""
+
+msgid "Set TP/SL trigger orders for an open position"
+msgstr ""
+
+msgid "Cancel native TWAP order (interactive if omitted)"
+msgstr ""
+
+msgid "Cancel order"
+msgstr ""
+
+msgid "Cancel all orders"
+msgstr ""
+
+msgid "Set leverage"
+msgstr ""
+
+msgid "Configure order defaults"
+msgstr ""
+
+msgid "Asset-specific information"
+msgstr ""
+
+msgid "Get price"
+msgstr ""
+
+msgid "Get orderbook"
+msgstr ""
+
+msgid "Get leverage info"
+msgstr ""
+
+msgid "Market information"
+msgstr ""
+
+msgid "List markets"
+msgstr ""
+
+msgid "Search markets by partial symbol/name"
+msgstr ""
+
+msgid "Referral management"
+msgstr ""
+
+msgid "Set referral code"
+msgstr ""
+
+msgid "Get referral status"
+msgstr ""
+
+msgid "Print shell completion script"
+msgstr ""
+
+msgid "Print bash completion script"
+msgstr ""
+
+msgid "Missing arguments. See: hl order limit -h"
+msgstr ""
+
+msgid "Missing price. Syntax: hl order limit <side> <size> <coin> <price>"
+msgstr ""
+
+msgid "Missing arguments. See: hl order market -h"
+msgstr ""
+
+msgid "Missing coin. Syntax: hl order market <side> <size> <coin>"
+msgstr ""
+
+msgid "CLI for Hyperliquid DEX"
+msgstr ""
+
+msgid "Output in JSON format"
+msgstr ""
+
+msgid "Use testnet"
+msgstr ""
+
+msgid "Display language (e.g. en, ja, zh, ko)"
+msgstr ""
+
+msgid "Get positions"
+msgstr ""
+
+msgid "Get orders"
+msgstr ""
+
+msgid "Get balances"
+msgstr ""
+
+msgid "Get portfolio"
+msgstr ""
+
+msgid "USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only"
+msgstr ""
+
+msgid "Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation"
+msgstr ""
+
+msgid "Use cross margin with --leverage"
+msgstr ""
+
+msgid "Use isolated margin with --leverage"
+msgstr ""
+
+msgid "Perp only: reduce-only for long/short"
+msgstr ""
+
+msgid "USD used to derive order size. For buy/sell this is spot size; for long/short this is perp margin."
+msgstr ""
+
+msgid "Perp only: optional leverage update before placing long/short"
+msgstr ""
+
+msgid "Perp only: use cross margin with --leverage"
+msgstr ""
+
+msgid "Perp only: use isolated margin with --leverage"
+msgstr ""
+
+msgid "Perp close only: close ratio (0 < ratio <= 1)"
+msgstr ""
+
+msgid "USD margin used to derive total TWAP size. With --leverage, size uses stake x leverage; without it, size uses stake only"
+msgstr ""
+
+msgid "Take-profit trigger price"
+msgstr ""
+
+msgid "Stop-loss trigger price"
+msgstr ""
+
+msgid "Position ratio to protect (0 < ratio <= 1)"
+msgstr ""
+
+msgid "Filter perp markets by category (e.g. stocks, commodities, indices, fx, preipo, crypto)"
+msgstr ""
+
+msgid "Sort markets by volume, oi, price, change, funding, or coin"
+msgstr ""
+
+msgid "Sort matches by volume, oi, price, change, funding, or coin"
+msgstr ""
+
+msgid "When --stake is used, syntax is: hl order limit <side> <coin> <price> --stake <usd>"
+msgstr ""
+
+msgid "price must be positive"
+msgstr ""
+
+msgid "stake must be positive"
+msgstr ""
+
+msgid "When --stake is used, syntax is: hl order market <side> <coin> --stake <usd>"
+msgstr ""
+
+msgid "Missing order subcommand. Run: hl order -h"
+msgstr ""
+
+msgid "Missing asset subcommand. Run: hl asset -h"
+msgstr ""
+
+msgid "Missing markets subcommand. Run: hl markets -h"
+msgstr ""
+
+msgid "Missing referral subcommand. Run: hl referral -h"
+msgstr ""
+
+msgid "Missing completion subcommand. Run: hl completion -h"
+msgstr ""
+
+msgid "Unknown command: {cmd}"
+msgstr ""
+
+msgid "Unsupported shell: {shell}"
+msgstr ""
+
+msgid "Invalid price: {price}"
+msgstr ""
+
+msgid "Unknown markets subcommand: {sc}"
+msgstr ""
+
+msgid "Unknown referral subcommand: {sc}"
+msgstr ""
+
+msgid "Close syntax: hl order market close <coin>"
+msgstr ""
+
+msgid "--stake cannot be used with market close"
+msgstr ""
+
+msgid "--leverage/--cross/--isolated cannot be used with market close"
+msgstr ""
+
+msgid "--ratio is only supported with: hl order market close <coin>"
+msgstr ""
+
+msgid "Unknown asset subcommand: {sc}"
+msgstr ""
+
+msgid "Unknown account subcommand: {sc}"
+msgstr ""
+
+msgid "Unknown order subcommand: {sc}"
+msgstr ""
+
+msgid "hjkl/arrows move  gg/G top/bottom  / ? search  n/N next/prev  h perp  l spot  a all  q quit"
+msgstr ""
+
+msgid "Markets ({perp} perps, {spot} spot)"
+msgstr ""
+
+msgid "Y/n"
+msgstr ""
+
+msgid "y/N"
+msgstr ""
+
+msgid "\nExecution time: {elapsed:.2f}s"
+msgstr ""
+
+msgid "\n[bold]Wallet Setup Guide[/bold]"
+msgstr ""
+
+msgid "1. To add an API wallet:"
+msgstr ""
+
+msgid "   - Generate an API wallet private key on Hyperliquid"
+msgstr ""
+
+msgid "   - Mainnet: https://app.hyperliquid.xyz/API"
+msgstr ""
+
+msgid "   - Testnet: https://app.hyperliquid-testnet.xyz/API"
+msgstr ""
+
+msgid "   - Run: [bold]hl account add[/bold] -> choose [bold]1[/bold]"
+msgstr ""
+
+msgid "2. To add a read-only wallet:"
+msgstr ""
+
+msgid "   - Run: [bold]hl account add[/bold] -> choose [bold]2[/bold]"
+msgstr ""
+
+msgid "   - Enter the wallet address to monitor (0x...)"
+msgstr ""
+
+msgid "Verification commands:"
+msgstr ""
+
+msgid " - [bold]hl account ls[/bold]"
+msgstr ""
+
+msgid " - [bold]hl account set-default <alias>[/bold]\n"
+msgstr ""
+
+msgid "\n=== Add New Account ===\n"
+msgstr ""
+
+msgid "1) Use existing API wallet"
+msgstr ""
+
+msgid "2) Add read-only account"
+msgstr ""
+
+msgid "Cancelled."
+msgstr ""
+
+msgid "Failed to remove account"
+msgstr ""
+
+msgid "Select setup method [1/2]: "
+msgstr ""
+
+msgid "This key is not registered as an API wallet (agent) on Hyperliquid"
+msgstr ""
+
+msgid "Set as default account?"
+msgstr ""
+
+msgid "Invalid selection"
+msgstr ""
+
+msgid "No accounts found. Run 'hl account add'."
+msgstr ""
+
+msgid "Accounts"
+msgstr ""
+
+msgid "\nVisit {url} and generate an API wallet key.\n"
+msgstr ""
+
+msgid "Alias cannot be empty."
+msgstr ""
+
+msgid "*"
+msgstr ""
+
+msgid "Alias"
+msgstr ""
+
+msgid "Address"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "API Wallet"
+msgstr ""
+
+msgid "Account with alias \"{alias}\" not found"
+msgstr ""
+
+msgid "Positions"
+msgstr ""
+
+msgid "Open Orders"
+msgstr ""
+
+msgid "Enter API wallet private key: "
+msgstr ""
+
+msgid "Alias: "
+msgstr ""
+
+msgid "Coin"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Entry"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "PnL"
+msgstr ""
+
+msgid "Leverage"
+msgstr ""
+
+msgid "Liq"
+msgstr ""
+
+msgid "OID"
+msgstr ""
+
+msgid "Side"
+msgstr ""
+
+msgid "Price"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Hold"
+msgstr ""
+
+msgid "Available"
+msgstr ""
+
+msgid "Spot Balances"
+msgstr ""
+
+msgid "Alias \"{alias}\" is already taken."
+msgstr ""
+
+msgid "Wallet address to watch: "
+msgstr ""
+
+msgid "Balances (Perp USD: {perp})"
+msgstr ""
+
+msgid "Portfolio AccountValue={value} MarginUsed={used}"
+msgstr ""
+
+msgid "Asks"
+msgstr ""
+
+msgid "Bids"
+msgstr ""
+
+msgid "N"
+msgstr ""
+
+msgid "Coin not found: {coin}"
+msgstr ""
+
+msgid "query must not be empty"
+msgstr ""
+
+msgid "invalid sort field: {field} (expected one of: {allowed})"
+msgstr ""
+
+msgid "ℹ️  Request completed."
+msgstr ""
+
+msgid "interval must be '<minutes>' or '<slice_minutes>,<orders>' (e.g. 30 or 5,10)"
+msgstr ""
+
+msgid "❌ Order rejected"
+msgstr ""
+
+msgid "Use only one of --cross or --isolated"
+msgstr ""
+
+msgid "leverage must be a positive integer"
+msgstr ""
+
+msgid "size must be a positive number"
+msgstr ""
+
+msgid "coin must not be empty"
+msgstr ""
+
+msgid "stake must be a positive number"
+msgstr ""
+
+msgid "leverage must be a positive integer when used with --stake"
+msgstr ""
+
+msgid "TWAP ID"
+msgstr ""
+
+msgid "Total Size"
+msgstr ""
+
+msgid "Minutes"
+msgstr ""
+
+msgid "Submitted"
+msgstr ""
+
+msgid "ratio must be > 0 and <= 1"
+msgstr ""
+
+msgid "Specify at least one of --tp or --sl"
+msgstr ""
+
+msgid "tp must be a positive number"
+msgstr ""
+
+msgid "sl must be a positive number"
+msgstr ""
+
+msgid "✅ TP/SL orders submitted"
+msgstr ""
+
+msgid "minutes must be a positive integer"
+msgstr ""
+
+msgid "minutes and orders must be positive integers"
+msgstr ""
+
+msgid "Could not resolve max leverage for {coin}"
+msgstr ""
+
+msgid "--cross/--isolated requires --leverage"
+msgstr ""
+
+msgid "--leverage/--cross/--isolated are only supported with long/short"
+msgstr ""
+
+msgid "--reduce-only is only supported with long/short"
+msgstr ""
+
+msgid "Tracked TWAP Orders"
+msgstr ""
+
+msgid "❌ TWAP order rejected"
+msgstr ""
+
+msgid "✅ TWAP order submitted"
+msgstr ""
+
+msgid "No tracked active TWAP orders found"
+msgstr ""
+
+msgid "No open orders to cancel"
+msgstr ""
+
+msgid "Cancelled"
+msgstr ""
+
+msgid "✅ Leverage updated"
+msgstr ""
+
+msgid "❌ Leverage update failed"
+msgstr ""
+
+msgid "Slippage must be a non-negative number"
+msgstr ""
+
+msgid "⚠️  Leverage update failed: {response}"
+msgstr ""
+
+msgid "\nReason: {reason}"
+msgstr ""
+
+msgid "\nTip: Increase --stake or --leverage so position value is at least $10."
+msgstr ""
+
+msgid "{order_kind} order executed"
+msgstr ""
+
+msgid "\nAsset: {coin}"
+msgstr ""
+
+msgid "Side: {side}"
+msgstr ""
+
+msgid "Filled size: {size} {coin}"
+msgstr ""
+
+msgid "Average price: {price}"
+msgstr ""
+
+msgid "Order ID: {oid}"
+msgstr ""
+
+msgid "{order_kind} order placed"
+msgstr ""
+
+msgid "Warning: Invalid leverage value ({leverage}) for {coin}. Retrying with max leverage {max_lev}."
+msgstr ""
+
+msgid "size too small for {coin}; minimum unit is 1e-{decimals}"
+msgstr ""
+
+msgid "Spot market not found: {coin}"
+msgstr ""
+
+msgid "No open position found for {coin}"
+msgstr ""
+
+msgid "Multiple open positions matched '{coin}': {coins}. Please specify the dex-prefixed symbol (e.g. xyz:TSLA)."
+msgstr ""
+
+msgid "Close side: {side}"
+msgstr ""
+
+msgid "Protected size: {size}"
+msgstr ""
+
+msgid "Manage it with 'hl order ls' or 'hl order twap-cancel'."
+msgstr ""
+
+msgid "Order {order_id} not found"
+msgstr ""
+
+msgid "⚙️  Leverage set: {coin} {leverage}x ({margin})"
+msgstr ""
+
+msgid "Your stake (margin): {stake}"
+msgstr ""
+
+msgid "BUY"
+msgstr ""
+
+msgid "SELL"
+msgstr ""
+
+msgid "TP trigger: {tp}"
+msgstr ""
+
+msgid "SL trigger: {sl}"
+msgstr ""
+
+msgid "Total size: {size} {coin}"
+msgstr ""
+
+msgid "Duration: {minutes} min"
+msgstr ""
+
+msgid "Randomize: {state}"
+msgstr ""
+
+msgid "Leverage: {leverage}x"
+msgstr ""
+
+msgid "Margin type: {margin}"
+msgstr ""
+
+msgid "cross"
+msgstr ""
+
+msgid "isolated"
+msgstr ""
+
+msgid "on"
+msgstr ""
+
+msgid "off"
+msgstr ""
+
+msgid "TWAP ID: {twap_id}"
+msgstr ""
+
+msgid "Tracked TWAP {twap_id} not found"
+msgstr ""
+
+msgid "No account configured. Run 'hl account add'."
+msgstr ""
+
+msgid "Account \"{alias}\" is read-only and cannot trade. Use 'hl account add' to add an API wallet."
+msgstr ""
+
+msgid "Pair"
+msgstr ""
+
+msgid "24h%"
+msgstr ""
+
+msgid "Vol"
+msgstr ""
+
+msgid "Category"
+msgstr ""
+
+msgid "Funding"
+msgstr ""
+
+msgid "OI"
+msgstr ""
+
+msgid "Balances"
+msgstr ""
+
+msgid "[green]✅ Account saved[/green]"
+msgstr ""
+
+msgid "Portfolio"
+msgstr ""
+
+msgid "Asset Leverage"
+msgstr ""
+
+msgid "Margin"
+msgstr ""
+
+msgid "[green]✅ TWAP cancel submitted[/green]"
+msgstr ""
+
+msgid "Market Price"
+msgstr ""
+
+msgid "Order Defaults"
+msgstr ""
+
+msgid "[red]❌ Request failed[/red]"
+msgstr ""
+
+msgid "No open positions"
+msgstr ""
+
+msgid "Margin Summary"
+msgstr ""
+
+msgid "No spot balances"
+msgstr ""
+
+msgid "Order request accepted"
+msgstr ""
+
+msgid "No open orders"
+msgstr ""
+
+msgid "Position"
+msgstr ""
+
+msgid "Position: none"
+msgstr ""
+
+msgid "[red]❌ TWAP cancel rejected[/red]"
+msgstr ""
+
+msgid "- Perp balance: {value}"
+msgstr ""
+
+msgid "[red]❌ Order rejected[/red]"
+msgstr ""
+
+msgid "[green]✅ Order filled[/green]"
+msgstr ""
+
+msgid "[cyan]🕒 Order resting on book[/cyan]"
+msgstr ""
+
+msgid "Alias: {alias}"
+msgstr ""
+
+msgid "Address: {address}"
+msgstr ""
+
+msgid "Type: {type}"
+msgstr ""
+
+msgid "- Account value: {value}"
+msgstr ""
+
+msgid "- Margin used: {value}"
+msgstr ""
+
+msgid "Markets: {perp} perp / {spot} spot"
+msgstr ""
+
+msgid "Perp Markets"
+msgstr ""
+
+msgid "Spot Markets"
+msgstr ""
+
+msgid "- Asset: {coin}"
+msgstr ""
+
+msgid "- Mark price: {price}"
+msgstr ""
+
+msgid "- Max leverage: {leverage}x"
+msgstr ""
+
+msgid "- Available margin: {value}"
+msgstr ""
+
+msgid "Asset: {coin}"
+msgstr ""
+
+msgid "[red]Error:[/red] {message}"
+msgstr ""
+
+msgid "[green]{message}[/green]"
+msgstr ""
+
+msgid "- Price: {price}"
+msgstr ""
+
+msgid "- Slippage: {slippage}"
+msgstr ""
+
+msgid "Reason: {reason}"
+msgstr ""
+
+msgid "- Total margin used: {value}"
+msgstr ""
+
+msgid "{rtype}: ok"
+msgstr ""
+
+msgid "API wallet: {wallet}"
+msgstr ""
+
+msgid "- Size: {size}"
+msgstr ""
+
+msgid "- Entry: {price}"
+msgstr ""
+
+msgid "- Value: {value}"
+msgstr ""
+
+msgid "- Unrealized PnL: {value}"
+msgstr ""
+
+msgid "No-op"
+msgstr ""
+
+msgid "Filled size: {size}"
+msgstr ""
+
+msgid "- Average price: {price}"
+msgstr ""
+
+msgid "Asks ({coin})"
+msgstr ""
+
+msgid "Bids ({coin})"
+msgstr ""
+
+msgid "[red]Error:[/red] {error}"
+msgstr ""
+
+msgid "{rtype}: {status}"
+msgstr ""
+
+msgid "Side must be \"buy\", \"sell\", \"long\", or \"short\""
+msgstr ""
+
+msgid "Invalid private key format"
+msgstr ""
+
+msgid "Time-in-force must be \"Gtc\", \"Ioc\", or \"Alo\""
+msgstr ""
+
+msgid "Invalid address: {value}"
+msgstr ""
+
+msgid "{name} must be a positive number"
+msgstr ""
+
+msgid "{name} must be a positive integer"
+msgstr ""

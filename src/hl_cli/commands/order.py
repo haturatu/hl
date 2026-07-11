@@ -27,6 +27,7 @@ from ..infra.twap_registry import (
     mark_twap_cancelled,
     register_twap_order,
 )
+from ..i18n import _
 from ..types import (
     AllMids,
     ClearinghouseState,
@@ -113,10 +114,18 @@ def _print_leverage_update(
     if lev_result.get("status") == "ok":
         if leverage is not None:
             print(
-                f"⚙️  Leverage set: {coin} {leverage}x ({'cross' if is_cross else 'isolated'})"
+                _("⚙️  Leverage set: {coin} {leverage}x ({margin})").format(
+                    coin=coin,
+                    leverage=leverage,
+                    margin=_("cross") if is_cross else _("isolated"),
+                )
             )
     else:
-        print(f"⚠️  Leverage update failed: {lev_result.get('response')}")
+        print(
+            _("⚠️  Leverage update failed: {response}").format(
+                response=lev_result.get("response")
+            )
+        )
 
 
 def _print_order_feedback(
@@ -144,33 +153,47 @@ def _print_order_feedback(
             first_resting = s["resting"]
 
     if first_error is not None:
-        print("❌ Order rejected")
-        print(f"\nReason: {first_error}")
+        print(_("❌ Order rejected"))
+        print(_("\nReason: {reason}").format(reason=first_error))
         if stake is not None:
-            print(f"Your stake (margin): {_format_usd(stake)}")
+            print(
+                _("Your stake (margin): {stake}").format(
+                    stake=_format_usd(stake)
+                )
+            )
             if "minimum value" in first_error.lower():
                 print(
-                    "\nTip: Increase --stake or --leverage so position value is at least $10."
+                    _(
+                        "\nTip: Increase --stake or --leverage so position value is at least $10."
+                    )
                 )
         return
 
     if first_filled is not None:
-        print(f"✅ {order_kind} order executed")
-        print(f"\nAsset: {coin}")
-        print(f"Side: {side.upper()}")
-        print(f"Filled size: {first_filled.get('totalSz')} {coin}")
-        print(f"Average price: {_format_usd(first_filled.get('avgPx'))}")
-        print(f"Order ID: {first_filled.get('oid')}")
+        print(_("{order_kind} order executed").format(order_kind=order_kind))
+        print(_("\nAsset: {coin}").format(coin=coin))
+        print(_("Side: {side}").format(side=side.upper()))
+        print(
+            _("Filled size: {size} {coin}").format(
+                size=first_filled.get("totalSz"), coin=coin
+            )
+        )
+        print(
+            _("Average price: {price}").format(
+                price=_format_usd(first_filled.get("avgPx"))
+            )
+        )
+        print(_("Order ID: {oid}").format(oid=first_filled.get("oid")))
         return
 
     if first_resting is not None:
-        print(f"✅ {order_kind} order placed")
-        print(f"\nAsset: {coin}")
-        print(f"Side: {side.upper()}")
-        print(f"Order ID: {first_resting.get('oid')}")
+        print(_("{order_kind} order placed").format(order_kind=order_kind))
+        print(_("\nAsset: {coin}").format(coin=coin))
+        print(_("Side: {side}").format(side=side.upper()))
+        print(_("Order ID: {oid}").format(oid=first_resting.get("oid")))
         return
 
-    print("ℹ️  Request completed.")
+    print(_("ℹ️  Request completed."))
 
 
 def _parse_twap_interval(value: str) -> tuple[int, int]:
@@ -178,16 +201,18 @@ def _parse_twap_interval(value: str) -> tuple[int, int]:
     if len(parts) == 1:
         minutes = int(parts[0])
         if minutes <= 0:
-            raise ValueError("minutes must be a positive integer")
+            raise ValueError(_("minutes must be a positive integer"))
         return minutes, 1
     if len(parts) == 2:
         minutes = int(parts[0])
         orders = int(parts[1])
         if minutes <= 0 or orders <= 0:
-            raise ValueError("minutes and orders must be positive integers")
+            raise ValueError(_("minutes and orders must be positive integers"))
         return minutes * orders, orders
     raise ValueError(
-        "interval must be '<minutes>' or '<slice_minutes>,<orders>' (e.g. 30 or 5,10)"
+        _(
+            "interval must be '<minutes>' or '<slice_minutes>,<orders>' (e.g. 30 or 5,10)"
+        )
     )
 
 
@@ -208,7 +233,9 @@ def _get_max_leverage_for_coin(context: CLIContext, coin: str) -> int:
             if max_lev is None:
                 continue
             return int(max_lev)
-    raise RuntimeError(f"Could not resolve max leverage for {coin}")
+    raise RuntimeError(
+        _("Could not resolve max leverage for {coin}").format(coin=coin)
+    )
 
 
 def _is_invalid_leverage_response(resp: object) -> bool:
@@ -235,8 +262,10 @@ def _update_leverage_with_fallback(
     max_lev = _get_max_leverage_for_coin(context, coin)
     if emit_warning:
         print(
-            f"Warning: Invalid leverage value ({leverage}) for {coin}. "
-            f"Retrying with max leverage {max_lev}."
+            _(
+                "Warning: Invalid leverage value ({leverage}) for {coin}. "
+                "Retrying with max leverage {max_lev}."
+            ).format(leverage=leverage, coin=coin, max_lev=max_lev)
         )
     return wallet.update_leverage(max_lev, coin, is_cross=is_cross)
 
@@ -251,13 +280,13 @@ def _maybe_update_leverage(
     emit_warning: bool = True,
 ) -> ExchangeSuccessEnvelope | None:
     if cross and isolated:
-        raise RuntimeError("Use only one of --cross or --isolated")
+        raise RuntimeError(_("Use only one of --cross or --isolated"))
     if leverage is None:
         if cross or isolated:
-            raise RuntimeError("--cross/--isolated requires --leverage")
+            raise RuntimeError(_("--cross/--isolated requires --leverage"))
         return None
     if leverage <= 0:
-        raise RuntimeError("leverage must be a positive integer")
+        raise RuntimeError(_("leverage must be a positive integer"))
     is_cross = cross or not isolated
     return _update_leverage_with_fallback(
         context=context,
@@ -270,7 +299,7 @@ def _maybe_update_leverage(
 
 def _normalize_size_for_coin(context: CLIContext, coin: str, raw_size: float) -> float:
     if raw_size <= 0:
-        raise RuntimeError("size must be a positive number")
+        raise RuntimeError(_("size must be a positive number"))
     exchange = context.get_wallet_client(perp_dexs=_wallet_perp_dexs_for_coin(coin))
     asset = exchange.info.name_to_asset(coin)
     sz_decimals = int(exchange.info.asset_to_sz_decimals[asset])
@@ -279,7 +308,9 @@ def _normalize_size_for_coin(context: CLIContext, coin: str, raw_size: float) ->
     d = Decimal(str(raw_size)).quantize(q, rounding=ROUND_DOWN)
     if d <= 0:
         raise RuntimeError(
-            f"size too small for {coin}; minimum unit is 1e-{sz_decimals}"
+            _("size too small for {coin}; minimum unit is 1e-{decimals}").format(
+                coin=coin, decimals=sz_decimals
+            )
         )
     return float(d)
 
@@ -288,7 +319,7 @@ def _resolve_perp_coin(context: CLIContext, coin: str) -> str:
     info = context.get_public_client()
     target = coin.strip()
     if not target:
-        raise RuntimeError("coin must not be empty")
+        raise RuntimeError(_("coin must not be empty"))
 
     mids = info.all_mids()
     if target in mids:
@@ -332,14 +363,14 @@ def _resolve_perp_coin(context: CLIContext, coin: str) -> str:
         perp_candidates.sort(key=lambda x: (x[1], x[0]), reverse=True)
         return perp_candidates[0][0]
 
-    raise RuntimeError(f"Coin not found: {coin}")
+    raise RuntimeError(_("Coin not found: {coin}").format(coin=coin))
 
 
 def _resolve_spot_coin(context: CLIContext, coin: str) -> str:
     info = context.get_public_client()
     target = coin.strip()
     if not target:
-        raise RuntimeError("coin must not be empty")
+        raise RuntimeError(_("coin must not be empty"))
 
     mids = info.all_mids()
     if target in mids and ("/" in target or target.startswith("@")):
@@ -364,7 +395,7 @@ def _resolve_spot_coin(context: CLIContext, coin: str) -> str:
         None,
     )
     if token_index is None:
-        raise RuntimeError(f"Spot market not found: {coin}")
+        raise RuntimeError(_("Spot market not found: {coin}").format(coin=coin))
 
     preferred = next(
         (
@@ -420,10 +451,10 @@ def _validate_side_mode_args(
     if side_uses_spot(side):
         if leverage is not None or cross or isolated:
             raise RuntimeError(
-                "--leverage/--cross/--isolated are only supported with long/short"
+                _("--leverage/--cross/--isolated are only supported with long/short")
             )
         if reduce_only:
-            raise RuntimeError("--reduce-only is only supported with long/short")
+            raise RuntimeError(_("--reduce-only is only supported with long/short"))
 
 
 def _mids_for_coin(context: CLIContext, coin: str) -> AllMids:
@@ -436,10 +467,12 @@ def _mids_for_coin(context: CLIContext, coin: str) -> AllMids:
 
 def _stake_to_position_notional(stake: float, leverage: Optional[int]) -> float:
     if stake <= 0:
-        raise RuntimeError("stake must be a positive number")
+        raise RuntimeError(_("stake must be a positive number"))
     lev = 1 if leverage is None else leverage
     if lev <= 0:
-        raise RuntimeError("leverage must be a positive integer when used with --stake")
+        raise RuntimeError(
+            _("leverage must be a positive integer when used with --stake")
+        )
     return stake * float(lev)
 
 
@@ -503,7 +536,7 @@ def _resolve_position_for_close(
     info = context.get_public_client()
     target = coin.strip()
     if not target:
-        raise RuntimeError("coin must not be empty")
+        raise RuntimeError(_("coin must not be empty"))
 
     with_prefix = ":" in target
     up = target.upper()
@@ -528,12 +561,14 @@ def _resolve_position_for_close(
                 matches.append((pos_coin, szi))
 
     if not matches:
-        raise RuntimeError(f"No open position found for {coin}")
+        raise RuntimeError(_("No open position found for {coin}").format(coin=coin))
     if not with_prefix and len(matches) > 1:
         coins = ", ".join(sorted({m[0] for m in matches}))
         raise RuntimeError(
-            f"Multiple open positions matched '{coin}': {coins}. "
-            "Please specify the dex-prefixed symbol (e.g. xyz:TSLA)."
+            _(
+                "Multiple open positions matched '{coin}': {coins}. "
+                "Please specify the dex-prefixed symbol (e.g. xyz:TSLA)."
+            ).format(coin=coin, coins=coins)
         )
     resolved_coin, szi = matches[0]
     return resolved_coin, abs(szi), (szi < 0)
@@ -600,7 +635,14 @@ def _extract_twap_id(response: ExchangeSuccessEnvelope) -> Optional[int]:
 def _render_twap_orders(title: str, records: list[TwapRecord]) -> None:
     _render_table(
         title,
-        ["TWAP ID", "Coin", "Side", "Total Size", "Minutes", "Submitted"],
+        [
+            _("TWAP ID"),
+            _("Coin"),
+            _("Side"),
+            _("Total Size"),
+            _("Minutes"),
+            _("Submitted"),
+        ],
         [
             [
                 record.twap_id,
@@ -659,7 +701,7 @@ def order_ls(
             out(orders, True)
     else:
         if tracked_twaps:
-            _render_twap_orders("Tracked TWAP Orders", tracked_twaps)
+            _render_twap_orders(_("Tracked TWAP Orders"), tracked_twaps)
         out(orders, False)
     _done(ctx)
 
@@ -834,7 +876,7 @@ def order_market_close(
     ratio: float = 1.0,
 ) -> None:
     if ratio <= 0 or ratio > 1:
-        raise RuntimeError("ratio must be > 0 and <= 1")
+        raise RuntimeError(_("ratio must be > 0 and <= 1"))
     context = _ctx(ctx)
     resolved_coin, order_size, is_buy = _resolve_position_for_close(context, coin)
     client = context.get_wallet_client(
@@ -870,13 +912,13 @@ def order_tpsl(
     ratio: float = 1.0,
 ) -> None:
     if tp is None and sl is None:
-        raise RuntimeError("Specify at least one of --tp or --sl")
+        raise RuntimeError(_("Specify at least one of --tp or --sl"))
     if tp is not None and tp <= 0:
-        raise RuntimeError("tp must be a positive number")
+        raise RuntimeError(_("tp must be a positive number"))
     if sl is not None and sl <= 0:
-        raise RuntimeError("sl must be a positive number")
+        raise RuntimeError(_("sl must be a positive number"))
     if ratio <= 0 or ratio > 1:
-        raise RuntimeError("ratio must be > 0 and <= 1")
+        raise RuntimeError(_("ratio must be > 0 and <= 1"))
 
     context = _ctx(ctx)
     resolved_coin, position_size, is_buy_to_close = _resolve_position_for_close(
@@ -920,14 +962,18 @@ def order_tpsl(
     if _json(ctx):
         out({"tpsl": results}, True)
     else:
-        print("✅ TP/SL orders submitted")
-        print(f"\nAsset: {coin}")
-        print(f"Close side: {'BUY' if is_buy_to_close else 'SELL'}")
-        print(f"Protected size: {protected_size}")
+        print(_("✅ TP/SL orders submitted"))
+        print(_("\nAsset: {coin}").format(coin=coin))
+        print(
+            _("Close side: {side}").format(
+                side=_("BUY") if is_buy_to_close else _("SELL")
+            )
+        )
+        print(_("Protected size: {size}").format(size=protected_size))
         if tp is not None:
-            print(f"TP trigger: {tp}")
+            print(_("TP trigger: {tp}").format(tp=tp))
         if sl is not None:
-            print(f"SL trigger: {sl}")
+            print(_("SL trigger: {sl}").format(sl=sl))
     _done(ctx)
 
 
@@ -1014,18 +1060,20 @@ def order_twap(
         _print_leverage_update(lev_result, coin, leverage, cross or not isolated)
         status = response.get("response", {}).get("data", {}).get("status", {})
         if isinstance(status, dict) and "error" in status:
-            print("❌ TWAP order rejected")
-            print(f"\nReason: {status.get('error')}")
+            print(_("❌ TWAP order rejected"))
+            print(_("\nReason: {reason}").format(reason=status.get("error")))
         else:
-            print("✅ TWAP order submitted")
-            print(f"\nAsset: {coin}")
-            print(f"Side: {'BUY' if is_buy else 'SELL'}")
-            print(f"Total size: {total_size} {coin}")
-            print(f"Duration: {minutes} min")
-            print(f"Randomize: {'on' if randomize else 'off'}")
+            print(_("✅ TWAP order submitted"))
+            print(_("\nAsset: {coin}").format(coin=coin))
+            print(_("Side: {side}").format(side=_("BUY") if is_buy else _("SELL")))
+            print(
+                _("Total size: {size} {coin}").format(size=total_size, coin=coin)
+            )
+            print(_("Duration: {minutes} min").format(minutes=minutes))
+            print(_("Randomize: {state}").format(state=_("on") if randomize else _("off")))
             if twap_id is not None:
-                print(f"TWAP ID: {twap_id}")
-                print("Manage it with 'hl order ls' or 'hl order twap-cancel'.")
+                print(_("TWAP ID: {twap_id}").format(twap_id=twap_id))
+                print(_("Manage it with 'hl order ls' or 'hl order twap-cancel'."))
     _done(ctx)
 
 
@@ -1047,7 +1095,7 @@ def order_twap_cancel(
                 if coin in {record.coin, record.resolved_coin}
             ]
         if not records:
-            raise RuntimeError("No tracked active TWAP orders found")
+            raise RuntimeError(_("No tracked active TWAP orders found"))
         if twap_id is not None:
             twap_num = validate_positive_integer(twap_id, "twap_id")
             record = find_twap_order(
@@ -1057,14 +1105,16 @@ def order_twap_cancel(
                 coin=coin,
             )
             if record is None:
-                raise RuntimeError(f"Tracked TWAP {twap_num} not found")
+                raise RuntimeError(
+                    _("Tracked TWAP {twap_id} not found").format(twap_id=twap_num)
+                )
             resolved_coin = record.resolved_coin
         elif _json(ctx):
             latest = records[0]
             resolved_coin = latest.resolved_coin
             twap_num = latest.twap_id
         else:
-            _render_twap_orders("Tracked TWAP Orders", records)
+            _render_twap_orders(_("Tracked TWAP Orders"), records)
             selected = input("Select TWAP ID to cancel: ").strip()
             twap_num = validate_positive_integer(selected, "twap_id")
             record = find_twap_order(
@@ -1073,7 +1123,9 @@ def order_twap_cancel(
                 twap_id=twap_num,
             )
             if record is None:
-                raise RuntimeError(f"Tracked TWAP {twap_num} not found")
+                raise RuntimeError(
+                    _("Tracked TWAP {twap_id} not found").format(twap_id=twap_num)
+                )
             resolved_coin = record.resolved_coin
     response = _cancel_native_twap(
         context=context, coin=resolved_coin, twap_id=twap_num
@@ -1112,12 +1164,12 @@ def order_cancel(ctx: CommandContext, oid: Optional[str] = None) -> None:
                 {
                     "cancelled": False,
                     "reason": "no_open_orders",
-                    "message": "No open orders to cancel",
+                    "message": _("No open orders to cancel"),
                 },
                 True,
             )
         else:
-            out_success("No open orders to cancel")
+            out_success(_("No open orders to cancel"))
         _done(ctx)
         return
 
@@ -1139,7 +1191,7 @@ def order_cancel(ctx: CommandContext, oid: Optional[str] = None) -> None:
     order_id = validate_positive_integer(oid, "oid")
     target = next((o for o in orders if int(o["oid"]) == order_id), None)
     if not target:
-        raise RuntimeError(f"Order {order_id} not found")
+        raise RuntimeError(_("Order {order_id} not found").format(order_id=order_id))
 
     result = exchange.cancel(target["coin"], order_id)
     out(result, _json(ctx))
@@ -1164,22 +1216,22 @@ def order_cancel_all(
                 {
                     "cancelled": 0,
                     "reason": "no_open_orders",
-                    "message": "No open orders to cancel",
+                    "message": _("No open orders to cancel"),
                 },
                 True,
             )
         else:
-            out_success("No open orders to cancel")
+            out_success(_("No open orders to cancel"))
         _done(ctx)
         return
     if not yes and not _confirm(f"Cancel {len(orders)} orders?", False):
         if _json(ctx):
             out(
-                {"cancelled": 0, "reason": "user_cancelled", "message": "Cancelled"},
+                {"cancelled": 0, "reason": "user_cancelled", "message": _("Cancelled")},
                 True,
             )
         else:
-            out_success("Cancelled")
+            out_success(_("Cancelled"))
         _done(ctx)
         return
     result = exchange.bulk_cancel(
@@ -1213,13 +1265,17 @@ def order_set_leverage(
         out({"requestedLeverage": requested, "result": result}, True)
     else:
         if result.get("status") == "ok":
-            print("✅ Leverage updated")
-            print(f"\nAsset: {coin}")
-            print(f"Leverage: {requested}x")
-            print(f"Margin type: {'cross' if is_cross else 'isolated'}")
+            print(_("✅ Leverage updated"))
+            print(_("\nAsset: {coin}").format(coin=coin))
+            print(_("Leverage: {leverage}x").format(leverage=requested))
+            print(
+                _("Margin type: {margin}").format(
+                    margin=_("cross") if is_cross else _("isolated")
+                )
+            )
         else:
-            print("❌ Leverage update failed")
-            print(f"\nReason: {result.get('response')}")
+            print(_("❌ Leverage update failed"))
+            print(_("\nReason: {reason}").format(reason=result.get("response")))
     _done(ctx)
 
 
@@ -1229,6 +1285,6 @@ def order_configure(ctx: CommandContext, slippage: Optional[float] = None) -> No
         out(get_order_config(), _json(ctx))
     else:
         if slippage < 0:
-            raise RuntimeError("Slippage must be a non-negative number")
+            raise RuntimeError(_("Slippage must be a non-negative number"))
         out(update_order_config(slippage=slippage), _json(ctx))
     _done(ctx)

@@ -8,6 +8,7 @@ from hyperliquid.utils.types import L2BookData
 
 from ..cli.runtime import CommandContext, cli_command, console, run_blocking
 from ..core.context import _build_info_client
+from ..i18n import _
 from ..types import AllMids, AssetLeveragePayload, ClearinghouseState, PerpMeta
 from ..utils.output import out
 from ..utils.validators import validate_address
@@ -24,7 +25,7 @@ def asset_price(ctx: CommandContext, coin: str, watch: bool = False) -> None:
         resolved_coin = _resolve_tradable_coin(context, coin)
         mids = _mids_for_coin(context, resolved_coin)
         if resolved_coin not in mids:
-            raise RuntimeError(f"Coin not found: {coin}")
+            raise RuntimeError(_("Coin not found: {coin}").format(coin=coin))
         return {"coin": coin, "price": mids[resolved_coin]}
 
     if watch:
@@ -49,12 +50,14 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
         bids = book.get("levels", [[], []])[0][:10]
         asks = book.get("levels", [[], []])[1][:10]
         _render_table(
-            "Asks",
-            ["Price", "Size", "N"],
+            _("Asks"),
+            [_("Price"), _("Size"), _("N")],
             [[x["px"], x["sz"], x["n"]] for x in asks[::-1]],
         )
         _render_table(
-            "Bids", ["Price", "Size", "N"], [[x["px"], x["sz"], x["n"]] for x in bids]
+            _("Bids"),
+            [_("Price"), _("Size"), _("N")],
+            [[x["px"], x["sz"], x["n"]] for x in bids],
         )
 
     if watch:

@@ -1,0 +1,851 @@
+msgid ""
+msgstr ""
+"Language: ja\n"
+"Project-Id-Version: hl_cli\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Command tree:\n  account add|ls|set-default|remove|positions|orders|balances|portfolio\n  order ls|limit|market|tpsl|twap|twap-cancel|cancel|cancel-all|set-leverage|configure\n  asset price|book|leverage\n  markets ls\n  referral set|status\nExamples:\n  hl account add\n  hl order twap buy 1 BTC 30 --randomize\n  hl order twap-cancel BTC 12345\n  hl account positions --watch\n"
+msgstr "コマンド一覧:\n  account add|ls|set-default|remove|positions|orders|balances|portfolio\n  order ls|limit|market|tpsl|twap|twap-cancel|cancel|cancel-all|set-leverage|configure\n  asset price|book|leverage\n  markets ls\n  referral set|status\n例:\n  hl account add\n  hl order twap buy 1 BTC 30 --randomize\n  hl order twap-cancel BTC 12345\n  hl account positions --watch\n"
+
+msgid "Account management and information"
+msgstr "アカウントの管理と情報"
+
+msgid "Add account"
+msgstr "アカウントを追加"
+
+msgid "List accounts"
+msgstr "アカウント一覧"
+
+msgid "Set default account"
+msgstr "デフォルトアカウントを設定"
+
+msgid "Remove account"
+msgstr "アカウントを削除"
+
+msgid "Order management and trading"
+msgstr "注文の管理と取引"
+
+msgid "List open orders"
+msgstr "未約定注文一覧"
+
+msgid "Place limit order (buy/sell = spot, long/short = perp)"
+msgstr "指値注文を出す (buy/sell = 現物, long/short = 先物)"
+
+msgid "Place market order (buy/sell = spot, long/short/close = perp)"
+msgstr "成行注文を出す (buy/sell = 現物, long/short/close = 先物)"
+
+msgid "Place TWAP order (perp only: use long/short)"
+msgstr "TWAP注文を出す (先物のみ: long/short を使用)"
+
+msgid "Set TP/SL trigger orders for an open position"
+msgstr "建玉のTP/SLトリガー注文を設定"
+
+msgid "Cancel native TWAP order (interactive if omitted)"
+msgstr "ネイティブTWAP注文をキャンセル (省略時は対話形式)"
+
+msgid "Cancel order"
+msgstr "注文をキャンセル"
+
+msgid "Cancel all orders"
+msgstr "すべての注文をキャンセル"
+
+msgid "Set leverage"
+msgstr "レバレッジを設定"
+
+msgid "Configure order defaults"
+msgstr "注文のデフォルトを設定"
+
+msgid "Asset-specific information"
+msgstr "銘柄ごとの情報"
+
+msgid "Get price"
+msgstr "価格を取得"
+
+msgid "Get orderbook"
+msgstr "オーダーブックを取得"
+
+msgid "Get leverage info"
+msgstr "レバレッジ情報を取得"
+
+msgid "Market information"
+msgstr "マーケット情報"
+
+msgid "List markets"
+msgstr "マーケット一覧"
+
+msgid "Search markets by partial symbol/name"
+msgstr "部分一致でマーケットを検索"
+
+msgid "Referral management"
+msgstr "リファラルの管理"
+
+msgid "Set referral code"
+msgstr "リファラルコードを設定"
+
+msgid "Get referral status"
+msgstr "リファラル状態を取得"
+
+msgid "Print shell completion script"
+msgstr "シェル補完スクリプトを表示"
+
+msgid "Print bash completion script"
+msgstr "bash補完スクリプトを表示"
+
+msgid "Missing arguments. See: hl order limit -h"
+msgstr "引数が不足しています。参照: hl order limit -h"
+
+msgid "Missing price. Syntax: hl order limit <side> <size> <coin> <price>"
+msgstr "価格が不足しています。書式: hl order limit <side> <size> <coin> <price>"
+
+msgid "Missing arguments. See: hl order market -h"
+msgstr "引数が不足しています。参照: hl order market -h"
+
+msgid "Missing coin. Syntax: hl order market <side> <size> <coin>"
+msgstr "銘柄が不足しています。書式: hl order market <side> <size> <coin>"
+
+msgid "CLI for Hyperliquid DEX"
+msgstr "Hyperliquid DEX のCLI"
+
+msgid "Output in JSON format"
+msgstr "JSON形式で出力"
+
+msgid "Use testnet"
+msgstr "テストネットを使用"
+
+msgid "Display language (e.g. en, ja, zh, ko)"
+msgstr "表示言語 (例: en, ja, zh, ko)"
+
+msgid "Get positions"
+msgstr "ポジションを取得"
+
+msgid "Get orders"
+msgstr "注文を取得"
+
+msgid "Get balances"
+msgstr "残高を取得"
+
+msgid "Get portfolio"
+msgstr "ポートフォリオを取得"
+
+msgid "USD margin used to derive order size. With --leverage, size uses stake x leverage; without it, size uses stake only"
+msgstr "注文サイズの算出に使用するUSD証拠金。--leverage を指定した場合は stake × leverage、指定しない場合は stake のみでサイズを算出します"
+
+msgid "Optional leverage update before placing the order. If omitted, the CLI does not multiply stake by leverage for size calculation"
+msgstr "注文前に任意で更新するレバレッジ。省略した場合、サイズ算出時に stake にレバレッジを乗算しません"
+
+msgid "Use cross margin with --leverage"
+msgstr "--leverage とともにクロスマージンを使用"
+
+msgid "Use isolated margin with --leverage"
+msgstr "--leverage とともに分離マージンを使用"
+
+msgid "Perp only: reduce-only for long/short"
+msgstr "先物のみ: long/short に対する reduce-only"
+
+msgid "USD used to derive order size. For buy/sell this is spot size; for long/short this is perp margin."
+msgstr "注文サイズの算出に使用するUSD。buy/sell の場合は現物サイズ、long/short の場合は先物証拠金として扱われます。"
+
+msgid "Perp only: optional leverage update before placing long/short"
+msgstr "先物のみ: long/short 注文前に任意でレバレッジを更新"
+
+msgid "Perp only: use cross margin with --leverage"
+msgstr "先物のみ: --leverage とともにクロスマージンを使用"
+
+msgid "Perp only: use isolated margin with --leverage"
+msgstr "先物のみ: --leverage とともに分離マージンを使用"
+
+msgid "Perp close only: close ratio (0 < ratio <= 1)"
+msgstr "先物クローズのみ: クローズ比率 (0 < ratio <= 1)"
+
+msgid "USD margin used to derive total TWAP size. With --leverage, size uses stake x leverage; without it, size uses stake only"
+msgstr "TWAP全体のサイズ算出に使用するUSD証拠金。--leverage を指定した場合は stake × leverage、指定しない場合は stake のみでサイズを算出します"
+
+msgid "Take-profit trigger price"
+msgstr "利益確定(TP)トリガー価格"
+
+msgid "Stop-loss trigger price"
+msgstr "損切り(SL)トリガー価格"
+
+msgid "Position ratio to protect (0 < ratio <= 1)"
+msgstr "保護するポジション比率 (0 < ratio <= 1)"
+
+msgid "Filter perp markets by category (e.g. stocks, commodities, indices, fx, preipo, crypto)"
+msgstr "カテゴリで先物マーケットを絞り込む (例: stocks, commodities, indices, fx, preipo, crypto)"
+
+msgid "Sort markets by volume, oi, price, change, funding, or coin"
+msgstr "出来高、建玉、価格、変動率、資金調達率、銘柄でソート"
+
+msgid "Sort matches by volume, oi, price, change, funding, or coin"
+msgstr "検索結果を出来高、建玉、価格、変動率、資金調達率、銘柄でソート"
+
+msgid "When --stake is used, syntax is: hl order limit <side> <coin> <price> --stake <usd>"
+msgstr "--stake を使用する場合の書式: hl order limit <side> <coin> <price> --stake <usd>"
+
+msgid "price must be positive"
+msgstr "価格は正の数値でなければなりません"
+
+msgid "stake must be positive"
+msgstr "stakeは正の数値でなければなりません"
+
+msgid "When --stake is used, syntax is: hl order market <side> <coin> --stake <usd>"
+msgstr "--stake を使用する場合の書式: hl order market <side> <coin> --stake <usd>"
+
+msgid "Missing order subcommand. Run: hl order -h"
+msgstr "order のサブコマンドが不足しています。実行: hl order -h"
+
+msgid "Missing asset subcommand. Run: hl asset -h"
+msgstr "asset のサブコマンドが不足しています。実行: hl asset -h"
+
+msgid "Missing markets subcommand. Run: hl markets -h"
+msgstr "markets のサブコマンドが不足しています。実行: hl markets -h"
+
+msgid "Missing referral subcommand. Run: hl referral -h"
+msgstr "referral のサブコマンドが不足しています。実行: hl referral -h"
+
+msgid "Missing completion subcommand. Run: hl completion -h"
+msgstr "completion のサブコマンドが不足しています。実行: hl completion -h"
+
+msgid "Unknown command: {cmd}"
+msgstr "未知のコマンド: {cmd}"
+
+msgid "Unsupported shell: {shell}"
+msgstr "未対応のシェル: {shell}"
+
+msgid "Invalid price: {price}"
+msgstr "無効な価格: {price}"
+
+msgid "Unknown markets subcommand: {sc}"
+msgstr "未知のmarketsサブコマンド: {sc}"
+
+msgid "Unknown referral subcommand: {sc}"
+msgstr "未知のreferralサブコマンド: {sc}"
+
+msgid "Close syntax: hl order market close <coin>"
+msgstr "クローズの書式: hl order market close <coin>"
+
+msgid "--stake cannot be used with market close"
+msgstr "--stake は market close と併用できません"
+
+msgid "--leverage/--cross/--isolated cannot be used with market close"
+msgstr "--leverage/--cross/--isolated は market close と併用できません"
+
+msgid "--ratio is only supported with: hl order market close <coin>"
+msgstr "--ratio は hl order market close <coin> でのみ対応しています"
+
+msgid "Unknown asset subcommand: {sc}"
+msgstr "未知のassetサブコマンド: {sc}"
+
+msgid "Unknown account subcommand: {sc}"
+msgstr "未知のaccountサブコマンド: {sc}"
+
+msgid "Unknown order subcommand: {sc}"
+msgstr "未知のorderサブコマンド: {sc}"
+
+msgid "hjkl/arrows move  gg/G top/bottom  / ? search  n/N next/prev  h perp  l spot  a all  q quit"
+msgstr "hjkl/矢印で移動  gg/G 先頭/末尾  / ? 検索  n/N 次/前  h 先物  l 現物  a すべて  q 終了"
+
+msgid "Markets ({perp} perps, {spot} spot)"
+msgstr "マーケット ({perp} 先物, {spot} 現物)"
+
+msgid "Y/n"
+msgstr "Y/n"
+
+msgid "y/N"
+msgstr "y/N"
+
+msgid "\nExecution time: {elapsed:.2f}s"
+msgstr "\n実行時間: {elapsed:.2f}秒"
+
+msgid "\n[bold]Wallet Setup Guide[/bold]"
+msgstr "\n[bold]ウォレット設定ガイド[/bold]"
+
+msgid "1. To add an API wallet:"
+msgstr "1. APIウォレットを追加するには:"
+
+msgid "   - Generate an API wallet private key on Hyperliquid"
+msgstr "   - HyperliquidでAPIウォレットの秘密鍵を生成"
+
+msgid "   - Mainnet: https://app.hyperliquid.xyz/API"
+msgstr "   - メインネット: https://app.hyperliquid.xyz/API"
+
+msgid "   - Testnet: https://app.hyperliquid-testnet.xyz/API"
+msgstr "   - テストネット: https://app.hyperliquid-testnet.xyz/API"
+
+msgid "   - Run: [bold]hl account add[/bold] -> choose [bold]1[/bold]"
+msgstr "   - 実行: [bold]hl account add[/bold] -> [bold]1[/bold] を選択"
+
+msgid "2. To add a read-only wallet:"
+msgstr "2. 読み取り専用ウォレットを追加するには:"
+
+msgid "   - Run: [bold]hl account add[/bold] -> choose [bold]2[/bold]"
+msgstr "   - 実行: [bold]hl account add[/bold] -> [bold]2[/bold] を選択"
+
+msgid "   - Enter the wallet address to monitor (0x...)"
+msgstr "   - 監視するウォレットアドレスを入力 (0x...)"
+
+msgid "Verification commands:"
+msgstr "確認コマンド:"
+
+msgid " - [bold]hl account ls[/bold]"
+msgstr " - [bold]hl account ls[/bold]"
+
+msgid " - [bold]hl account set-default <alias>[/bold]\n"
+msgstr " - [bold]hl account set-default <alias>[/bold]\n"
+
+msgid "\n=== Add New Account ===\n"
+msgstr "\n=== 新規アカウント追加 ===\n"
+
+msgid "1) Use existing API wallet"
+msgstr "1) 既存のAPIウォレットを使用"
+
+msgid "2) Add read-only account"
+msgstr "2) 読み取り専用アカウントを追加"
+
+msgid "Cancelled."
+msgstr "キャンセルしました。"
+
+msgid "Failed to remove account"
+msgstr "アカウントの削除に失敗しました"
+
+msgid "Select setup method [1/2]: "
+msgstr "設定方法を選択 [1/2]: "
+
+msgid "This key is not registered as an API wallet (agent) on Hyperliquid"
+msgstr "この鍵はHyperliquidのAPIウォレット(agent)として登録されていません"
+
+msgid "Set as default account?"
+msgstr "デフォルトアカウントに設定しますか?"
+
+msgid "Invalid selection"
+msgstr "無効な選択です"
+
+msgid "No accounts found. Run 'hl account add'."
+msgstr "アカウントが見つかりません。実行: 'hl account add'。"
+
+msgid "Accounts"
+msgstr "アカウント"
+
+msgid "\nVisit {url} and generate an API wallet key.\n"
+msgstr "\n{url} を開き、APIウォレットキーを生成してください。\n"
+
+msgid "Alias cannot be empty."
+msgstr "エイリアスは空にできません。"
+
+msgid "*"
+msgstr "*"
+
+msgid "Alias"
+msgstr "エイリアス"
+
+msgid "Address"
+msgstr "アドレス"
+
+msgid "Type"
+msgstr "種類"
+
+msgid "API Wallet"
+msgstr "APIウォレット"
+
+msgid "Account with alias \"{alias}\" not found"
+msgstr "エイリアス \"{alias}\" のアカウントが見つかりません"
+
+msgid "Positions"
+msgstr "ポジション"
+
+msgid "Open Orders"
+msgstr "未約定注文"
+
+msgid "Enter API wallet private key: "
+msgstr "APIウォレットの秘密鍵を入力: "
+
+msgid "Alias: "
+msgstr "エイリアス: "
+
+msgid "Coin"
+msgstr "銘柄"
+
+msgid "Size"
+msgstr "数量"
+
+msgid "Entry"
+msgstr "平均約定価格"
+
+msgid "Value"
+msgstr "評価額"
+
+msgid "PnL"
+msgstr "損益"
+
+msgid "Leverage"
+msgstr "レバレッジ"
+
+msgid "Liq"
+msgstr "清算価格"
+
+msgid "OID"
+msgstr "注文ID"
+
+msgid "Side"
+msgstr "売買区分"
+
+msgid "Price"
+msgstr "価格"
+
+msgid "Time"
+msgstr "時刻"
+
+msgid "Token"
+msgstr "トークン"
+
+msgid "Total"
+msgstr "合計"
+
+msgid "Hold"
+msgstr "拘束中"
+
+msgid "Available"
+msgstr "利用可能"
+
+msgid "Spot Balances"
+msgstr "現物残高"
+
+msgid "Alias \"{alias}\" is already taken."
+msgstr "エイリアス \"{alias}\" は既に使用されています。"
+
+msgid "Wallet address to watch: "
+msgstr "監視するウォレットアドレス: "
+
+msgid "Balances (Perp USD: {perp})"
+msgstr "残高 (先物USD: {perp})"
+
+msgid "Portfolio AccountValue={value} MarginUsed={used}"
+msgstr "ポートフォリオ アカウント価値={value} 使用証拠金={used}"
+
+msgid "Asks"
+msgstr "売り注文"
+
+msgid "Bids"
+msgstr "買い注文"
+
+msgid "N"
+msgstr "件数"
+
+msgid "Coin not found: {coin}"
+msgstr "銘柄が見つかりません: {coin}"
+
+msgid "query must not be empty"
+msgstr "検索語を空にすることはできません"
+
+msgid "invalid sort field: {field} (expected one of: {allowed})"
+msgstr "無効なソート項目: {field} (次のいずれかが必要: {allowed})"
+
+msgid "ℹ️  Request completed."
+msgstr "ℹ️  リクエスト完了。"
+
+msgid "interval must be '<minutes>' or '<slice_minutes>,<orders>' (e.g. 30 or 5,10)"
+msgstr "間隔は '<分数>' または '<分割分数>,<注文数>' で指定してください (例: 30 または 5,10)"
+
+msgid "❌ Order rejected"
+msgstr "❌ 注文が拒否されました"
+
+msgid "Use only one of --cross or --isolated"
+msgstr "--cross と --isolated はどちらか一方のみ使用してください"
+
+msgid "leverage must be a positive integer"
+msgstr "レバレッジは正の整数でなければなりません"
+
+msgid "size must be a positive number"
+msgstr "数量は正の数値でなければなりません"
+
+msgid "coin must not be empty"
+msgstr "銘柄を空にすることはできません"
+
+msgid "stake must be a positive number"
+msgstr "stakeは正の数値でなければなりません"
+
+msgid "leverage must be a positive integer when used with --stake"
+msgstr "--stake と併用する場合、レバレッジは正の整数でなければなりません"
+
+msgid "TWAP ID"
+msgstr "TWAP ID"
+
+msgid "Total Size"
+msgstr "合計数量"
+
+msgid "Minutes"
+msgstr "分数"
+
+msgid "Submitted"
+msgstr "送信済み"
+
+msgid "ratio must be > 0 and <= 1"
+msgstr "ratioは 0 < ratio <= 1 でなければなりません"
+
+msgid "Specify at least one of --tp or --sl"
+msgstr "--tp または --sl の少なくとも一方を指定してください"
+
+msgid "tp must be a positive number"
+msgstr "tpは正の数値でなければなりません"
+
+msgid "sl must be a positive number"
+msgstr "slは正の数値でなければなりません"
+
+msgid "✅ TP/SL orders submitted"
+msgstr "✅ TP/SL注文を送信しました"
+
+msgid "minutes must be a positive integer"
+msgstr "分数は正の整数でなければなりません"
+
+msgid "minutes and orders must be positive integers"
+msgstr "分数と注文数は正の整数でなければなりません"
+
+msgid "Could not resolve max leverage for {coin}"
+msgstr "{coin} の最大レバレッジを解決できませんでした"
+
+msgid "--cross/--isolated requires --leverage"
+msgstr "--cross/--isolated には --leverage が必要です"
+
+msgid "--leverage/--cross/--isolated are only supported with long/short"
+msgstr "--leverage/--cross/--isolated は long/short でのみ対応しています"
+
+msgid "--reduce-only is only supported with long/short"
+msgstr "--reduce-only は long/short でのみ対応しています"
+
+msgid "Tracked TWAP Orders"
+msgstr "追跡中のTWAP注文"
+
+msgid "❌ TWAP order rejected"
+msgstr "❌ TWAP注文が拒否されました"
+
+msgid "✅ TWAP order submitted"
+msgstr "✅ TWAP注文を送信しました"
+
+msgid "No tracked active TWAP orders found"
+msgstr "追跡中の有効なTWAP注文が見つかりません"
+
+msgid "No open orders to cancel"
+msgstr "キャンセルする未約定注文はありません"
+
+msgid "Cancelled"
+msgstr "キャンセルしました"
+
+msgid "✅ Leverage updated"
+msgstr "✅ レバレッジを更新しました"
+
+msgid "❌ Leverage update failed"
+msgstr "❌ レバレッジの更新に失敗しました"
+
+msgid "Slippage must be a non-negative number"
+msgstr "スリッページは0以上の数値でなければなりません"
+
+msgid "⚠️  Leverage update failed: {response}"
+msgstr "⚠️  レバレッジの更新に失敗: {response}"
+
+msgid "\nReason: {reason}"
+msgstr "\n理由: {reason}"
+
+msgid "\nTip: Increase --stake or --leverage so position value is at least $10."
+msgstr "\nヒント: ポジション価値が最低$10になるよう --stake または --leverage を増やしてください。"
+
+msgid "{order_kind} order executed"
+msgstr "{order_kind}注文を約定しました"
+
+msgid "\nAsset: {coin}"
+msgstr "\n銘柄: {coin}"
+
+msgid "Side: {side}"
+msgstr "売買区分: {side}"
+
+msgid "Filled size: {size} {coin}"
+msgstr "約定数量: {size} {coin}"
+
+msgid "Average price: {price}"
+msgstr "平均価格: {price}"
+
+msgid "Order ID: {oid}"
+msgstr "注文ID: {oid}"
+
+msgid "{order_kind} order placed"
+msgstr "{order_kind}注文を配置しました"
+
+msgid "Warning: Invalid leverage value ({leverage}) for {coin}. Retrying with max leverage {max_lev}."
+msgstr "警告: {coin} のレバレッジ値 ({leverage}) が無効です。最大レバレッジ {max_lev} で再試行します。"
+
+msgid "size too small for {coin}; minimum unit is 1e-{decimals}"
+msgstr "{coin} の数量が小さすぎます。最小単位は 1e-{decimals} です"
+
+msgid "Spot market not found: {coin}"
+msgstr "現物マーケットが見つかりません: {coin}"
+
+msgid "No open position found for {coin}"
+msgstr "{coin} の建玉が見つかりません"
+
+msgid "Multiple open positions matched '{coin}': {coins}. Please specify the dex-prefixed symbol (e.g. xyz:TSLA)."
+msgstr "'{coin}' に複数の建玉が一致しました: {coins}。dex付き銘柄 (例: xyz:TSLA) を指定してください。"
+
+msgid "Close side: {side}"
+msgstr "クローズ区分: {side}"
+
+msgid "Protected size: {size}"
+msgstr "保護する数量: {size}"
+
+msgid "Manage it with 'hl order ls' or 'hl order twap-cancel'."
+msgstr "'hl order ls' または 'hl order twap-cancel' で管理できます。"
+
+msgid "Order {order_id} not found"
+msgstr "注文 {order_id} が見つかりません"
+
+msgid "⚙️  Leverage set: {coin} {leverage}x ({margin})"
+msgstr "⚙️  レバレッジ設定: {coin} {leverage}x ({margin})"
+
+msgid "Your stake (margin): {stake}"
+msgstr "あなたのstake (証拠金): {stake}"
+
+msgid "BUY"
+msgstr "買い"
+
+msgid "SELL"
+msgstr "売り"
+
+msgid "TP trigger: {tp}"
+msgstr "TPトリガー: {tp}"
+
+msgid "SL trigger: {sl}"
+msgstr "SLトリガー: {sl}"
+
+msgid "Total size: {size} {coin}"
+msgstr "合計数量: {size} {coin}"
+
+msgid "Duration: {minutes} min"
+msgstr "期間: {minutes} 分"
+
+msgid "Randomize: {state}"
+msgstr "ランダマイズ: {state}"
+
+msgid "Leverage: {leverage}x"
+msgstr "レバレッジ: {leverage}x"
+
+msgid "Margin type: {margin}"
+msgstr "マージンタイプ: {margin}"
+
+msgid "cross"
+msgstr "クロス"
+
+msgid "isolated"
+msgstr "分離"
+
+msgid "on"
+msgstr "オン"
+
+msgid "off"
+msgstr "オフ"
+
+msgid "TWAP ID: {twap_id}"
+msgstr "TWAP ID: {twap_id}"
+
+msgid "Tracked TWAP {twap_id} not found"
+msgstr "追跡中のTWAP {twap_id} が見つかりません"
+
+msgid "No account configured. Run 'hl account add'."
+msgstr "アカウントが設定されていません。実行: 'hl account add'。"
+
+msgid "Account \"{alias}\" is read-only and cannot trade. Use 'hl account add' to add an API wallet."
+msgstr "アカウント \"{alias}\" は読み取り専用のため取引できません。'hl account add' でAPIウォレットを追加してください。"
+
+msgid "Pair"
+msgstr "ペア"
+
+msgid "24h%"
+msgstr "24h%"
+
+msgid "Vol"
+msgstr "出来高"
+
+msgid "Category"
+msgstr "カテゴリ"
+
+msgid "Funding"
+msgstr "資金調達率"
+
+msgid "OI"
+msgstr "建玉"
+
+msgid "Balances"
+msgstr "残高"
+
+msgid "[green]✅ Account saved[/green]"
+msgstr "[green]✅ アカウントを保存しました[/green]"
+
+msgid "Portfolio"
+msgstr "ポートフォリオ"
+
+msgid "Asset Leverage"
+msgstr "銘柄レバレッジ"
+
+msgid "Margin"
+msgstr "証拠金"
+
+msgid "[green]✅ TWAP cancel submitted[/green]"
+msgstr "[green]✅ TWAPキャンセルを送信しました[/green]"
+
+msgid "Market Price"
+msgstr "市場価格"
+
+msgid "Order Defaults"
+msgstr "注文のデフォルト"
+
+msgid "[red]❌ Request failed[/red]"
+msgstr "[red]❌ リクエスト失敗[/red]"
+
+msgid "No open positions"
+msgstr "建玉はありません"
+
+msgid "Margin Summary"
+msgstr "証拠金サマリー"
+
+msgid "No spot balances"
+msgstr "現物残高はありません"
+
+msgid "Order request accepted"
+msgstr "注文リクエストを受け付けました"
+
+msgid "No open orders"
+msgstr "未約定注文はありません"
+
+msgid "Position"
+msgstr "ポジション"
+
+msgid "Position: none"
+msgstr "ポジション: なし"
+
+msgid "[red]❌ TWAP cancel rejected[/red]"
+msgstr "[red]❌ TWAPキャンセルが拒否されました[/red]"
+
+msgid "- Perp balance: {value}"
+msgstr "- 先物残高: {value}"
+
+msgid "[red]❌ Order rejected[/red]"
+msgstr "[red]❌ 注文が拒否されました[/red]"
+
+msgid "[green]✅ Order filled[/green]"
+msgstr "[green]✅ 注文約定[/green]"
+
+msgid "[cyan]🕒 Order resting on book[/cyan]"
+msgstr "[cyan]🕒 注文が板に載りました[/cyan]"
+
+msgid "Alias: {alias}"
+msgstr "エイリアス: {alias}"
+
+msgid "Address: {address}"
+msgstr "アドレス: {address}"
+
+msgid "Type: {type}"
+msgstr "種類: {type}"
+
+msgid "- Account value: {value}"
+msgstr "- アカウント価値: {value}"
+
+msgid "- Margin used: {value}"
+msgstr "- 使用証拠金: {value}"
+
+msgid "Markets: {perp} perp / {spot} spot"
+msgstr "マーケット: 先物 {perp} / 現物 {spot}"
+
+msgid "Perp Markets"
+msgstr "先物マーケット"
+
+msgid "Spot Markets"
+msgstr "現物マーケット"
+
+msgid "- Asset: {coin}"
+msgstr "- 銘柄: {coin}"
+
+msgid "- Mark price: {price}"
+msgstr "- マーク価格: {price}"
+
+msgid "- Max leverage: {leverage}x"
+msgstr "- 最大レバレッジ: {leverage}x"
+
+msgid "- Available margin: {value}"
+msgstr "- 利用可能証拠金: {value}"
+
+msgid "Asset: {coin}"
+msgstr "銘柄: {coin}"
+
+msgid "[red]Error:[/red] {message}"
+msgstr "[red]エラー:[/red] {message}"
+
+msgid "[green]{message}[/green]"
+msgstr "[green]{message}[/green]"
+
+msgid "- Price: {price}"
+msgstr "- 価格: {price}"
+
+msgid "- Slippage: {slippage}"
+msgstr "- スリッページ: {slippage}"
+
+msgid "Reason: {reason}"
+msgstr "理由: {reason}"
+
+msgid "- Total margin used: {value}"
+msgstr "- 使用証拠金合計: {value}"
+
+msgid "{rtype}: ok"
+msgstr "{rtype}: 成功"
+
+msgid "API wallet: {wallet}"
+msgstr "APIウォレット: {wallet}"
+
+msgid "- Size: {size}"
+msgstr "- 数量: {size}"
+
+msgid "- Entry: {price}"
+msgstr "- 平均約定価格: {price}"
+
+msgid "- Value: {value}"
+msgstr "- 評価額: {value}"
+
+msgid "- Unrealized PnL: {value}"
+msgstr "- 未実現損益: {value}"
+
+msgid "No-op"
+msgstr "操作なし"
+
+msgid "Filled size: {size}"
+msgstr "約定数量: {size}"
+
+msgid "- Average price: {price}"
+msgstr "- 平均価格: {price}"
+
+msgid "Asks ({coin})"
+msgstr "売り注文 ({coin})"
+
+msgid "Bids ({coin})"
+msgstr "買い注文 ({coin})"
+
+msgid "[red]Error:[/red] {error}"
+msgstr "[red]エラー:[/red] {error}"
+
+msgid "{rtype}: {status}"
+msgstr "{rtype}: {status}"
+
+msgid "Side must be \"buy\", \"sell\", \"long\", or \"short\""
+msgstr "売買区分は \"buy\", \"sell\", \"long\", \"short\" のいずれかである必要があります"
+
+msgid "Invalid private key format"
+msgstr "無効な秘密鍵フォーマットです"
+
+msgid "Time-in-force must be \"Gtc\", \"Ioc\", or \"Alo\""
+msgstr "執行条件は \"Gtc\", \"Ioc\", \"Alo\" のいずれかである必要があります"
+
+msgid "Invalid address: {value}"
+msgstr "無効なアドレス: {value}"
+
+msgid "{name} must be a positive number"
+msgstr "{name}は正の数値でなければなりません"
+
+msgid "{name} must be a positive integer"
+msgstr "{name}は正の整数でなければなりません"

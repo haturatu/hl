@@ -2,17 +2,18 @@ from typing import Callable
 
 from rich.table import Table
 
+from ..i18n import _
 from ..types import DisplayValue, MarketRow
 
 
 def market_table_columns(
     *, include_category: bool, show_perp_only_fields: bool
 ) -> list[str]:
-    columns = ["Coin", "Pair", "Price", "24h%", "Vol"]
+    columns = [_("Coin"), _("Pair"), _("Price"), _("24h%"), _("Vol")]
     if include_category:
-        columns.insert(1, "Category")
+        columns.insert(1, _("Category"))
     if show_perp_only_fields:
-        columns.extend(["Funding", "OI"])
+        columns.extend([_("Funding"), _("OI")])
     return columns
 
 

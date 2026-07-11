@@ -5,6 +5,7 @@ from hyperliquid.utils.types import L2BookData
 from rich.console import Console
 from rich.table import Table
 
+from ..i18n import _
 from ..types import (
     AccountRecord,
     AssetLeveragePayload,
@@ -82,9 +83,9 @@ def _render_known(data: JsonValue) -> bool:
         return True
 
     if "coin" in data and "price" in data and len(data.keys()) <= 3:
-        console.print("Market Price")
-        console.print(f"- Asset: {data.get('coin')}")
-        console.print(f"- Price: {_fmt_price(data.get('price'))}")
+        console.print(_("Market Price"))
+        console.print(_("- Asset: {coin}").format(coin=data.get("coin")))
+        console.print(_("- Price: {price}").format(price=_fmt_price(data.get("price"))))
         return True
 
     if (
@@ -101,8 +102,10 @@ def _render_known(data: JsonValue) -> bool:
         return True
 
     if "slippage" in data and len(data.keys()) == 1:
-        console.print("Order Defaults")
-        console.print(f"- Slippage: {_fmt_pct(data.get('slippage'))}")
+        console.print(_("Order Defaults"))
+        console.print(
+            _("- Slippage: {slippage}").format(slippage=_fmt_pct(data.get("slippage")))
+        )
         return True
 
     if "twapCancel" in data and isinstance(data["twapCancel"], dict):
@@ -118,8 +121,8 @@ def _render_known(data: JsonValue) -> bool:
 
     if data.get("status") == "err":
         err = cast(ExchangeErrorEnvelope, data)
-        console.print("[red]❌ Request failed[/red]")
-        console.print(f"Reason: {err.get('response')}")
+        console.print(_("[red]❌ Request failed[/red]"))
+        console.print(_("Reason: {reason}").format(reason=err.get("response")))
         return True
 
     if _print_flat_dict(data):
@@ -131,7 +134,7 @@ def _render_known(data: JsonValue) -> bool:
 def _print_positions_payload(data: PositionsPayload) -> None:
     positions = data.get("positions", [])
     if positions:
-        tbl = Table(title="Positions")
+        tbl = Table(title=_("Positions"))
         for c in [
             "coin",
             "size",
@@ -154,24 +157,32 @@ def _print_positions_payload(data: PositionsPayload) -> None:
             )
         console.print(tbl)
     else:
-        console.print("No open positions")
+        console.print(_("No open positions"))
 
     ms = data.get("marginSummary")
     if isinstance(ms, dict):
-        console.print("Margin Summary")
-        console.print(f"- Account value: {_fmt_usd(ms.get('accountValue'))}")
-        console.print(f"- Total margin used: {_fmt_usd(ms.get('totalMarginUsed'))}")
+        console.print(_("Margin Summary"))
+        console.print(
+            _("- Account value: {value}").format(value=_fmt_usd(ms.get("accountValue")))
+        )
+        console.print(
+            _("- Total margin used: {value}").format(
+                value=_fmt_usd(ms.get("totalMarginUsed"))
+            )
+        )
 
 
 def _print_balances_payload(data: BalancesPayload) -> None:
-    console.print("Balances")
-    console.print(f"- Perp balance: {_fmt_usd(data.get('perpBalance'))}")
+    console.print(_("Balances"))
+    console.print(
+        _("- Perp balance: {value}").format(value=_fmt_usd(data.get("perpBalance")))
+    )
     balances = data.get("spotBalances", [])
     if not balances:
-        console.print("No spot balances")
+        console.print(_("No spot balances"))
         return
 
-    tbl = Table(title="Spot Balances")
+    tbl = Table(title=_("Spot Balances"))
     cols = ["token", "total", "hold", "available"]
     for c in cols:
         tbl.add_column(c)
@@ -189,20 +200,22 @@ def _iter_statuses(statuses: Iterable[ExchangeOrderStatus]) -> None:
             console.print(str(s))
             continue
         if "error" in s:
-            console.print("[red]❌ Order rejected[/red]")
-            console.print(f"Reason: {s['error']}")
+            console.print(_("[red]❌ Order rejected[/red]"))
+            console.print(_("Reason: {reason}").format(reason=s["error"]))
             continue
         if "filled" in s and isinstance(s["filled"], dict):
             f = s["filled"]
-            console.print("[green]✅ Order filled[/green]")
-            console.print(f"Filled size: {f.get('totalSz')}")
-            console.print(f"Average price: {_fmt_usd(f.get('avgPx'))}")
-            console.print(f"Order ID: {f.get('oid')}")
+            console.print(_("[green]✅ Order filled[/green]"))
+            console.print(_("Filled size: {size}").format(size=f.get("totalSz")))
+            console.print(
+                _("- Average price: {price}").format(price=_fmt_usd(f.get("avgPx")))
+            )
+            console.print(_("Order ID: {oid}").format(oid=f.get("oid")))
             continue
         if "resting" in s and isinstance(s["resting"], dict):
             r = s["resting"]
-            console.print("[cyan]🕒 Order resting on book[/cyan]")
-            console.print(f"Order ID: {r.get('oid')}")
+            console.print(_("[cyan]🕒 Order resting on book[/cyan]"))
+            console.print(_("Order ID: {oid}").format(oid=r.get("oid")))
             continue
         console.print(json.dumps(s, ensure_ascii=False))
 
@@ -218,7 +231,7 @@ def _print_exchange_response(resp: ExchangeResponse) -> None:
         if statuses:
             _iter_statuses(statuses)
             return
-        console.print("Order request accepted")
+        console.print(_("Order request accepted"))
         return
 
     if rtype in {"cancel", "batchModify", "twapOrder", "twapCancel", "default"}:
@@ -229,11 +242,11 @@ def _print_exchange_response(resp: ExchangeResponse) -> None:
             s = data.get("status")
             if isinstance(s, dict) and "error" in s:
                 err = cast(ExchangeStatusWithError, s)
-                console.print(f"[red]Error:[/red] {err['error']}")
+                console.print(_("[red]Error:[/red] {error}").format(error=err["error"]))
             else:
-                console.print(f"{rtype}: {s}")
+                console.print(_("{rtype}: {status}").format(rtype=rtype, status=s))
             return
-        console.print(f"{rtype}: ok")
+        console.print(_("{rtype}: ok").format(rtype=rtype))
         return
 
     console.print_json(
@@ -253,9 +266,9 @@ def _print_open_orders_list(data: list[JsonValue]) -> bool:
     if len(rows) != len(data):
         return False
     if not rows:
-        console.print("No open orders")
-        return True
-    tbl = Table(title="Open Orders")
+        console.print(_("No open orders"))
+        return
+    tbl = Table(title=_("Open Orders"))
     for c in ["oid", "coin", "side", "sz", "limitPx", "timestamp"]:
         tbl.add_column(c)
     for r in rows:
@@ -282,7 +295,7 @@ def _print_accounts_list(data: list[JsonValue]) -> bool:
     ]
     if len(rows) != len(data):
         return False
-    tbl = Table(title="Accounts")
+    tbl = Table(title=_("Accounts"))
     for c in [
         "alias",
         "user_address",
@@ -309,19 +322,27 @@ def _print_account_record(data: JsonObject) -> bool:
     if not {"alias", "user_address", "type"}.issubset(data.keys()):
         return False
     account = cast(AccountRecord, data)
-    console.print("[green]✅ Account saved[/green]")
-    console.print(f"Alias: {account.get('alias')}")
-    console.print(f"Address: {account.get('user_address')}")
-    console.print(f"Type: {account.get('type')}")
+    console.print(_("[green]✅ Account saved[/green]"))
+    console.print(_("Alias: {alias}").format(alias=account.get("alias")))
+    console.print(_("Address: {address}").format(address=account.get("user_address")))
+    console.print(_("Type: {type}").format(type=account.get("type")))
     if account.get("api_wallet_public_key"):
-        console.print(f"API wallet: {account.get('api_wallet_public_key')}")
+        console.print(
+            _("API wallet: {wallet}").format(
+                wallet=account.get("api_wallet_public_key")
+            )
+        )
     return True
 
 
 def _print_portfolio_payload(data: PortfolioPayload) -> None:
-    console.print("Portfolio")
-    console.print(f"- Account value: {_fmt_usd(data.get('accountValue'))}")
-    console.print(f"- Margin used: {_fmt_usd(data.get('totalMarginUsed'))}")
+    console.print(_("Portfolio"))
+    console.print(
+        _("- Account value: {value}").format(value=_fmt_usd(data.get("accountValue")))
+    )
+    console.print(
+        _("- Margin used: {value}").format(value=_fmt_usd(data.get("totalMarginUsed")))
+    )
     _print_positions_payload({"positions": data.get("positions", [])})
     _print_balances_payload(
         {
@@ -336,7 +357,9 @@ def _print_markets_payload(data: MarketsPayload) -> None:
     spot = data.get("spotMarkets", [])
     show_perp_category = any("category" in r for r in perp)
     show_spot_category = any("category" in r for r in spot)
-    console.print(f"Markets: {len(perp)} perp / {len(spot)} spot")
+    console.print(
+        _("Markets: {perp} perp / {spot} spot").format(perp=len(perp), spot=len(spot))
+    )
     if perp:
         columns = market_table_columns(
             include_category=show_perp_category,
@@ -354,7 +377,7 @@ def _print_markets_payload(data: MarketsPayload) -> None:
             for r in perp
         ]
         tbl = build_market_table(
-            title="Perp Markets",
+            title=_("Perp Markets"),
             columns=columns,
             rendered_rows=rendered_rows,
             widths=market_table_widths(columns, rendered_rows),
@@ -377,7 +400,7 @@ def _print_markets_payload(data: MarketsPayload) -> None:
             for r in spot
         ]
         tbl = build_market_table(
-            title="Spot Markets",
+            title=_("Spot Markets"),
             columns=columns,
             rendered_rows=rendered_rows,
             widths=market_table_widths(columns, rendered_rows),
@@ -386,24 +409,40 @@ def _print_markets_payload(data: MarketsPayload) -> None:
 
 
 def _print_asset_leverage_payload(data: AssetLeveragePayload) -> None:
-    console.print("Asset Leverage")
-    console.print(f"- Asset: {data.get('coin')}")
-    console.print(f"- Mark price: {_fmt_usd(data.get('markPx'))}")
-    console.print(f"- Max leverage: {data.get('maxLeverage')}x")
+    console.print(_("Asset Leverage"))
+    console.print(_("- Asset: {coin}").format(coin=data.get("coin")))
+    console.print(
+        _("- Mark price: {price}").format(price=_fmt_usd(data.get("markPx")))
+    )
+    console.print(
+        _("- Max leverage: {leverage}x").format(leverage=data.get("maxLeverage"))
+    )
     margin = data.get("margin") or {}
-    console.print("Margin")
-    console.print(f"- Account value: {_fmt_usd(margin.get('accountValue'))}")
-    console.print(f"- Margin used: {_fmt_usd(margin.get('totalMarginUsed'))}")
-    console.print(f"- Available margin: {_fmt_usd(margin.get('availableMargin'))}")
+    console.print(_("Margin"))
+    console.print(
+        _("- Account value: {value}").format(value=_fmt_usd(margin.get("accountValue")))
+    )
+    console.print(
+        _("- Margin used: {value}").format(value=_fmt_usd(margin.get("totalMarginUsed")))
+    )
+    console.print(
+        _("- Available margin: {value}").format(
+            value=_fmt_usd(margin.get("availableMargin"))
+        )
+    )
     pos = data.get("position")
     if isinstance(pos, dict):
-        console.print("Position")
-        console.print(f"- Size: {pos.get('szi')}")
-        console.print(f"- Entry: {_fmt_usd(pos.get('entryPx'))}")
-        console.print(f"- Value: {_fmt_usd(pos.get('positionValue'))}")
-        console.print(f"- Unrealized PnL: {_fmt_usd(pos.get('unrealizedPnl'))}")
+        console.print(_("Position"))
+        console.print(_("- Size: {size}").format(size=pos.get("szi")))
+        console.print(_("- Entry: {price}").format(price=_fmt_usd(pos.get("entryPx"))))
+        console.print(_("- Value: {value}").format(value=_fmt_usd(pos.get("positionValue"))))
+        console.print(
+            _("- Unrealized PnL: {value}").format(
+                value=_fmt_usd(pos.get("unrealizedPnl"))
+            )
+        )
     else:
-        console.print("Position: none")
+        console.print(_("Position: none"))
 
 
 def _print_book_payload(data: L2BookData) -> None:
@@ -411,7 +450,7 @@ def _print_book_payload(data: L2BookData) -> None:
     bids = levels[0][:10] if len(levels) > 0 else []
     asks = levels[1][:10] if len(levels) > 1 else []
     if asks:
-        tbl = Table(title=f"Asks ({data.get('coin', '-')})")
+        tbl = Table(title=_("Asks ({coin})").format(coin=data.get("coin", "-")))
         for c in ["px", "sz", "n"]:
             tbl.add_column(c)
         for x in asks[::-1]:
@@ -420,7 +459,7 @@ def _print_book_payload(data: L2BookData) -> None:
             )
         console.print(tbl)
     if bids:
-        tbl = Table(title=f"Bids ({data.get('coin', '-')})")
+        tbl = Table(title=_("Bids ({coin})").format(coin=data.get("coin", "-")))
         for c in ["px", "sz", "n"]:
             tbl.add_column(c)
         for x in bids:
@@ -436,20 +475,20 @@ def _print_twap_cancel_payload(data: TwapCancelPayload) -> None:
     response: ExchangeSuccessEnvelope = data["response"]
     status = response.get("response", {}).get("data", {}).get("status", {})
     if isinstance(status, dict) and status.get("error"):
-        console.print("[red]❌ TWAP cancel rejected[/red]")
-        console.print(f"Asset: {coin}")
-        console.print(f"TWAP ID: {twap_id}")
-        console.print(f"Reason: {status.get('error')}")
+        console.print(_("[red]❌ TWAP cancel rejected[/red]"))
+        console.print(_("Asset: {coin}").format(coin=coin))
+        console.print(_("TWAP ID: {twap_id}").format(twap_id=twap_id))
+        console.print(_("Reason: {reason}").format(reason=status.get("error")))
         return
-    console.print("[green]✅ TWAP cancel submitted[/green]")
-    console.print(f"Asset: {coin}")
-    console.print(f"TWAP ID: {twap_id}")
+    console.print(_("[green]✅ TWAP cancel submitted[/green]"))
+    console.print(_("Asset: {coin}").format(coin=coin))
+    console.print(_("TWAP ID: {twap_id}").format(twap_id=twap_id))
 
 
 def _print_cancel_noop(data: JsonObject) -> bool:
     if "cancelled" in data and "reason" in data:
         payload = cast(CancelNoopPayload, data)
-        console.print(payload.get("message", "No-op"))
+        console.print(_(payload.get("message", _("No-op"))))
         return True
     return False
 
@@ -534,8 +573,8 @@ def _fmt_rate_pct(value: DisplayValue) -> str:
 
 
 def out_error(message: str) -> None:
-    console.print(f"[red]Error:[/red] {message}")
+    console.print(_("[red]Error:[/red] {message}").format(message=message))
 
 
 def out_success(message: str) -> None:
-    console.print(f"[green]{message}[/green]")
+    console.print(_("[green]{message}[/green]").format(message=message))

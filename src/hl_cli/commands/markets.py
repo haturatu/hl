@@ -7,6 +7,7 @@ from ..cli.markets_tui import run_markets_tui
 from ..cli.runtime import CommandContext, cli_command, console, run_blocking
 from ..core.context import CLIContext
 from ..core.testnet_policy import includes_builder_perps
+from ..i18n import _
 from ..types import MarketRow, MarketsPayload, PerpAssetCtx, PerpMeta, SpotTokenInfo
 from ..utils.output import out
 from .common import _ctx, _done, _format_price, _format_rate_pct, _format_usd, _json
@@ -19,7 +20,9 @@ def _normalize_market_sort(sort_by: str) -> str:
     if value not in MARKET_SORT_FIELDS:
         allowed = ", ".join(sorted(MARKET_SORT_FIELDS))
         raise RuntimeError(
-            f"invalid sort field: {sort_by} (expected one of: {allowed})"
+            _("invalid sort field: {field} (expected one of: {allowed})").format(
+                field=sort_by, allowed=allowed
+            )
         )
     return value
 
@@ -339,7 +342,7 @@ def markets_search(
     include_category = category is not None
     q = query.strip().lower()
     if not q:
-        raise RuntimeError("query must not be empty")
+        raise RuntimeError(_("query must not be empty"))
     rows = _prepare_market_output(
         _sort_market_rows(
             _filter_market_rows_by_category(

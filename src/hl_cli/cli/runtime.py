@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ..core.context import CLIContext
+from ..i18n import _
 from ..types import TableCell
 from ..utils.output import out_error
 
@@ -38,12 +39,12 @@ def json_output_enabled(ctx: CommandContext) -> bool:
 def finish_command(ctx: CommandContext) -> None:
     if not json_output_enabled(ctx):
         elapsed = time.perf_counter() - float(ctx.obj["start"])
-        print(f"\nExecution time: {elapsed:.2f}s")
+        print(_("\nExecution time: {elapsed:.2f}s").format(elapsed=elapsed))
 
 
 def confirm(message: str, default: bool = False) -> bool:
-    suffix = "[Y/n]" if default else "[y/N]"
-    answer = input(f"{message} {suffix}: ").strip().lower()
+    suffix = _("Y/n") if default else _("y/N")
+    answer = input(f"{message} [{suffix}]: ").strip().lower()
     if not answer:
         return default
     return answer in {"y", "yes"}

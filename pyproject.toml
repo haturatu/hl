@@ -26,6 +26,13 @@ hl = "hl_cli.cli.argparse_main:main"
 include-package-data = true
 package-dir = {"" = "src"}
 
+[tool.setuptools.package-data]
+hl_cli = ["locale/*/LC_MESSAGES/*.mo", "locale/*/LC_MESSAGES/*.po"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["hl_cli*"]
+
+[tool.ruff]
+# `_`/`ngettext` are injected by the gettext-based i18n module.
+builtins = ["_", "ngettext"]

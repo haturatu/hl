@@ -8,13 +8,14 @@ VENV_PYTHON := $(VENV)/bin/python
 BINARY_PATH := dist/hl-linux-x86_64
 COMPLETION_LINE := eval "$$(hl completion bash)" \# hl-cli-completion
 
-.PHONY: help install uninstall completion test binary venv clean
+.PHONY: help install uninstall completion locales test binary venv clean
 
 help:
 	@printf '%s\n' \
 		'make install    Build/install the single binary and add bash completion to ~/.bashrc' \
 		'make uninstall  Remove installed binary/package and bash completion from ~/.bashrc' \
 		'make completion Add bash completion to ~/.bashrc if missing' \
+		'make locales   Extract translatable strings and compile .po catalogs to .mo' \
 		'make binary     Build the Nuitka onefile binary at dist/hl-linux-x86_64' \
 		'make clean      Remove build outputs and the local virtualenv' \
 		'make test       Run test suite'
@@ -28,6 +29,12 @@ install: binary
 completion:
 	touch "$(BASHRC)"
 	grep -Fqx '$(COMPLETION_LINE)' "$(BASHRC)" || printf '%s\n' '$(COMPLETION_LINE)' >> "$(BASHRC)"
+
+locales:
+	$(PYTHON) tools/extract_messages.py
+	@for po in $$(find src/hl_cli/locale -name '*.po'); do \
+		$(PYTHON) tools/build_locales.py "$$po" "$${po%.po}.mo"; \
+	done
 
 uninstall:
 	-rm -f "$(INSTALL_BIN)/hl"
@@ -45,7 +52,7 @@ venv:
 	$(VENV_PYTHON) -m pip install --upgrade -e . nuitka zstandard
 	$(VENV_PYTHON) tools/patch_parsimonious_for_nuitka.py
 
-binary: venv
+binary: venv locales
 	rm -rf *.build *.dist *.onefile-build hl hl.exe hl.bin
 	PYTHONPATH=src $(VENV_PYTHON) -m nuitka \
 		--onefile \
