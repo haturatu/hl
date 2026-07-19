@@ -133,7 +133,7 @@ jobs:
       # Nuitka stores generated C compilation results below this directory.  Persist
       # it between workflow runs so unchanged dependencies do not get rebuilt.
       - name: Restore Nuitka compilation cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .nuitka-cache
           key: nuitka-${{ runner.os }}-${{ matrix.asset-name }}-py312-${{ hashFiles('pyproject.toml', '.github/workflows/workflow.yml') }}
