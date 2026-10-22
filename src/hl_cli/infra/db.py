@@ -13,7 +13,7 @@ def _command_path_for_key() -> str:
     return str(Path(resolved or "hl").resolve())
 
 
-from .account_repo import (  # noqa: E402
+from .account_repo import (
     Account,
     _conn,
     create_account,
@@ -27,9 +27,9 @@ from .account_repo import (  # noqa: E402
 )
 
 __all__ = [
-    "Account",
     "DB_PATH",
     "HL_DIR",
+    "Account",
     "_command_path_for_key",
     "_conn",
     "create_account",

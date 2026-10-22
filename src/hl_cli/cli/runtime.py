@@ -1,9 +1,10 @@
 import asyncio
-from concurrent.futures import Future
-from functools import wraps
 import threading
 import time
-from typing import Awaitable, Callable, ParamSpec, Protocol, TypeVar, TypedDict
+from collections.abc import Awaitable, Callable
+from concurrent.futures import Future
+from functools import wraps
+from typing import ParamSpec, Protocol, TypedDict, TypeVar
 
 from rich.console import Console
 from rich.table import Table
@@ -87,7 +88,7 @@ def cli_command(fn: Callable[P, R]) -> Callable[P, R]:
             return fn(*args, **kwargs)
         except SystemExit:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             out_error(str(exc))
             raise SystemExit(1) from exc
 

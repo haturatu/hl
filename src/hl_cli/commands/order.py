@@ -1,7 +1,6 @@
 import asyncio
 from datetime import datetime
-from decimal import Decimal, ROUND_DOWN
-from typing import Optional
+from decimal import ROUND_DOWN, Decimal
 
 from hyperliquid.info import Info
 from hyperliquid.utils.constants import MAINNET_API_URL
@@ -15,11 +14,12 @@ from ..cli.runtime import (
     finish_command,
     json_output_enabled,
     render_table,
+    run_blocking,
 )
-from ..cli.runtime import run_blocking
 from ..core.context import CLIContext
 from ..core.order_config import get_order_config, update_order_config
 from ..core.testnet_policy import uses_main_perp_only
+from ..i18n import _
 from ..infra.twap_registry import (
     TwapRecord,
     find_twap_order,
@@ -27,19 +27,18 @@ from ..infra.twap_registry import (
     mark_twap_cancelled,
     register_twap_order,
 )
-from ..i18n import _
 from ..types import (
     AllMids,
     ClearinghouseState,
     DisplayValue,
     ExchangeEnvelope,
     ExchangeOrderStatus,
-    ExchangeSuccessEnvelope,
     ExchangeStatusFilled,
     ExchangeStatusResting,
+    ExchangeSuccessEnvelope,
     JsonObject,
-    PerpMeta,
     OpenOrderRow,
+    PerpMeta,
     TableCell,
 )
 from ..utils.output import out, out_success
@@ -65,7 +64,7 @@ def _done(ctx: CommandContext) -> None:
     finish_command(ctx)
 
 
-def _wallet_perp_dexs_for_coin(coin: str) -> Optional[list[str]]:
+def _wallet_perp_dexs_for_coin(coin: str) -> list[str] | None:
     if ":" not in coin:
         return None
     return [coin.split(":", 1)[0]]
@@ -89,7 +88,7 @@ def _format_usd(value: DisplayValue) -> str:
     try:
         n = float(value)  # type: ignore[arg-type]
         return f"${n:,.2f}"
-    except Exception:
+    except (TypeError, ValueError, OverflowError):
         return f"${value}" if value is not None else "-"
 
 
@@ -99,14 +98,14 @@ def _extract_statuses(result: ExchangeSuccessEnvelope) -> list[ExchangeOrderStat
         if isinstance(statuses, list):
             return statuses
         return []
-    except Exception:
+    except (AttributeError, TypeError):
         return []
 
 
 def _print_leverage_update(
     lev_result: ExchangeSuccessEnvelope | None,
     coin: str,
-    leverage: Optional[int],
+    leverage: int | None,
     is_cross: bool,
 ) -> None:
     if not lev_result:
@@ -134,7 +133,7 @@ def _print_order_feedback(
     coin: str,
     side: str,
     order_kind: str,
-    stake: Optional[float] = None,
+    stake: float | None = None,
 ) -> None:
     statuses = _extract_statuses(result)
     if not statuses:
@@ -274,7 +273,7 @@ def _maybe_update_leverage(
     *,
     context: CLIContext,
     coin: str,
-    leverage: Optional[int],
+    leverage: int | None,
     cross: bool,
     isolated: bool,
     emit_warning: bool = True,
@@ -443,7 +442,7 @@ def _resolve_tradable_coin(context: CLIContext, coin: str) -> str:
 def _validate_side_mode_args(
     *,
     side: str,
-    leverage: Optional[int],
+    leverage: int | None,
     cross: bool,
     isolated: bool,
     reduce_only: bool = False,
@@ -465,7 +464,7 @@ def _mids_for_coin(context: CLIContext, coin: str) -> AllMids:
     return info.all_mids()
 
 
-def _stake_to_position_notional(stake: float, leverage: Optional[int]) -> float:
+def _stake_to_position_notional(stake: float, leverage: int | None) -> float:
     if stake <= 0:
         raise RuntimeError(_("stake must be a positive number"))
     lev = 1 if leverage is None else leverage
@@ -508,7 +507,7 @@ def _place_native_twap(
         exchange.expires_after,
         exchange.base_url == MAINNET_API_URL,
     )
-    return exchange._post_action(action, signature, nonce)  # noqa: SLF001
+    return exchange._post_action(action, signature, nonce)
 
 
 def _cancel_native_twap(
@@ -526,7 +525,7 @@ def _cancel_native_twap(
         exchange.expires_after,
         exchange.base_url == MAINNET_API_URL,
     )
-    return exchange._post_action(action, signature, nonce)  # noqa: SLF001
+    return exchange._post_action(action, signature, nonce)
 
 
 def _resolve_position_for_close(
@@ -619,7 +618,7 @@ def _network_name(context: CLIContext) -> str:
     return "testnet" if context.config.testnet else "mainnet"
 
 
-def _extract_twap_id(response: ExchangeSuccessEnvelope) -> Optional[int]:
+def _extract_twap_id(response: ExchangeSuccessEnvelope) -> int | None:
     status = response.get("response", {}).get("data", {}).get("status", {})
     if not isinstance(status, dict):
         return None
@@ -660,7 +659,7 @@ def _render_twap_orders(title: str, records: list[TwapRecord]) -> None:
 @cli_command
 def order_ls(
     ctx: CommandContext,
-    user: Optional[str] = None,
+    user: str | None = None,
     watch: bool = False,
 ) -> None:
     context = _ctx(ctx)
@@ -715,8 +714,8 @@ def order_limit(
     price: str,
     tif: str = "Gtc",
     reduce_only: bool = False,
-    stake: Optional[float] = None,
-    leverage: Optional[int] = None,
+    stake: float | None = None,
+    leverage: int | None = None,
     cross: bool = False,
     isolated: bool = False,
 ) -> None:
@@ -784,9 +783,9 @@ def order_market(
     size: str,
     coin: str,
     reduce_only: bool = False,
-    slippage: Optional[float] = None,
-    stake: Optional[float] = None,
-    leverage: Optional[int] = None,
+    slippage: float | None = None,
+    stake: float | None = None,
+    leverage: int | None = None,
     cross: bool = False,
     isolated: bool = False,
 ) -> None:
@@ -805,7 +804,7 @@ def order_market(
     is_buy = side_is_buy(side)
     cfg = get_order_config()
     slippage_pct = (slippage if slippage is not None else float(cfg["slippage"])) / 100
-    mids_cache: Optional[dict[str, str]] = None
+    mids_cache: dict[str, str] | None = None
     if stake is not None:
         mids_cache = _mids_for_coin(context, resolved_coin)
         mid = float(mids_cache[resolved_coin])
@@ -872,7 +871,7 @@ def order_market(
 def order_market_close(
     ctx: CommandContext,
     coin: str,
-    slippage: Optional[float] = None,
+    slippage: float | None = None,
     ratio: float = 1.0,
 ) -> None:
     if ratio <= 0 or ratio > 1:
@@ -907,8 +906,8 @@ def order_market_close(
 def order_tpsl(
     ctx: CommandContext,
     coin: str,
-    tp: Optional[float] = None,
-    sl: Optional[float] = None,
+    tp: float | None = None,
+    sl: float | None = None,
     ratio: float = 1.0,
 ) -> None:
     if tp is None and sl is None:
@@ -984,10 +983,10 @@ def order_twap(
     size: str,
     coin: str,
     interval: str,
-    stake: Optional[float] = None,
+    stake: float | None = None,
     reduce_only: bool = False,
     randomize: bool = False,
-    leverage: Optional[int] = None,
+    leverage: int | None = None,
     cross: bool = False,
     isolated: bool = False,
 ) -> None:
@@ -1079,7 +1078,7 @@ def order_twap(
 
 @cli_command
 def order_twap_cancel(
-    ctx: CommandContext, coin: Optional[str] = None, twap_id: Optional[str] = None
+    ctx: CommandContext, coin: str | None = None, twap_id: str | None = None
 ) -> None:
     context = _ctx(ctx)
     address = context.get_wallet_address()
@@ -1152,7 +1151,7 @@ def order_twap_cancel(
 
 
 @cli_command
-def order_cancel(ctx: CommandContext, oid: Optional[str] = None) -> None:
+def order_cancel(ctx: CommandContext, oid: str | None = None) -> None:
     context = _ctx(ctx)
     user = context.get_wallet_address()
     exchange = context.get_wallet_client()
@@ -1202,7 +1201,7 @@ def order_cancel(ctx: CommandContext, oid: Optional[str] = None) -> None:
 def order_cancel_all(
     ctx: CommandContext,
     yes: bool = False,
-    coin: Optional[str] = None,
+    coin: str | None = None,
 ) -> None:
     context = _ctx(ctx)
     user = context.get_wallet_address()
@@ -1280,7 +1279,7 @@ def order_set_leverage(
 
 
 @cli_command
-def order_configure(ctx: CommandContext, slippage: Optional[float] = None) -> None:
+def order_configure(ctx: CommandContext, slippage: float | None = None) -> None:
     if slippage is None:
         out(get_order_config(), _json(ctx))
     else:

@@ -1,7 +1,7 @@
 import asyncio
 import json
+from contextlib import suppress
 from queue import Empty, Queue
-from typing import Optional
 
 from hyperliquid.info import Info
 from hyperliquid.utils.types import L2BookData
@@ -89,15 +89,12 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
         except KeyboardInterrupt:
             return
         finally:
-            try:
+            # SDK shutdown is best effort after interruption or a stream error.
+            with suppress(Exception):
                 stream_info.unsubscribe(subscription, subscription_id)
-            except Exception:
-                pass
             if stream_info.ws_manager is not None:
-                try:
+                with suppress(Exception):
                     stream_info.ws_manager.stop()
-                except Exception:
-                    pass
         return
     out(fetch(), _json(ctx))
     _done(ctx)
@@ -105,7 +102,7 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
 
 @cli_command
 def asset_leverage(
-    ctx: CommandContext, coin: str, user: Optional[str] = None, watch: bool = False
+    ctx: CommandContext, coin: str, user: str | None = None, watch: bool = False
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()

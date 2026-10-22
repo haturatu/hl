@@ -1,6 +1,5 @@
 import sqlite3
 from dataclasses import dataclass
-from typing import Optional
 
 from ..i18n import _
 from . import db as db_module
@@ -21,8 +20,8 @@ class Account:
     user_address: str
     type: str
     source: str
-    api_wallet_private_key: Optional[str]
-    api_wallet_public_key: Optional[str]
+    api_wallet_private_key: str | None
+    api_wallet_public_key: str | None
     is_default: bool
     created_at: int
     updated_at: int
@@ -95,7 +94,7 @@ def get_all_accounts(network: str) -> list[Account]:
     return [_to_account(row) for row in rows]
 
 
-def get_account_by_alias(alias: str, network: str) -> Optional[Account]:
+def get_account_by_alias(alias: str, network: str) -> Account | None:
     conn = _conn()
     row = conn.execute(
         "SELECT * FROM accounts WHERE alias = ? AND network = ?", (alias, network)
@@ -104,7 +103,7 @@ def get_account_by_alias(alias: str, network: str) -> Optional[Account]:
     return _to_account(row) if row else None
 
 
-def get_default_account(network: str) -> Optional[Account]:
+def get_default_account(network: str) -> Account | None:
     conn = _conn()
     row = conn.execute(
         "SELECT * FROM accounts WHERE network = ? AND is_default = 1 LIMIT 1",
