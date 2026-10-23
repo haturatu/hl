@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import Optional
 
 from eth_account import Account as EthAccount
 
 from ..cli.runtime import CommandContext, cli_command, console, run_blocking
 from ..core.context import CLIContext
+from ..i18n import _
 from ..infra.db import (
     create_account,
     delete_account,
@@ -24,7 +24,6 @@ from ..types import BalancesPayload, OpenOrderRow, PortfolioPayload, PositionsPa
 from ..utils.output import out
 from ..utils.validators import normalize_private_key, validate_address
 from ..utils.watch import watch_loop
-from ..i18n import _
 from .common import (
     _confirm,
     _ctx,
@@ -214,7 +213,7 @@ async def _fetch_positions_async(context: CLIContext, user: str) -> PositionsPay
 
 @cli_command
 def account_positions(
-    ctx: CommandContext, user: Optional[str] = None, watch: bool = False
+    ctx: CommandContext, user: str | None = None, watch: bool = False
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
@@ -269,7 +268,7 @@ def _fetch_orders(context: CLIContext, user: str) -> list[OpenOrderRow]:
 
 @cli_command
 def account_orders(
-    ctx: CommandContext, user: Optional[str] = None, watch: bool = False
+    ctx: CommandContext, user: str | None = None, watch: bool = False
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
@@ -312,7 +311,7 @@ async def _fetch_portfolio_async(context: CLIContext, user: str) -> PortfolioPay
 
 @cli_command
 def account_balances(
-    ctx: CommandContext, user: Optional[str] = None, watch: bool = False
+    ctx: CommandContext, user: str | None = None, watch: bool = False
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()
@@ -336,7 +335,7 @@ def account_balances(
 
 @cli_command
 def account_portfolio(
-    ctx: CommandContext, user: Optional[str] = None, watch: bool = False
+    ctx: CommandContext, user: str | None = None, watch: bool = False
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()

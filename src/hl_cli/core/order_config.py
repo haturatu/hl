@@ -11,7 +11,7 @@ def get_order_config() -> dict:
     try:
         data = json.loads(ORDER_CONFIG_PATH.read_text())
         return {**DEFAULT_CONFIG, **data}
-    except Exception:
+    except (OSError, ValueError, TypeError):
         return dict(DEFAULT_CONFIG)
 
 

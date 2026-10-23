@@ -1,7 +1,6 @@
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Optional
 
 from .paths import HL_DIR
 
@@ -22,7 +21,7 @@ class TwapRecord:
     reduce_only: bool
     submitted_at: str
     status: str = "active"
-    cancelled_at: Optional[str] = None
+    cancelled_at: str | None = None
 
 
 def _utc_now() -> str:
@@ -34,7 +33,7 @@ def _load_all() -> list[TwapRecord]:
         return []
     try:
         raw = json.loads(TWAP_REGISTRY_PATH.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, UnicodeError, json.JSONDecodeError):
         return []
     if not isinstance(raw, list):
         return []
@@ -120,8 +119,8 @@ def find_twap_order(
     network: str,
     user: str,
     twap_id: int,
-    coin: Optional[str] = None,
-) -> Optional[TwapRecord]:
+    coin: str | None = None,
+) -> TwapRecord | None:
     for record in list_twap_orders(network=network, user=user, active_only=False):
         if record.twap_id != twap_id:
             continue
@@ -132,7 +131,7 @@ def find_twap_order(
 
 
 def mark_twap_cancelled(
-    *, network: str, user: str, twap_id: int, coin: Optional[str] = None
+    *, network: str, user: str, twap_id: int, coin: str | None = None
 ) -> None:
     records = _load_all()
     updated = False

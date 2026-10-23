@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 from hyperliquid.info import Info
 
@@ -27,12 +26,12 @@ def _normalize_market_sort(sort_by: str) -> str:
     return value
 
 
-def _to_float(value: str | float | int | None) -> float | None:
+def _to_float(value: str | float | None) -> float | None:
     if value is None:
         return None
     try:
         return float(value)
-    except Exception:
+    except (TypeError, ValueError):
         return None
 
 
@@ -70,7 +69,7 @@ def _sort_market_rows(rows: MarketsPayload, sort_by: str) -> MarketsPayload:
 
 
 def _filter_market_rows_by_category(
-    rows: MarketsPayload, category: Optional[str]
+    rows: MarketsPayload, category: str | None
 ) -> MarketsPayload:
     if category is None or category == "*":
         return rows
@@ -110,7 +109,7 @@ def _watch_markets_prices(
     *,
     spot_only: bool,
     perp_only: bool,
-    category: Optional[str],
+    category: str | None,
     sort_by: str,
     as_json: bool,
 ) -> None:
@@ -297,7 +296,7 @@ def markets_ls(
     ctx: CommandContext,
     spot_only: bool = False,
     perp_only: bool = False,
-    category: Optional[str] = None,
+    category: str | None = None,
     sort_by: str = "volume",
     watch: bool = False,
 ) -> None:
@@ -336,7 +335,7 @@ def markets_search(
     query: str,
     spot_only: bool = False,
     perp_only: bool = False,
-    category: Optional[str] = None,
+    category: str | None = None,
     sort_by: str = "volume",
 ) -> None:
     include_category = category is not None

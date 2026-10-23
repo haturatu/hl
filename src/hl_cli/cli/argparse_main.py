@@ -2,12 +2,13 @@ import argparse
 import asyncio
 import sys
 import time
+from collections.abc import Callable
 from textwrap import dedent
 from types import SimpleNamespace
-from typing import Any, Callable
+from typing import Any
 
-from ..core.context import CLIContext, load_config
 from ..commands import app as legacy
+from ..core.context import CLIContext, load_config
 from ..i18n import _, install_language
 
 TOP_LEVEL_COMMANDS = ["account", "order", "asset", "markets", "referral", "completion"]

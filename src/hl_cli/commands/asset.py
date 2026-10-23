@@ -1,7 +1,7 @@
 import asyncio
 import json
+import logging
 from queue import Empty, Queue
-from typing import Optional
 
 from hyperliquid.info import Info
 from hyperliquid.utils.types import L2BookData
@@ -15,6 +15,8 @@ from ..utils.validators import validate_address
 from ..utils.watch import watch_loop
 from .common import _ctx, _done, _format_price, _json, _render_table
 from .order import _mids_for_coin, _resolve_tradable_coin
+
+logger = logging.getLogger(__name__)
 
 
 @cli_command
@@ -91,13 +93,13 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
         finally:
             try:
                 stream_info.unsubscribe(subscription, subscription_id)
-            except Exception:
-                pass
+            except Exception:  # noqa: BLE001 - preserve best-effort cleanup
+                logger.debug("Failed to unsubscribe from order book", exc_info=True)
             if stream_info.ws_manager is not None:
                 try:
                     stream_info.ws_manager.stop()
-                except Exception:
-                    pass
+                except Exception:  # noqa: BLE001 - preserve best-effort cleanup
+                    logger.debug("Failed to stop WebSocket manager", exc_info=True)
         return
     out(fetch(), _json(ctx))
     _done(ctx)
@@ -105,7 +107,7 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
 
 @cli_command
 def asset_leverage(
-    ctx: CommandContext, coin: str, user: Optional[str] = None, watch: bool = False
+    ctx: CommandContext, coin: str, user: str | None = None, watch: bool = False
 ) -> None:
     context = _ctx(ctx)
     address = validate_address(user) if user else context.get_wallet_address()

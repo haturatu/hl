@@ -1,5 +1,6 @@
 import json
-from typing import Iterable, cast
+from collections.abc import Iterable
+from typing import cast
 
 from hyperliquid.utils.types import L2BookData
 from rich.console import Console
@@ -12,8 +13,8 @@ from ..types import (
     BalancesPayload,
     CancelNoopPayload,
     DisplayValue,
-    ExchangeOrderStatus,
     ExchangeErrorEnvelope,
+    ExchangeOrderStatus,
     ExchangeResponse,
     ExchangeStatusWithError,
     ExchangeSuccessEnvelope,
@@ -51,9 +52,7 @@ def _render_known(data: JsonValue) -> bool:
     if isinstance(data, list):
         if _print_open_orders_list(data):
             return True
-        if _print_accounts_list(data):
-            return True
-        return False
+        return bool(_print_accounts_list(data))
 
     if not isinstance(data, dict):
         return False
@@ -125,10 +124,7 @@ def _render_known(data: JsonValue) -> bool:
         console.print(_("Reason: {reason}").format(reason=err.get("response")))
         return True
 
-    if _print_flat_dict(data):
-        return True
-
-    return False
+    return bool(_print_flat_dict(data))
 
 
 def _print_positions_payload(data: PositionsPayload) -> None:
@@ -524,8 +520,6 @@ def _fmt_price(value: DisplayValue) -> str:
     abs_n = abs(n)
     if abs_n >= 1000:
         s = f"{n:,.2f}"
-    elif abs_n >= 1:
-        s = f"{n:,.4f}"
     elif abs_n >= 0.01:
         s = f"{n:,.4f}"
     elif abs_n >= 0.0001:

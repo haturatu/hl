@@ -1,9 +1,10 @@
 import asyncio
-from concurrent.futures import Future
-from functools import wraps
 import threading
 import time
-from typing import Awaitable, Callable, ParamSpec, Protocol, TypeVar, TypedDict
+from collections.abc import Awaitable, Callable
+from concurrent.futures import Future
+from functools import wraps
+from typing import ParamSpec, Protocol, TypeVar, TypedDict
 
 from rich.console import Console
 from rich.table import Table

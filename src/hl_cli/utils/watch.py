@@ -1,6 +1,7 @@
 import json
 import time
-from typing import Callable, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 from rich.console import Console
 
