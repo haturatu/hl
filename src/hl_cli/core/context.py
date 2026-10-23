@@ -80,13 +80,12 @@ class CLIContext:
         if self._perp_dexs is not None:
             return self._perp_dexs
         try:
-            temp = _build_info_client(self.base_url, skip_ws=True)
-            raw: list[PerpDexInfo | None] = temp.perp_dexs()
+            raw: list[PerpDexInfo | None] = self.get_public_client().perp_dexs()
             names = [
                 str(x.get("name")) for x in raw if isinstance(x, dict) and x.get("name")
             ]
             self._perp_dexs = ["", *names] if names else [""]
-        except Exception:  # noqa: BLE001 - optional SDK discovery must fall back
+        except Exception:  # noqa: BLE001 - Optional SDK discovery must retain the main-perp fallback.
             self._perp_dexs = [""]
         return self._perp_dexs
 
@@ -103,7 +102,7 @@ def load_config(testnet: bool) -> Config:
     default = None
     try:
         default = get_default_account(network)
-    except Exception:  # noqa: BLE001 - optional account fallback
+    except Exception:  # noqa: BLE001 - Optional stored accounts must not prevent environment configuration.
         default = None
 
     if default:

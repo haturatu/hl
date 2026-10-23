@@ -88,7 +88,7 @@ def _format_usd(value: DisplayValue) -> str:
     try:
         n = float(value)  # type: ignore[arg-type]
         return f"${n:,.2f}"
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return f"${value}" if value is not None else "-"
 
 

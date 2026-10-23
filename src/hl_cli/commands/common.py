@@ -38,14 +38,14 @@ def _format_usd(value: DisplayValue) -> str:
     try:
         n = float(value)  # type: ignore[arg-type]
         return f"${n:,.2f}"
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return f"${value}" if value is not None else "-"
 
 
 def _format_price(value: DisplayValue) -> str:
     try:
         n = float(value)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return f"${value}" if value is not None else "-"
 
     abs_n = abs(n)
@@ -66,7 +66,7 @@ def _format_price(value: DisplayValue) -> str:
 def _format_rate_pct(value: DisplayValue) -> str:
     try:
         n = float(value)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return str(value) if value is not None else "-"
 
     abs_n = abs(n)

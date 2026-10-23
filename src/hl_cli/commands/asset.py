@@ -91,6 +91,7 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
         except KeyboardInterrupt:
             return
         finally:
+            # SDK shutdown is best effort after interruption or a stream error.
             try:
                 stream_info.unsubscribe(subscription, subscription_id)
             except Exception:
