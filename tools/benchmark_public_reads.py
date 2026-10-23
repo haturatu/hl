@@ -115,15 +115,23 @@ def main() -> None:
     results = [
         measure(name, delay=args.delay, repeat=args.repeat)
         for name in (
-            "dexs_cold", "dexs_warm", "testnet_all", "mainnet_all",
-            "mainnet_spot_only", "mainnet_perp_only",
+            "dexs_cold",
+            "dexs_warm",
+            "testnet_all",
+            "mainnet_all",
+            "mainnet_spot_only",
+            "mainnet_perp_only",
         )
     ]
     if profiler:
         profiler.disable()
         profiler.dump_stats(args.profile)
-    print(json.dumps({"delay_ms": args.delay * 1000, "repeat": args.repeat,
-                      "results": results}, indent=2))
+    print(
+        json.dumps(
+            {"delay_ms": args.delay * 1000, "repeat": args.repeat, "results": results},
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

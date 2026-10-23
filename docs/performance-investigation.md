@@ -55,3 +55,39 @@ The fixture is deliberately small to isolate request latency. These results
 are not measurements of production API latency, large-universe CPU cost, or
 Nuitka executable startup. Existing SDK initialization requests remain included
 in the market scenarios.
+
+## Results
+
+Unprofiled median times on the same machine, before (`3ec664b`, benchmark only)
+and after the two optimizations (`9827276`):
+
+| Scenario | Before (ms) | After (ms) | Requests before → after |
+| --- | ---: | ---: | ---: |
+| DEX discovery, cold client | 60.608 | 60.454 | 3 → 3 |
+| DEX discovery, existing client | 60.571 | 20.145 | 3 → 1 |
+| Testnet, all markets | 82.949 | 63.137 | 5 → 5 |
+| Mainnet, all markets | 166.639 | 84.324 | 10 → 8 |
+| Mainnet, spot only | 62.478 | 62.550 | 4 → 3 |
+| Mainnet, perp only | 164.785 | 84.783 | 10 → 8 |
+
+All six output hashes match before and after. Mainnet market latency decreased
+by about 49%, and warm DEX discovery latency by about 67% in this simulation.
+Spot-only latency is effectively unchanged because the removed categories
+request previously overlapped the spot request; its API request count improves.
+Cold DEX discovery still needs SDK initialization, but now retains that client
+for subsequent reads.
+
+The mainnet savings remove one `spotMeta` and one `meta` initialization request
+per context. Spot-only savings remove `perpCategories`. Parallel snapshot and
+DEX discovery requests reduce the critical path without changing builder
+request count or output ordering.
+
+Validation:
+
+- All 43 unit tests pass on Python 3.14.8 with SDK 0.23.0 and on Python 3.12.3
+  with freshly resolved dependencies, including SDK 0.24.0.
+- The Python 3.12 / SDK 0.24 offline benchmark produces the same request counts
+  and output hashes for all six scenarios.
+- Ruff passes for `src` and the changed benchmark/tests; `git diff --check`
+  passes. Concurrency tests use barriers/events to verify overlapping requests,
+  DEX discovery outside the event loop thread, and stable builder row order.
