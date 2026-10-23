@@ -155,17 +155,27 @@ async def _build_market_rows_async(
 ) -> MarketsPayload:
     info = context.get_public_client()
     spot_task = asyncio.to_thread(info.spot_meta_and_asset_ctxs)
-    perp_categories_task = asyncio.to_thread(
-        info.post, "/info", {"type": "perpCategories"}
-    )
-    (spot_meta, spot_ctxs), perp_categories_raw = await asyncio.gather(
-        spot_task, perp_categories_task
-    )
-    perp_categories = {
-        str(coin): str(category)
-        for coin, category in perp_categories_raw
-        if isinstance(coin, str) and isinstance(category, str)
-    }
+    if spot_only:
+        spot_meta, spot_ctxs = await spot_task
+    else:
+        # Only builder snapshots depend on DEX discovery. Fetch the other
+        # snapshots concurrently, retaining spot metadata for collateral names.
+        (
+            (spot_meta, spot_ctxs),
+            (perp_meta, perp_ctxs),
+            perp_categories_raw,
+            builder_results,
+        ) = await asyncio.gather(
+            spot_task,
+            asyncio.to_thread(info.meta_and_asset_ctxs),
+            asyncio.to_thread(info.post, "/info", {"type": "perpCategories"}),
+            _fetch_builder_markets_async(context, info),
+        )
+        perp_categories = {
+            str(coin): str(category)
+            for coin, category in perp_categories_raw
+            if isinstance(coin, str) and isinstance(category, str)
+        }
 
     spot_rows: list[MarketRow] = []
     perp_rows: list[MarketRow] = []
@@ -204,7 +214,6 @@ async def _build_market_rows_async(
             )
 
     if not spot_only:
-        perp_meta, perp_ctxs = await asyncio.to_thread(info.meta_and_asset_ctxs)
         tokens = spot_meta.get("tokens", [])
         collateral = _safe_token_name(
             tokens, perp_meta.get("collateralToken", 0), "USD"
@@ -236,15 +245,7 @@ async def _build_market_rows_async(
                 }
             )
 
-        # Testnet uses main perp + spot only to avoid rate-limiting on bulk builder fetches.
-        if includes_builder_perps(context.config.testnet):
-            dexs = [dex for dex in context.get_perp_dexs() if dex]
-            builder_results = await asyncio.gather(
-                *(
-                    asyncio.to_thread(_fetch_builder_market_data, info, dex)
-                    for dex in dexs
-                )
-            )
+        if builder_results:
             for meta, ctxs in builder_results:
                 dex = str(meta.get("dex", ""))
                 if not dex:
@@ -282,6 +283,22 @@ async def _build_market_rows_async(
                     )
 
     return {"perpMarkets": perp_rows, "spotMarkets": spot_rows}
+
+
+async def _fetch_builder_markets_async(
+    context: CLIContext, info: Info
+) -> list[tuple[PerpMeta, list[PerpAssetCtx]]]:
+    # Testnet avoids bulk builder fetches to reduce rate limiting.
+    if not includes_builder_perps(context.config.testnet):
+        return []
+    dexs = await asyncio.to_thread(context.get_perp_dexs)
+    return await asyncio.gather(
+        *(
+            asyncio.to_thread(_fetch_builder_market_data, info, dex)
+            for dex in dexs
+            if dex
+        )
+    )
 
 
 def _fetch_builder_market_data(
