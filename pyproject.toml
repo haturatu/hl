@@ -36,3 +36,8 @@ include = ["hl_cli*"]
 [tool.ruff]
 # `_`/`ngettext` are injected by the gettext-based i18n module.
 builtins = ["_", "ngettext"]
+
+[tool.ruff.lint]
+# Ruff 0.16 expanded its default rules. Keep the project's existing lint
+# baseline stable; opt in to additional rules in separate cleanup changes.
+select = ["E4", "E7", "E9", "F"]
