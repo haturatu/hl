@@ -19,6 +19,7 @@ user-facing literals::
     console.print(_("Order placed"))
     console.print(_("Asset: {coin}").format(coin=coin))
 """
+
 from __future__ import annotations
 
 import gettext as _gettext
@@ -89,21 +90,12 @@ def _argv_language(argv: list[str] | None) -> str | None:
     return None
 
 
-def resolve_language(
-    explicit: str | None = None, argv: list[str] | None = None
-) -> str:
+def resolve_language(explicit: str | None = None, argv: list[str] | None = None) -> str:
     """Resolve the language to use given an optional explicit override."""
-    return (
-        explicit
-        or _argv_language(argv)
-        or _env_language()
-        or DEFAULT_LANGUAGE
-    )
+    return explicit or _argv_language(argv) or _env_language() or DEFAULT_LANGUAGE
 
 
-def install_language(
-    lang: str | None = None, *, argv: list[str] | None = None
-) -> str:
+def install_language(lang: str | None = None, *, argv: list[str] | None = None) -> str:
     """Activate the translation catalog for ``lang`` (or auto-detected).
 
     Returns the language that was selected. Safe to call multiple times.

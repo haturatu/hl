@@ -88,7 +88,14 @@ PATH_OPTIONS: dict[str, list[str]] = {
     "asset price": ["-w", "--watch"],
     "asset book": ["-w", "--watch"],
     "asset leverage": ["--user", "-w", "--watch"],
-    "markets ls": ["--spot-only", "--perp-only", "--category", "--sort-by", "-w", "--watch"],
+    "markets ls": [
+        "--spot-only",
+        "--perp-only",
+        "--category",
+        "--sort-by",
+        "-w",
+        "--watch",
+    ],
     "markets search": ["--spot-only", "--perp-only", "--category", "--sort-by"],
 }
 
@@ -114,13 +121,13 @@ def _bash_completion_script() -> str:
     known_paths = " ".join(sorted(path for path in completion_paths if path))
     word_case_lines = "\n".join(
         [
-            f'        "{name}") COMPREPLY=( $(compgen -W "{ " ".join(values) }" -- "$cur") ) ;;'
+            f'        "{name}") COMPREPLY=( $(compgen -W "{" ".join(values)}" -- "$cur") ) ;;'
             for name, values in completion_paths.items()
         ]
     )
     option_case_lines = "\n".join(
         [
-            f'        "{name}") COMPREPLY=( $(compgen -W "{ " ".join(HELP_OPTIONS + values) }" -- "$cur") ) ;;'
+            f'        "{name}") COMPREPLY=( $(compgen -W "{" ".join(HELP_OPTIONS + values)}" -- "$cur") ) ;;'
             for name, values in PATH_OPTIONS.items()
             if name
         ]
@@ -157,7 +164,7 @@ def _bash_completion_script() -> str:
                 case "$path" in
         "") COMPREPLY=( $(compgen -W "{global_options}" -- "$cur") ) ;;
 {option_case_lines}
-                    *) COMPREPLY=( $(compgen -W "{ " ".join(HELP_OPTIONS) }" -- "$cur") ) ;;
+                    *) COMPREPLY=( $(compgen -W "{" ".join(HELP_OPTIONS)}" -- "$cur") ) ;;
                 esac
                 return 0
             fi
@@ -306,7 +313,10 @@ def _build_parser() -> argparse.ArgumentParser:
         acc_sub, "ls", _("List accounts"), ["hl account ls", "hl --json account ls"]
     )
     acc_set = add_cmd_parser(
-        acc_sub, "set-default", _("Set default account"), ["hl account set-default main"]
+        acc_sub,
+        "set-default",
+        _("Set default account"),
+        ["hl account set-default main"],
     )
     acc_set.add_argument("alias")
     acc_rm = add_cmd_parser(
@@ -763,9 +773,7 @@ async def dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
         elif sc == "market":
             if str(args.side).lower() == "close":
                 if args.a is None or args.b is not None:
-                    _exit_with_error(
-                        _("Close syntax: hl order market close <coin>")
-                    )
+                    _exit_with_error(_("Close syntax: hl order market close <coin>"))
                 if args.stake is not None:
                     _exit_with_error(_("--stake cannot be used with market close"))
                 if args.leverage is not None or args.cross or args.isolated:

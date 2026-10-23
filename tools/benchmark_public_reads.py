@@ -6,12 +6,12 @@ account configuration, private keys, or local account database are used.
 
 import argparse
 import asyncio
-from collections import Counter
 import cProfile
 import hashlib
 import json
-from statistics import median
 import time
+from collections import Counter
+from statistics import median
 from unittest.mock import patch
 
 from hyperliquid.info import Info
@@ -71,7 +71,7 @@ def measure(name: str, *, delay: float, repeat: int) -> dict:
     for _ in range(repeat):
         api = SimulatedAPI(delay)
         context = CLIContext(Config(None, None, name.startswith("testnet"), None))
-        with patch.object(Info, "post", lambda *args: api.post(*args)):
+        with patch.object(Info, "post", lambda *args, api=api: api.post(*args)):
             if name == "dexs_warm":
                 context.get_public_client()
                 api.calls.clear()

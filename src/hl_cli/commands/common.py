@@ -51,7 +51,7 @@ def _format_price(value: DisplayValue) -> str:
     abs_n = abs(n)
     if abs_n >= 1000:
         s = f"{n:,.2f}"
-    elif abs_n >= 1 or abs_n >= 0.01:
+    elif abs_n >= 0.01:
         s = f"{n:,.4f}"
     elif abs_n >= 0.0001:
         s = f"{n:,.6f}"

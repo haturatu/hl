@@ -1,7 +1,7 @@
 import asyncio
 import threading
-from types import SimpleNamespace
 import unittest
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from hl_cli.commands.markets import _build_market_rows_async
@@ -72,7 +72,7 @@ class MarketsTestnetModeTests(unittest.TestCase):
                 )
                 context = SimpleNamespace(
                     config=SimpleNamespace(testnet=testnet),
-                    get_public_client=lambda: info,
+                    get_public_client=lambda info=info: info,
                     get_perp_dexs=Mock(side_effect=AssertionError("unused discovery")),
                 )
                 rows = asyncio.run(_build_market_rows_async(context, True, False))

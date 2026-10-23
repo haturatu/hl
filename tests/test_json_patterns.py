@@ -18,9 +18,8 @@ async def _call_stub(fn, *_args, **_kwargs):
 class JsonPatternTests(unittest.TestCase):
     def _run(self, argv):
         buf = io.StringIO()
-        with patch.object(argparse_main, "_call", _call_stub):
-            with redirect_stdout(buf):
-                argparse_main.main(argv)
+        with patch.object(argparse_main, "_call", _call_stub), redirect_stdout(buf):
+            argparse_main.main(argv)
         lines = [x.strip() for x in buf.getvalue().splitlines() if x.strip()]
         self.assertTrue(lines, f"no output for argv={argv}")
         return json.loads(lines[-1])

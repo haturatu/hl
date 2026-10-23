@@ -1,5 +1,5 @@
-import pathlib
 import os
+import pathlib
 import subprocess
 import sys
 import unittest
@@ -24,11 +24,20 @@ class CompletionTests(unittest.TestCase):
         self.assertIn("complete -F _hl_completion hl", result.stdout)
         self.assertIn('"order")', result.stdout)
         self.assertIn('"order market")', result.stdout)
-        self.assertIn('case " account asset completion markets order order limit order market order twap referral " in', result.stdout)
+        self.assertIn(
+            'case " account asset completion markets order order limit order market order twap referral " in',
+            result.stdout,
+        )
         self.assertIn("buy sell long short close", result.stdout)
-        self.assertIn('--json --testnet -h --help', result.stdout)
-        self.assertIn('-h --help --reduce-only --slippage --stake --leverage --cross --isolated --ratio', result.stdout)
-        self.assertIn('-h --help --spot-only --perp-only --category --sort-by -w --watch', result.stdout)
+        self.assertIn("--json --testnet -h --help", result.stdout)
+        self.assertIn(
+            "-h --help --reduce-only --slippage --stake --leverage --cross --isolated --ratio",
+            result.stdout,
+        )
+        self.assertIn(
+            "-h --help --spot-only --perp-only --category --sort-by -w --watch",
+            result.stdout,
+        )
 
 
 if __name__ == "__main__":

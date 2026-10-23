@@ -1,6 +1,6 @@
 import asyncio
 import json
-from contextlib import suppress
+import logging
 from queue import Empty, Queue
 
 from hyperliquid.info import Info
@@ -15,6 +15,8 @@ from ..utils.validators import validate_address
 from ..utils.watch import watch_loop
 from .common import _ctx, _done, _format_price, _json, _render_table
 from .order import _mids_for_coin, _resolve_tradable_coin
+
+logger = logging.getLogger(__name__)
 
 
 @cli_command
@@ -90,11 +92,15 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
             return
         finally:
             # SDK shutdown is best effort after interruption or a stream error.
-            with suppress(Exception):
+            try:
                 stream_info.unsubscribe(subscription, subscription_id)
+            except Exception:
+                logger.debug("Failed to unsubscribe from order book", exc_info=True)
             if stream_info.ws_manager is not None:
-                with suppress(Exception):
+                try:
                     stream_info.ws_manager.stop()
+                except Exception:
+                    logger.debug("Failed to stop WebSocket manager", exc_info=True)
         return
     out(fetch(), _json(ctx))
     _done(ctx)

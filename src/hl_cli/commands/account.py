@@ -77,16 +77,16 @@ def account_add(ctx: CommandContext) -> None:
             else "https://app.hyperliquid.xyz/API"
         )
         print(_("\nVisit {url} and generate an API wallet key.\n").format(url=api_url))
-        api_key = normalize_private_key(input(_("Enter API wallet private key: ")).strip())
+        api_key = normalize_private_key(
+            input(_("Enter API wallet private key: ")).strip()
+        )
 
         info = context.get_public_client()
         api_wallet_addr = EthAccount.from_key(api_key).address
         role = info.user_role(api_wallet_addr)
         if role.get("role") != "agent":
             raise RuntimeError(
-                _(
-                    "This key is not registered as an API wallet (agent) on Hyperliquid"
-                )
+                _("This key is not registered as an API wallet (agent) on Hyperliquid")
             )
         user_address = role["data"]["user"]
 
@@ -354,9 +354,9 @@ def account_portfolio(
             fetch,
             lambda d: (
                 _render_table(
-                    _(
-                        "Portfolio AccountValue={value} MarginUsed={used}"
-                    ).format(value=d["accountValue"], used=d["totalMarginUsed"]),
+                    _("Portfolio AccountValue={value} MarginUsed={used}").format(
+                        value=d["accountValue"], used=d["totalMarginUsed"]
+                    ),
                     [
                         _("Coin"),
                         _("Size"),
