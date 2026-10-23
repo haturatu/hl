@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from decimal import Decimal, ROUND_DOWN
+from decimal import ROUND_DOWN, Decimal
 
 from hyperliquid.info import Info
 from hyperliquid.utils.constants import MAINNET_API_URL
@@ -33,9 +33,9 @@ from ..types import (
     DisplayValue,
     ExchangeEnvelope,
     ExchangeOrderStatus,
-    ExchangeSuccessEnvelope,
     ExchangeStatusFilled,
     ExchangeStatusResting,
+    ExchangeSuccessEnvelope,
     JsonObject,
     OpenOrderRow,
     PerpMeta,

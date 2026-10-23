@@ -16,8 +16,14 @@ from ..infra.db import (
 )
 from ..services.account_fetch import (
     account_perp_dexs as _service_account_perp_dexs,
+)
+from ..services.account_fetch import (
     fetch_balances_async as _service_fetch_balances_async,
+)
+from ..services.account_fetch import (
     fetch_portfolio_async as _service_fetch_portfolio_async,
+)
+from ..services.account_fetch import (
     fetch_positions_async as _service_fetch_positions_async,
 )
 from ..types import BalancesPayload, OpenOrderRow, PortfolioPayload, PositionsPayload

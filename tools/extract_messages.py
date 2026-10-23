@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import ast
 import os
-import sys
-from typing import Iterable
+from collections.abc import Iterable
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src", "hl_cli")
@@ -116,7 +115,6 @@ def _read_po_translations(path: str) -> dict[str, list[str]]:
         return {}
     translations: dict[str, list[str]] = {}
     msgid = None
-    plural = None
     forms: list[str] = []
     with open(path, "r", encoding="utf-8") as handle:
         for raw in handle:
@@ -127,10 +125,7 @@ def _read_po_translations(path: str) -> dict[str, list[str]]:
                 if msgid is not None:
                     translations[msgid] = forms
                 msgid = _unescape(_string_from(line[len("msgid ") :]))
-                plural = None
                 forms = [""]
-            elif line.startswith("msgid_plural "):
-                plural = _unescape(_string_from(line[len("msgid_plural ") :]))
             elif line.startswith("msgstr["):
                 idx = int(line[len("msgstr[") : line.index("]")])
                 while len(forms) <= idx:
@@ -169,7 +164,7 @@ def _write_po(path: str, catalog: dict[str, str | None], lang: str) -> None:
         '"MIME-Version: 1.0\\n"',
         '"Content-Type: text/plain; charset=UTF-8\\n"',
         '"Content-Transfer-Encoding: 8bit\\n"',
-        f'"Plural-Forms: nplurals=2; plural=(n != 1);\\n"',
+        '"Plural-Forms: nplurals=2; plural=(n != 1);\\n"',
         "",
     ]
     for msgid, plural in catalog.items():

@@ -49,11 +49,10 @@ class ContextTests(unittest.TestCase):
 
         with patch(
             "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
-        ) as info_cls:
-            with patch(
+        ) as info_cls, patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
-            ) as loader:
-                client = context.get_public_client()
+        ) as loader:
+            client = context.get_public_client()
 
         self.assertIs(client, created)
         loader.assert_called_once_with(context.base_url)
@@ -72,11 +71,10 @@ class ContextTests(unittest.TestCase):
 
         with patch(
             "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
-        ) as info_cls:
-            with patch(
+        ) as info_cls, patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
-            ) as loader:
-                client = _build_info_client(
+        ) as loader:
+            client = _build_info_client(
                     "https://api.hyperliquid-testnet.xyz", skip_ws=True
                 )
 
@@ -96,11 +94,10 @@ class ContextTests(unittest.TestCase):
 
         with patch(
             "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
-        ) as info_cls:
-            with patch(
+        ) as info_cls, patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
-            ) as loader:
-                client = _build_info_client(
+        ) as loader:
+            client = _build_info_client(
                     "https://api.hyperliquid.xyz", skip_ws=True
                 )
 
@@ -118,11 +115,10 @@ class ContextTests(unittest.TestCase):
         }
         created = object()
 
-        with patch("hl_cli.core.context.Info", return_value=created) as info_cls:
-            with patch(
+        with patch("hl_cli.core.context.Info", return_value=created) as info_cls, patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
-            ) as loader:
-                client = _build_info_client(
+        ) as loader:
+            client = _build_info_client(
                     "https://api.hyperliquid.xyz", skip_ws=False
                 )
 

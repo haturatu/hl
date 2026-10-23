@@ -1,7 +1,7 @@
 import os
-import requests
 from dataclasses import dataclass
 
+import requests
 from eth_account import Account as EthAccount
 from hyperliquid.exchange import Exchange
 from hyperliquid.info import Info

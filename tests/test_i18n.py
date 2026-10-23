@@ -11,7 +11,6 @@ import unittest
 from hl_cli import i18n
 from hl_cli.i18n import _
 
-
 _LANG_VARS = ("HL_LANG", "LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG")
 
 

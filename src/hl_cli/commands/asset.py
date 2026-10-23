@@ -93,12 +93,12 @@ def asset_book(ctx: CommandContext, coin: str, watch: bool = False) -> None:
         finally:
             try:
                 stream_info.unsubscribe(subscription, subscription_id)
-            except Exception:  # noqa: BLE001 - preserve best-effort cleanup
+            except Exception:
                 logger.debug("Failed to unsubscribe from order book", exc_info=True)
             if stream_info.ws_manager is not None:
                 try:
                     stream_info.ws_manager.stop()
-                except Exception:  # noqa: BLE001 - preserve best-effort cleanup
+                except Exception:
                     logger.debug("Failed to stop WebSocket manager", exc_info=True)
         return
     out(fetch(), _json(ctx))

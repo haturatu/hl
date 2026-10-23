@@ -10,7 +10,6 @@ from __future__ import annotations
 import os
 import struct
 import sys
-from typing import Iterator
 
 
 def _decode_po_string(value: str) -> str:
@@ -162,8 +161,6 @@ def _build_mo(metadata: dict[str, str], entries: list[_PoEntry]) -> bytes:
     hash_size = 0
 
     # Build the string data blob and the offset/length tables.
-    originals_table: list[bytes] = []
-    translations_table: list[bytes] = []
     blob = b""
     orig_offsets: list[tuple[int, int]] = []
     trans_offsets: list[tuple[int, int]] = []
