@@ -11,6 +11,61 @@ from hl_cli.core.context import (
 
 
 class ContextTests(unittest.TestCase):
+    def test_get_perp_dexs_reuses_public_client_and_caches_names(self):
+        context = CLIContext(Config(None, None, False, None))
+        info = Mock()
+        info.perp_dexs.return_value = [None, {"name": "alpha"}, {}, "invalid"]
+        with patch(
+            "hl_cli.core.context._build_info_client", return_value=info
+        ) as build:
+            self.assertIs(context.get_public_client(), info)
+            self.assertEqual(context.get_perp_dexs(), ["", "alpha"])
+            self.assertEqual(context.get_perp_dexs(), ["", "alpha"])
+
+        build.assert_called_once_with(context.base_url, skip_ws=True)
+        info.perp_dexs.assert_called_once_with()
+
+    def test_get_perp_dexs_initializes_a_reusable_public_client(self):
+        context = CLIContext(Config(None, None, False, None))
+        info = Mock()
+        info.perp_dexs.return_value = [None, {"name": "alpha"}]
+        with patch(
+            "hl_cli.core.context._build_info_client", return_value=info
+        ) as build:
+            self.assertEqual(context.get_perp_dexs(), ["", "alpha"])
+            self.assertIs(context.get_public_client(), info)
+        build.assert_called_once_with(context.base_url, skip_ws=True)
+
+    def test_get_perp_dexs_caches_fallback(self):
+        for response in (RuntimeError("unavailable"), [None]):
+            with self.subTest(response=response):
+                context = CLIContext(Config(None, None, False, None))
+                info = Mock()
+                if isinstance(response, Exception):
+                    info.perp_dexs.side_effect = response
+                else:
+                    info.perp_dexs.return_value = response
+                with patch("hl_cli.core.context._build_info_client", return_value=info):
+                    self.assertEqual(context.get_perp_dexs(), [""])
+                    self.assertEqual(context.get_perp_dexs(), [""])
+                info.perp_dexs.assert_called_once_with()
+
+    def test_public_client_and_dex_cache_are_scoped_to_network_context(self):
+        mainnet = CLIContext(Config(None, None, False, None))
+        testnet = CLIContext(Config(None, None, True, None))
+        main_info, test_info = Mock(), Mock()
+        main_info.perp_dexs.return_value = [None, {"name": "alpha"}]
+        test_info.perp_dexs.return_value = [None]
+        with patch(
+            "hl_cli.core.context._build_info_client", side_effect=[main_info, test_info]
+        ) as build:
+            self.assertEqual(mainnet.get_perp_dexs(), ["", "alpha"])
+            self.assertEqual(testnet.get_perp_dexs(), [""])
+            self.assertIs(mainnet.get_public_client(), main_info)
+            self.assertIs(testnet.get_public_client(), test_info)
+        self.assertEqual(build.call_args_list[0].args, (mainnet.base_url,))
+        self.assertEqual(build.call_args_list[1].args, (testnet.base_url,))
+
     def test_safe_token_name_handles_invalid_indexes(self):
         tokens = [{"name": "USDC"}, {"name": "BTC"}]
 
@@ -100,9 +155,7 @@ class ContextTests(unittest.TestCase):
             with patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
             ) as loader:
-                client = _build_info_client(
-                    "https://api.hyperliquid.xyz", skip_ws=True
-                )
+                client = _build_info_client("https://api.hyperliquid.xyz", skip_ws=True)
 
         self.assertIs(client, created)
         loader.assert_called_once_with("https://api.hyperliquid.xyz")

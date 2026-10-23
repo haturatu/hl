@@ -82,8 +82,7 @@ class CLIContext:
         if self._perp_dexs is not None:
             return self._perp_dexs
         try:
-            temp = _build_info_client(self.base_url, skip_ws=True)
-            raw: list[PerpDexInfo | None] = temp.perp_dexs()
+            raw: list[PerpDexInfo | None] = self.get_public_client().perp_dexs()
             names = [
                 str(x.get("name")) for x in raw if isinstance(x, dict) and x.get("name")
             ]
