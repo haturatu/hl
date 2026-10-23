@@ -5,6 +5,7 @@ hl CLI needs: metadata headers, singular entries and plural entries with
 ``Plural-Forms`` support. No third-party dependencies are required so it works
 in CI and in the Nuitka build environment.
 """
+
 from __future__ import annotations
 
 import os
@@ -191,12 +192,7 @@ def _build_mo(metadata: dict[str, str], entries: list[_PoEntry]) -> bytes:
         hash_size,
         offset_hash,
     )
-    return (
-        header_struct
-        + original_table_bytes
-        + translation_table_bytes
-        + blob
-    )
+    return header_struct + original_table_bytes + translation_table_bytes + blob
 
 
 def compile_po(po_path: str, mo_path: str) -> None:

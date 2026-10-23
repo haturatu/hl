@@ -155,11 +155,7 @@ def _print_order_feedback(
         print(_("❌ Order rejected"))
         print(_("\nReason: {reason}").format(reason=first_error))
         if stake is not None:
-            print(
-                _("Your stake (margin): {stake}").format(
-                    stake=_format_usd(stake)
-                )
-            )
+            print(_("Your stake (margin): {stake}").format(stake=_format_usd(stake)))
             if "minimum value" in first_error.lower():
                 print(
                     _(
@@ -232,9 +228,7 @@ def _get_max_leverage_for_coin(context: CLIContext, coin: str) -> int:
             if max_lev is None:
                 continue
             return int(max_lev)
-    raise RuntimeError(
-        _("Could not resolve max leverage for {coin}").format(coin=coin)
-    )
+    raise RuntimeError(_("Could not resolve max leverage for {coin}").format(coin=coin))
 
 
 def _is_invalid_leverage_response(resp: object) -> bool:
@@ -1065,11 +1059,11 @@ def order_twap(
             print(_("✅ TWAP order submitted"))
             print(_("\nAsset: {coin}").format(coin=coin))
             print(_("Side: {side}").format(side=_("BUY") if is_buy else _("SELL")))
-            print(
-                _("Total size: {size} {coin}").format(size=total_size, coin=coin)
-            )
+            print(_("Total size: {size} {coin}").format(size=total_size, coin=coin))
             print(_("Duration: {minutes} min").format(minutes=minutes))
-            print(_("Randomize: {state}").format(state=_("on") if randomize else _("off")))
+            print(
+                _("Randomize: {state}").format(state=_("on") if randomize else _("off"))
+            )
             if twap_id is not None:
                 print(_("TWAP ID: {twap_id}").format(twap_id=twap_id))
                 print(_("Manage it with 'hl order ls' or 'hl order twap-cancel'."))

@@ -47,11 +47,14 @@ class ContextTests(unittest.TestCase):
         }
         created = object()
 
-        with patch(
-            "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
-        ) as info_cls, patch(
+        with (
+            patch(
+                "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
+            ) as info_cls,
+            patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
-        ) as loader:
+            ) as loader,
+        ):
             client = context.get_public_client()
 
         self.assertIs(client, created)
@@ -69,14 +72,17 @@ class ContextTests(unittest.TestCase):
         }
         created = object()
 
-        with patch(
-            "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
-        ) as info_cls, patch(
+        with (
+            patch(
+                "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
+            ) as info_cls,
+            patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
-        ) as loader:
+            ) as loader,
+        ):
             client = _build_info_client(
-                    "https://api.hyperliquid-testnet.xyz", skip_ws=True
-                )
+                "https://api.hyperliquid-testnet.xyz", skip_ws=True
+            )
 
         self.assertIs(client, created)
         loader.assert_called_once_with("https://api.hyperliquid-testnet.xyz")
@@ -92,14 +98,15 @@ class ContextTests(unittest.TestCase):
         }
         created = object()
 
-        with patch(
-            "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
-        ) as info_cls, patch(
+        with (
+            patch(
+                "hl_cli.core.context.Info", side_effect=[IndexError("bad"), created]
+            ) as info_cls,
+            patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
-        ) as loader:
-            client = _build_info_client(
-                    "https://api.hyperliquid.xyz", skip_ws=True
-                )
+            ) as loader,
+        ):
+            client = _build_info_client("https://api.hyperliquid.xyz", skip_ws=True)
 
         self.assertIs(client, created)
         loader.assert_called_once_with("https://api.hyperliquid.xyz")
@@ -115,12 +122,13 @@ class ContextTests(unittest.TestCase):
         }
         created = object()
 
-        with patch("hl_cli.core.context.Info", return_value=created) as info_cls, patch(
+        with (
+            patch("hl_cli.core.context.Info", return_value=created) as info_cls,
+            patch(
                 "hl_cli.core.context._load_safe_spot_meta", return_value=safe_spot_meta
-        ) as loader:
-            client = _build_info_client(
-                    "https://api.hyperliquid.xyz", skip_ws=False
-                )
+            ) as loader,
+        ):
+            client = _build_info_client("https://api.hyperliquid.xyz", skip_ws=False)
 
         self.assertIs(client, created)
         loader.assert_called_once_with("https://api.hyperliquid.xyz")

@@ -8,6 +8,7 @@ Usage::
 
     python tools/extract_messages.py
 """
+
 from __future__ import annotations
 
 import ast

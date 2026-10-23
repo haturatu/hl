@@ -407,9 +407,7 @@ def _print_markets_payload(data: MarketsPayload) -> None:
 def _print_asset_leverage_payload(data: AssetLeveragePayload) -> None:
     console.print(_("Asset Leverage"))
     console.print(_("- Asset: {coin}").format(coin=data.get("coin")))
-    console.print(
-        _("- Mark price: {price}").format(price=_fmt_usd(data.get("markPx")))
-    )
+    console.print(_("- Mark price: {price}").format(price=_fmt_usd(data.get("markPx"))))
     console.print(
         _("- Max leverage: {leverage}x").format(leverage=data.get("maxLeverage"))
     )
@@ -419,7 +417,9 @@ def _print_asset_leverage_payload(data: AssetLeveragePayload) -> None:
         _("- Account value: {value}").format(value=_fmt_usd(margin.get("accountValue")))
     )
     console.print(
-        _("- Margin used: {value}").format(value=_fmt_usd(margin.get("totalMarginUsed")))
+        _("- Margin used: {value}").format(
+            value=_fmt_usd(margin.get("totalMarginUsed"))
+        )
     )
     console.print(
         _("- Available margin: {value}").format(
@@ -431,7 +431,9 @@ def _print_asset_leverage_payload(data: AssetLeveragePayload) -> None:
         console.print(_("Position"))
         console.print(_("- Size: {size}").format(size=pos.get("szi")))
         console.print(_("- Entry: {price}").format(price=_fmt_usd(pos.get("entryPx"))))
-        console.print(_("- Value: {value}").format(value=_fmt_usd(pos.get("positionValue"))))
+        console.print(
+            _("- Value: {value}").format(value=_fmt_usd(pos.get("positionValue")))
+        )
         console.print(
             _("- Unrealized PnL: {value}").format(
                 value=_fmt_usd(pos.get("unrealizedPnl"))
