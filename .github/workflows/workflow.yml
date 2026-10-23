@@ -35,6 +35,22 @@ jobs:
       - name: Run Ruff
         run: ruff check src tests tools
 
+      # Temporary diagnostic: print only files changed by Ruff's formatter.
+      - name: Collect formatting preview
+        run: |
+          python - <<'PY'
+          import base64
+          import subprocess
+          from pathlib import Path
+          files = sorted(p for root in ("src", "tests", "tools") for p in Path(root).rglob("*.py"))
+          before = {p: p.read_bytes() for p in files}
+          subprocess.run(["ruff", "format", "src", "tests", "tools"], check=True)
+          for p, old in before.items():
+              content = p.read_bytes()
+              if old != content:
+                  print(f"FORMAT_CANDIDATE {p} {base64.b64encode(content).decode('ascii')}")
+          PY
+
   test:
     runs-on: ubuntu-latest
     steps:
