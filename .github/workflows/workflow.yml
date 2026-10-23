@@ -25,7 +25,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.15.1"
           cache: pip
           cache-dependency-path: pyproject.toml
 
@@ -46,7 +46,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.15.1"
           cache: pip
           cache-dependency-path: pyproject.toml
 
@@ -68,7 +68,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.15.1"
           cache: pip
           cache-dependency-path: pyproject.toml
 
@@ -114,6 +114,8 @@ jobs:
             output-name: hl
             install-system-tools: ""
           - os: windows-latest
+            # ckzg has Windows wheels through Python 3.14; its 3.15 source build lacks blst.lib.
+            python-version: "3.14.9"
             asset-name: hl-windows-x86_64.exe
             output-name: hl.exe
             install-system-tools: ""
@@ -126,7 +128,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version || '3.15.1' }}
           cache: pip
           cache-dependency-path: pyproject.toml
 
@@ -136,9 +138,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .nuitka-cache
-          key: nuitka-${{ runner.os }}-${{ matrix.asset-name }}-py312-${{ hashFiles('pyproject.toml', '.github/workflows/workflow.yml') }}
+          key: nuitka-${{ runner.os }}-${{ matrix.asset-name }}-py${{ matrix.python-version || '3.15.1' }}-${{ hashFiles('pyproject.toml', '.github/workflows/workflow.yml') }}
           restore-keys: |
-            nuitka-${{ runner.os }}-${{ matrix.asset-name }}-py312-
+            nuitka-${{ runner.os }}-${{ matrix.asset-name }}-py${{ matrix.python-version || '3.15.1' }}-
 
       - name: Install system build tools
         if: matrix.install-system-tools != ''

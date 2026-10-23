@@ -1,8 +1,7 @@
 import base64
 import hashlib
-import sqlite3
 import secrets
-from typing import Optional
+import sqlite3
 
 from Crypto.Cipher import ChaCha20
 
@@ -35,13 +34,13 @@ def decrypt_value(value: str) -> str:
     return cipher.decrypt(encrypted).decode("utf-8")
 
 
-def encrypt_optional_value(value: Optional[str]) -> Optional[str]:
+def encrypt_optional_value(value: str | None) -> str | None:
     if value is None:
         return None
     return encrypt_value(value)
 
 
-def decrypt_optional_value(value: Optional[str]) -> Optional[str]:
+def decrypt_optional_value(value: str | None) -> str | None:
     if value is None:
         return None
     return decrypt_value(value)

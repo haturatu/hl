@@ -1,15 +1,13 @@
 import os
 from dataclasses import dataclass
-from typing import Optional
 
+import requests
 from eth_account import Account as EthAccount
 from hyperliquid.exchange import Exchange
 from hyperliquid.info import Info
 from hyperliquid.utils.constants import MAINNET_API_URL, TESTNET_API_URL
-import requests
 
 from ..i18n import _
-
 from ..infra.db import Account, get_default_account
 from ..types import PerpDexInfo, SpotMeta
 from .testnet_policy import filter_safe_spot_universe
@@ -17,19 +15,19 @@ from .testnet_policy import filter_safe_spot_universe
 
 @dataclass
 class Config:
-    private_key: Optional[str]
-    wallet_address: Optional[str]
+    private_key: str | None
+    wallet_address: str | None
     testnet: bool
-    account: Optional[Account]
+    account: Account | None
 
 
 class CLIContext:
     def __init__(self, config: Config):
         self.config = config
-        self._info: Optional[Info] = None
-        self._multi_perp_info: Optional[Info] = None
+        self._info: Info | None = None
+        self._multi_perp_info: Info | None = None
         self._exchange_clients: dict[tuple[str, ...], Exchange] = {}
-        self._perp_dexs: Optional[list[str]] = None
+        self._perp_dexs: list[str] | None = None
 
     @property
     def base_url(self) -> str:
@@ -49,7 +47,7 @@ class CLIContext:
             )
         return self._multi_perp_info
 
-    def get_wallet_client(self, perp_dexs: Optional[list[str]] = None) -> Exchange:
+    def get_wallet_client(self, perp_dexs: list[str] | None = None) -> Exchange:
         key = tuple(perp_dexs or [])
         if key not in self._exchange_clients:
             if not self.config.private_key:
@@ -87,7 +85,7 @@ class CLIContext:
                 str(x.get("name")) for x in raw if isinstance(x, dict) and x.get("name")
             ]
             self._perp_dexs = ["", *names] if names else [""]
-        except Exception:
+        except Exception:  # noqa: BLE001 - Optional SDK discovery must retain the main-perp fallback.
             self._perp_dexs = [""]
         return self._perp_dexs
 
@@ -104,7 +102,7 @@ def load_config(testnet: bool) -> Config:
     default = None
     try:
         default = get_default_account(network)
-    except Exception:
+    except Exception:  # noqa: BLE001 - Optional stored accounts must not prevent environment configuration.
         default = None
 
     if default:

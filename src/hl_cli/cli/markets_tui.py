@@ -2,8 +2,9 @@ import contextlib
 import json
 import sys
 import time
+from collections.abc import Callable, Iterator
 from itertools import cycle
-from typing import Callable, Iterator, Literal, Optional
+from typing import Literal
 
 from rich.console import Console
 from rich.live import Live
@@ -83,7 +84,7 @@ def _raw_tty_mode() -> Iterator[bool]:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
 
-def _read_key(timeout: float = 0.0) -> Optional[str]:
+def _read_key(timeout: float = 0.0) -> str | None:
     if not sys.stdin.isatty():
         return None
     if sys.platform == "win32":
@@ -91,7 +92,7 @@ def _read_key(timeout: float = 0.0) -> Optional[str]:
     return _read_posix_key(timeout)
 
 
-def _read_windows_key(timeout: float = 0.0) -> Optional[str]:
+def _read_windows_key(timeout: float = 0.0) -> str | None:
     import msvcrt
 
     deadline = time.time() + timeout
@@ -112,7 +113,7 @@ def _read_windows_key(timeout: float = 0.0) -> Optional[str]:
     return first + second
 
 
-def _read_posix_key(timeout: float = 0.0) -> Optional[str]:
+def _read_posix_key(timeout: float = 0.0) -> str | None:
     import select
 
     ready, _, _ = select.select([sys.stdin], [], [], timeout)
@@ -148,7 +149,7 @@ def _matches_query(row: MarketRow, query: str) -> bool:
 
 def _find_match(
     rows: list[MarketRow], start: int, query: str, *, forward: bool
-) -> Optional[int]:
+) -> int | None:
     if not rows or not query.strip():
         return None
     total = len(rows)
@@ -183,7 +184,7 @@ def _jump_to_match(
 
 
 def _handle_key(
-    key: Optional[str], state: MarketsTuiState, rows: MarketsPayload, window_size: int
+    key: str | None, state: MarketsTuiState, rows: MarketsPayload, window_size: int
 ) -> bool:
     current_rows = state.rows(rows)
     total = len(current_rows)
