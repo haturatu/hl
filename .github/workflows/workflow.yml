@@ -40,7 +40,7 @@ jobs:
               - '.github/workflows/workflow.yml'
   lint:
     needs: changes
-    if: needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'release: v'))
+    if: "needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'release: v'))"
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -66,7 +66,7 @@ jobs:
 
   test:
     needs: changes
-    if: needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'release: v'))
+    if: "needs.changes.outputs.code == 'true' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'release: v'))"
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
